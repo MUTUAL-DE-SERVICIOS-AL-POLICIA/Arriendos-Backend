@@ -8,7 +8,7 @@ from rest_framework.decorators import api_view
 from ldap3 import Server, Connection, ALL, SUBTREE, ALL_ATTRIBUTES
 from ldap3.core.exceptions import LDAPException
 # Create your views here
-def bind_user_ldap(user, password):
+def Bind_User_Ldap(user, password):
     ldap_server = settings.LDAP_SERVER 
     ldap_user = settings.LDAP_USER
     ldap_password = settings.LDAP_PASSWORD
@@ -21,7 +21,7 @@ def bind_user_ldap(user, password):
     except:
         return None
 
-def connect_ldap(request):
+def Connect_Ldap(request):
     ldap_server = settings.LDAP_SERVER 
     ldap_user = settings.LDAP_USER
     ldap_password = settings.LDAP_PASSWORD
@@ -34,10 +34,10 @@ def connect_ldap(request):
         return JsonResponse({"estado":"falló la conexión"}, status=404)
 @csrf_exempt
 @api_view(['POST'])
-def search_user_ldap(request):
+def Search_User_Ldap(request):
     user=request.data.get('user')
     password=request.data.get('password')
-    if bind_user_ldap(user, password)==True: 
+    if Bind_User_Ldap(user, password)==True: 
         return HttpResponse("usuario válido")
     else:
         return HttpResponse("no coincide el usuario y contraseña")

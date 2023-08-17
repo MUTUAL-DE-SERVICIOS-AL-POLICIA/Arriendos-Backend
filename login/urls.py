@@ -3,6 +3,6 @@ from rest_framework import routers
 from rest_framework.documentation import include_docs_urls
 from login import views
 urlpatterns = [
-    path("connect_ldap/", views.connect_ldap),
-    path("search_ldap/", views.search_user_ldap)
+    path("connect_ldap/", views.Connect_Ldap),
+    path("search_ldap/", views.Search_User_Ldap)
 ]
