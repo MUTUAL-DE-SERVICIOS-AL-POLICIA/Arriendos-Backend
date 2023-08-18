@@ -37,11 +37,11 @@ def Connect_Ldap(request):
         return JsonResponse({"estado":"falló la conexión"}, status=404)
 @csrf_exempt
 @api_view(['POST'])
-def Search_User_Ldap(request):
+def Authenticate_With_Ldap(request):
     user=request.data.get('user')
     password=request.data.get('password')
     if Bind_User_Ldap(user, password)==True: 
-        return HttpResponse("usuario válido")
+        return True
     else:
         return HttpResponse("no coincide el usuario y contraseña")
 
@@ -50,15 +50,30 @@ class Auth(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         user=request.data.get('username')
         password=request.data.get('password')
-        print("entro")
-        print(Bind_User_Ldap(user, password))
-        if Bind_User_Ldap(user, password)==True:
+        if(settings.LDAP_STATUS==True):
+            if Bind_User_Ldap(user, password):
+                response = super().post(request, *args, **kwargs)
+                if response.status_code == status.HTTP_200_OK:
+                    user = User.objects.filter(username=request.data['username']).first()
+                    response.data['user_id'] = user.id
+                    response.data['username'] = user.username
+                    response.data['first_name'] = user.first_name
+                    response.data['last_name'] = user.last_name
+                    if not user or not user.check_password(request.data['password']):
+                        response.data['detail'] = "Credenciales inválidas"
+                        response.status_code = status.HTTP_401_UNAUTHORIZED
+            else:
+                 return Response({'detail': 'Credenciales LDAP inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
+        else:
             response = super().post(request, *args, **kwargs)
             if response.status_code == status.HTTP_200_OK:
                 user = User.objects.filter(username=request.data['username']).first()
+                response.data['user_id'] = user.id
+                response.data['username'] = user.username
+                response.data['user_id'] = user.id
+                response.data['first_name'] = user.first_name
+                response.data['last_name'] = user.last_name
                 if not user or not user.check_password(request.data['password']):
                     response.data['detail'] = "Credenciales inválidas"
                     response.status_code = status.HTTP_401_UNAUTHORIZED
-        else:
-             return Response({'detail': 'Credenciales LDAP inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
         return response
