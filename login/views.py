@@ -7,7 +7,10 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from ldap3 import Server, Connection, ALL, SUBTREE, ALL_ATTRIBUTES
 from ldap3.core.exceptions import LDAPException
-# Create your views here
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework import status
+from django.contrib.auth import get_user_model
+
 def Bind_User_Ldap(user, password):
     ldap_server = settings.LDAP_SERVER 
     ldap_user = settings.LDAP_USER
@@ -42,5 +45,35 @@ def Search_User_Ldap(request):
     else:
         return HttpResponse("no coincide el usuario y contraseña")
 
-        
-
+User = get_user_model()
+class Auth(TokenObtainPairView):
+    def post(self, request, *args, **kwargs):
+        user=request.data.get('username')
+        password=request.data.get('password')
+        if(settings.LDAP_STATUS==True):
+            if Bind_User_Ldap(user, password):
+                response = super().post(request, *args, **kwargs)
+                if response.status_code == status.HTTP_200_OK:
+                    user = User.objects.filter(username=request.data['username']).first()
+                    response.data['user_id'] = user.id
+                    response.data['username'] = user.username
+                    response.data['first_name'] = user.first_name
+                    response.data['last_name'] = user.last_name
+                    if not user or not user.check_password(request.data['password']):
+                        response.data['detail'] = "Credenciales inválidas"
+                        response.status_code = status.HTTP_401_UNAUTHORIZED
+            else:
+                 return Response({'detail': 'Credenciales LDAP inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
+        else:
+            response = super().post(request, *args, **kwargs)
+            if response.status_code == status.HTTP_200_OK:
+                user = User.objects.filter(username=request.data['username']).first()
+                response.data['user_id'] = user.id
+                response.data['username'] = user.username
+                response.data['user_id'] = user.id
+                response.data['first_name'] = user.first_name
+                response.data['last_name'] = user.last_name
+                if not user or not user.check_password(request.data['password']):
+                    response.data['detail'] = "Credenciales inválidas"
+                    response.status_code = status.HTTP_401_UNAUTHORIZED
+        return response
