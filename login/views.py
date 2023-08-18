@@ -37,11 +37,11 @@ def Connect_Ldap(request):
         return JsonResponse({"estado":"falló la conexión"}, status=404)
 @csrf_exempt
 @api_view(['POST'])
-def Authenticate_With_Ldap(request):
+def Search_User_Ldap(request):
     user=request.data.get('user')
     password=request.data.get('password')
     if Bind_User_Ldap(user, password)==True: 
-        return True
+        return HttpResponse("usuario válido")
     else:
         return HttpResponse("no coincide el usuario y contraseña")
 
