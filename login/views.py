@@ -10,6 +10,10 @@ from ldap3.core.exceptions import LDAPException
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import status
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User
+
+#from django.core import serializers
+import json
 
 def Bind_User_Ldap(user, password):
     ldap_server = settings.LDAP_SERVER 
@@ -77,3 +81,16 @@ class Auth(TokenObtainPairView):
                     response.data['detail'] = "Credenciales inválidas"
                     response.status_code = status.HTTP_401_UNAUTHORIZED
         return response
+
+def Users_ldap(request):
+    ldap_server = settings.LDAP_SERVER
+    ldap_password = settings.LDAP_PASSWORD
+    server = Server(ldap_server, get_info=ALL)
+    connection = Connection(server, settings.LDAP_USER, ldap_password, auto_bind=True) 
+    connection.search(settings.LDAP_BASE, settings.LDAP_FILTER, SUBTREE, attributes=settings.ATTRIBUTES)
+    data = []
+    for entry in connection.entries:
+        user = [{'first_name': entry.givenName, 'last_name': entry.sn, 'email': entry.mail, 'username': entry.uid }]
+        data.append(user)
+    return HttpResponse(data, status=200)
+
