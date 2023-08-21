@@ -93,4 +93,3 @@ def Users_ldap(request):
         user = [{'first_name': entry.givenName, 'last_name': entry.sn, 'email': entry.mail, 'username': entry.uid }]
         data.append(user)
     return HttpResponse(data, status=200)
-
