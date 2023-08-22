@@ -11,11 +11,7 @@ from datetime import datetime
 from rest_framework import status, generics
 # Create your views here.
 
-
-#class CustomerView(viewsets.ModelViewSet):
-# serializer_class = CustomerSerializer
-# queryset = Customer.objects.all()
-class Customer_type_api(generics.GenericAPIView):
+class Customer_Type_Api(generics.GenericAPIView):
     serializer_class = Customer_typeSerializer
     queryset = Customer_type.objects.all()
 
@@ -46,7 +42,7 @@ class Customer_type_api(generics.GenericAPIView):
         else:
             return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         
-class Customer_typeDetail(generics.GenericAPIView):
+class Customer_Type_Detail(generics.GenericAPIView):
     queryset = Customer_type.objects.all()
     serializer_class = Customer_typeSerializer
 
@@ -72,7 +68,7 @@ class Customer_typeDetail(generics.GenericAPIView):
             return Response({"status": "success", "data": {"customer_type": serializer.data}}, status=status.HTTP_200_OK)
         return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-class Customer_api(generics.GenericAPIView):
+class Customer_Api(generics.GenericAPIView):
     serializer_class = CustomerSerializer
     queryset = Customer.objects.all()
 
@@ -103,7 +99,7 @@ class Customer_api(generics.GenericAPIView):
             return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CustomerDetail(generics.GenericAPIView):
+class Customer_Detail(generics.GenericAPIView):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
 
