@@ -32,7 +32,7 @@ class Customer_Type_Api(generics.GenericAPIView):
             "total": total_customers,
             "page": page_num,
             "last_page": math.ceil(total_customers/ limit_num),
-            "customers": serializer.data
+            "customer_type": serializer.data
         })
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)

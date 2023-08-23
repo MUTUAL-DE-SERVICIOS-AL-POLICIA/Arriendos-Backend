@@ -8,9 +8,7 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-        ('rooms', '0004_alter_property_photo_alter_room_photo'),
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
