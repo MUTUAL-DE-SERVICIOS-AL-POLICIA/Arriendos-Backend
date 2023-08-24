@@ -17,10 +17,11 @@ class Customer_Type_Api(generics.GenericAPIView):
 
 
     def get(self, request, *args, **kwargs):
-        page_num = int(request.GET.get('page', 1))
+        #inciamos en 0 por defecto
+        page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit', 10))
-        start_num = (page_num - 1) * limit_num
-        end_num = limit_num * page_num
+        start_num = (page_num) * limit_num
+        end_num = limit_num * (page_num + 1)
         search_param = request.GET.get('search')
         customers = Customer_type.objects.all()
         total_customers = customers.count()
@@ -73,10 +74,10 @@ class Customer_Api(generics.GenericAPIView):
     queryset = Customer.objects.all()
 
     def get(self, request, *args, **kwargs):
-        page_num = int(request.GET.get('page', 1))
+        page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit', 10))
-        start_num = (page_num - 1) * limit_num
-        end_num = limit_num * page_num
+        start_num = (page_num) * limit_num
+        end_num = limit_num * (page_num + 1)
         search_param = request.GET.get('search')
         customers = Customer.objects.all()
         total_customers = customers.count()
