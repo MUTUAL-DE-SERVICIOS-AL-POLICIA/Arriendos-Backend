@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from .serializers import UserCustomSerializer
-from .serializers import AssingSerializer, AssingsSerializer
+from .serializers import AssignSerializer, AssignsSerializer
 from rest_framework.response import Response
 from django.http import HttpResponse
 from django.http import JsonResponse
@@ -10,7 +10,7 @@ from rest_framework.decorators import api_view
 from ldap3 import Server, Connection, ALL, SUBTREE, ALL_ATTRIBUTES
 from ldap3.core.exceptions import LDAPException
 from django.contrib.auth.models import User
-from .models import Assing
+from .models import Assign
 from rest_framework import status, generics
 from django.conf import settings
 import math
@@ -31,7 +31,7 @@ class User_Ldap(APIView):
             users = users.filter(first_name__icontains=search_param)
         serializer = self.serializer_class(users[start_num:end_num], many=True)
         return Response({
-            "status": "success",
+            "status": "sname 'Asuccess",
             "total": total_users,
             "page": page_num,
             "last_page": math.ceil(total_users/ limit_num),
@@ -70,19 +70,19 @@ def get_user(request):
         data.append(user)
     return HttpResponse(data, status=200)
 
-class Assing_Api(generics.GenericAPIView):
-    serializer_class = AssingSerializer
-    queryset = Assing.objects.all()
+class Assign_Api(generics.GenericAPIView):
+    serializer_class = AssignSerializer
+    queryset = Assign.objects.all()
 
     def get(self, request, *args, **kwargs):
-        serializer_class = AssingsSerializer
-        queryset = Assing.objects.all()
+        serializer_class = AssignsSerializer
+        queryset = Assign.objects.all()
         page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit', 10))
         start_num = (page_num) * limit_num
         end_num = limit_num * (page_num + 1)
         search_param = request.GET.get('search')
-        assings = Assing.objects.all()
+        assings = Assign.objects.all()
         total_assings = assings.count()
         if search_param:
             assings = assings.filter(first_name__icontains=search_param)
@@ -102,13 +102,13 @@ class Assing_Api(generics.GenericAPIView):
         else:
             return Response({"status": "fail", "data": serializer.errors}, status=status.HTTP_400_BAD)
         
-class Assing_Detail(generics.GenericAPIView):
-    queryset = Assing.objects.all()
-    serializer_class = AssingSerializer
+class Assign_Detail(generics.GenericAPIView):
+    queryset = Assign.objects.all()
+    serializer_class = AssignSerializer
 
     def get_assing(self, pk, *args, **kwargs):
         try:
-            return Assing.objects.get(pk=pk)
+            return Assign.objects.get(pk=pk)
         except:
             return None
     
