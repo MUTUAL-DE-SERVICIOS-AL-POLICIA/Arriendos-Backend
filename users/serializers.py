@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from .models import Room
 from rooms.serializers import RoomSerializer
-from .models import Assing
+from .models import Assign
 from rest_framework import serializers
 
 class UserCustomSerializer(serializers.ModelSerializer):
@@ -10,13 +10,13 @@ class UserCustomSerializer(serializers.ModelSerializer):
         fields = ('id', 'username', 'email', 'first_name', 'last_name')
 
 
-class AssingSerializer(serializers.ModelSerializer): 
+class AssignSerializer(serializers.ModelSerializer): 
     class Meta:
-        model = Assing
+        model = Assign
         fields = '__all__'
-class AssingsSerializer(serializers.ModelSerializer):
+class AssignsSerializer(serializers.ModelSerializer):
     user = UserCustomSerializer()
     room = RoomSerializer()
     class Meta:
-        model = Assing
+        model = Assign
         fields = '__all__'
