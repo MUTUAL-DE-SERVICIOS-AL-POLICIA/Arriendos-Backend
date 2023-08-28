@@ -14,8 +14,5 @@ class Room(models.Model):
     capacity=models.IntegerField()
     warranty=models.FloatField()
     is_active = models.BooleanField(default=True)
-    def get_upload_to(instance, filename):
-        return f'room_photos/{filename}'
-    photo = models.ImageField(upload_to=get_upload_to)
     def __str__(self):
         return self.name
