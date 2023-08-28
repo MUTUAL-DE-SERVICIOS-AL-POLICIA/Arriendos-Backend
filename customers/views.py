@@ -3,7 +3,7 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from django.http import HttpResponse, JsonResponse
 from rest_framework.decorators import api_view
-from .serializer import CustomerSerializer, Customer_typeSerializer
+from .serializer import CustomerSerializer, Customer_typeSerializer, CustomersSerializer
 from django.views.decorators.csrf import csrf_exempt
 from .models import Customer, Customer_type
 import math
@@ -14,8 +14,7 @@ from rest_framework import status, generics
 class Customer_Type_Api(generics.GenericAPIView):
     serializer_class = Customer_typeSerializer
     queryset = Customer_type.objects.all()
-
-
+    
     def get(self, request, *args, **kwargs):
         #inciamos en 0 por defecto
         page_num = int(request.GET.get('page', 0))
@@ -74,6 +73,8 @@ class Customer_Api(generics.GenericAPIView):
     queryset = Customer.objects.all()
 
     def get(self, request, *args, **kwargs):
+        serializer_class = CustomersSerializer
+        queryset = Customer.objects.all()
         page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit', 10))
         start_num = (page_num) * limit_num
@@ -83,7 +84,7 @@ class Customer_Api(generics.GenericAPIView):
         total_customers = customers.count()
         if search_param:
             customers = customers.filter(title__icontains=search_param)
-        serializer = self.serializer_class(customers[start_num:end_num], many=True)
+        serializer = serializer_class(customers[start_num:end_num], many=True)
         return Response({
             "status": "success",
             "total": total_customers,
@@ -91,6 +92,8 @@ class Customer_Api(generics.GenericAPIView):
             "last_page": math.ceil(total_customers/ limit_num),
             "customers": serializer.data
         })
+    
+    
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():

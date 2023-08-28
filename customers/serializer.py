@@ -7,8 +7,15 @@ class Customer_typeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class CustomerSerializer(serializers.ModelSerializer):
+    #customer_type = Customer_typeSerializer()
+    class Meta:
+        model = Customer
+        fields = '__all__'
+
+class CustomersSerializer(serializers.ModelSerializer):
     customer_type = Customer_typeSerializer()
     class Meta:
         model = Customer
         fields = '__all__'
+        
         
