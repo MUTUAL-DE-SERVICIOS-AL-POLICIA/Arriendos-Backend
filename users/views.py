@@ -31,7 +31,7 @@ class User_Ldap(APIView):
             users = users.filter(first_name__icontains=search_param)
         serializer = self.serializer_class(users[start_num:end_num], many=True)
         return Response({
-            "status": "sname 'Asuccess",
+            "status": "success",
             "total": total_users,
             "page": page_num,
             "last_page": math.ceil(total_users/ limit_num),
@@ -129,3 +129,4 @@ class Assign_Detail(generics.GenericAPIView):
             return Response({"status": "success", "data": {"assing": serializer.data}}, status=status.HTTP_200_OK)
         else:
             return Response({"status": "fail", "data": serializer.errors}, status=status.HTTP_400_BAD)
+    
