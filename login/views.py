@@ -11,8 +11,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
+from ldap3.abstract.attribute import Attribute
 
-#from django.core import serializers
 import json
 
 def Bind_User_Ldap(user, password):
@@ -90,6 +90,12 @@ def Users_ldap(request):
     connection.search(settings.LDAP_BASE, settings.LDAP_FILTER, SUBTREE, attributes=settings.ATTRIBUTES)
     data = []
     for entry in connection.entries:
-        user = [{'first_name': entry.givenName, 'last_name': entry.sn, 'email': entry.mail, 'username': entry.uid }]
+        user = {
+                "username": f"{entry.uid}",
+                "first_name": f"{entry.givenName}",
+                "last_name": f"{entry.sn}",
+                "email": f"{entry.mail}"
+                }
         data.append(user)
-    return HttpResponse(data, status=200)
+    response_data = {"message": "List of users LDAP", "users": data}
+    return JsonResponse(response_data, safe=False, status=status.HTTP_202_ACCEPTED) 
