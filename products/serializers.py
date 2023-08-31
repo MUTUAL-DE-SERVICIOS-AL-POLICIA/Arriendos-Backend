@@ -5,6 +5,8 @@ class RateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rate
         fields = '__all__'
+        depth=2
+
 
 class TimeSerializer(serializers.ModelSerializer):
     class Meta:
