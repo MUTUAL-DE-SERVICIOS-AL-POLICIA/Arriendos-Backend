@@ -22,7 +22,7 @@ class Customer_Type_Api(generics.GenericAPIView):
         start_num = (page_num) * limit_num
         end_num = limit_num * (page_num + 1)
         search_param = request.GET.get('search')
-        customers = Customer_type.objects.all()
+        customers = Customer_type.objects.all().order_by('id')
         total_customers = customers.count()
         if search_param:
             customers = customers.filter(title__icontains=search_param)
@@ -80,7 +80,7 @@ class Customer_Api(generics.GenericAPIView):
         start_num = (page_num) * limit_num
         end_num = limit_num * (page_num + 1)
         search_param = request.GET.get('search')
-        customers = Customer.objects.all()
+        customers = Customer.objects.all().order_by('id')
         total_customers = customers.count()
         if search_param:
             customers = customers.filter(title__icontains=search_param)
