@@ -11,6 +11,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import status
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
+from users.serializers import UserCustomSerializer
 from ldap3.abstract.attribute import Attribute
 
 import json
@@ -83,19 +84,27 @@ class Auth(TokenObtainPairView):
         return response
 
 def Users_ldap(request):
+    serializer_class = UserCustomSerializer
+    queryset = User.objects.all()
     ldap_server = settings.LDAP_SERVER
     ldap_password = settings.LDAP_PASSWORD
     server = Server(ldap_server, get_info=ALL)
     connection = Connection(server, settings.LDAP_USER, ldap_password, auto_bind=True) 
     connection.search(settings.LDAP_BASE, settings.LDAP_FILTER, SUBTREE, attributes=settings.ATTRIBUTES)
     data = []
+    users_dba = User.objects.all()
+    user_to_compare = []
+    for user_dba in users_dba:
+        user_list = user_dba.username
+        user_to_compare.append(user_list)
     for entry in connection.entries:
-        user = {
-                "username": f"{entry.uid}",
-                "first_name": f"{entry.givenName}",
-                "last_name": f"{entry.sn}",
-                "email": f"{entry.mail}"
-                }
-        data.append(user)
+        if not entry.uid in user_to_compare:
+            user = {
+                    "username": f"{entry.uid}",
+                    "first_name": f"{entry.givenName}",
+                    "last_name": f"{entry.sn}",
+                    "email": f"{entry.mail}"
+                    }
+            data.append(user)
     response_data = {"message": "List of users LDAP", "users": data}
-    return JsonResponse(response_data, safe=False, status=status.HTTP_202_ACCEPTED) 
+    return JsonResponse(response_data, safe=False, status=status.HTTP_202_ACCEPTED)
