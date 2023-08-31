@@ -39,18 +39,31 @@ class User_Ldap(APIView):
         })
     def post(self, request):
         username = request.data.get('username')
-        password = request.data.get('password')
         email = request.data.get('email')
         first_name = request.data.get('first_name')
         last_name = request.data.get('last_name')
-        if User.objects.filter(username=username).exists():
-            return Response({'detail': 'El usuario ya existe'}, status=status.HTTP_400_BAD_REQUEST)
-        if User.objects.filter(email=email).exists():
-            return Response({'detail': 'El correo ya existe'}, status=status.HTTP_400_BAD_REQUEST)
-        user = User.objects.create_user(username=username, password=password, email=email, first_name=first_name, last_name=last_name)
-        user.save()
-        return Response({"message":"Usuario registrado con exito", "user": user.id, "username": user.username, "email": user.email, "first_name": user.first_name, "last_name": user.last_name}, status=status.HTTP_201_CREATED)
-
+        user=request.data.get('username')
+        ldap_server = settings.LDAP_SERVER
+        ldap_user = settings.LDAP_USER
+        ldap_password = settings.LDAP_PASSWORD
+        server = Server(ldap_server, get_info=ALL)
+        connection = Connection(server, ldap_user, ldap_password, auto_bind=True)
+        search_base = settings.LDAP_BASE
+        search_filter = f"(uid={user})"
+        search_attributes = settings.ATTRIBUTES
+        connection.search(search_base, search_filter, SUBTREE, attributes=search_attributes)
+        for entry in connection.entries:
+            if (first_name == entry.givenName and last_name == entry.sn and username == entry.uid and email == entry.mail):
+                if User.objects.filter(username=username).exists():
+                    return Response({'detail': 'El usuario ya existe'}, status=status.HTTP_400_BAD_REQUEST)
+                if User.objects.filter(email=email).exists():
+                    return Response({'detail': 'El correo ya existe'}, status=status.HTTP_400_BAD_REQUEST)
+                user = User.objects.create_user(username=username, password=username, email=email, first_name=first_name, last_name=last_name)
+                return Response({"message":"Usuario registrado con exito", "user": user.id, "username": user.username, "email": user.email, "first_name": user.first_name, "last_name": user.last_name}, status=status.HTTP_201_CREATED)
+            else:
+                return Response({"status": "fail"}, status=status.HTTP_404_NOT_FOUND)
+        
+        
 @api_view(['POST'])
 @csrf_exempt
 def get_user(request):
@@ -82,23 +95,23 @@ class Assign_Api(generics.GenericAPIView):
         start_num = (page_num) * limit_num
         end_num = limit_num * (page_num + 1)
         search_param = request.GET.get('search')
-        assings = Assign.objects.all()
-        total_assings = assings.count()
+        assigns = Assign.objects.all()
+        total_assigns = assigns.count()
         if search_param:
-            assings = assings.filter(first_name__icontains=search_param)
-        serializer = serializer_class(assings[start_num:end_num], many=True)
+            assigns = assigns.filter(user__icontains=search_param)
+        serializer = serializer_class(assigns[start_num:end_num], many=True)
         return Response({
             "status": "success",
-            "total": total_assings,
+            "total": total_assigns,
             "page": page_num,
-            "last_page": math.ceil(total_assings/ limit_num),
-            "assings": serializer.data
+            "last_page": math.ceil(total_assigns/ limit_num),
+            "assigns": serializer.data
             })
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response({"status":"success","data": {"assings": serializer.data}}, status=status.HTTP_201_CREATED)
+            return Response({"status":"success","data": {"assigns": serializer.data}}, status=status.HTTP_201_CREATED)
         else:
             return Response({"status": "fail", "data": serializer.errors}, status=status.HTTP_400_BAD)
         
@@ -106,27 +119,27 @@ class Assign_Detail(generics.GenericAPIView):
     queryset = Assign.objects.all()
     serializer_class = AssignSerializer
 
-    def get_assing(self, pk, *args, **kwargs):
+    def get_assign(self, pk, *args, **kwargs):
         try:
             return Assign.objects.get(pk=pk)
         except:
             return None
     
     def get(self, request, pk, *args, **kwargs):
-        assing = self.get_assing(pk=pk)
-        if assing == None:
-            return Response({"status": "fail", "message": f"Assing with id: {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
-        serializer = self.serializer_class(assing)
-        return Response({"status": "success", "data": {"assing": serializer.data}}, status=status.HTTP_200_OK)
+        assign = self.get_assign(pk=pk)
+        if assign == None:
+            return Response({"status": "fail", "message": f"Assign with id: {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
+        serializer = self.serializer_class(assign)
+        return Response({"status": "success", "data": {"assign": serializer.data}}, status=status.HTTP_200_OK)
     
     def patch(self, request, pk):
-        assing = self.get_assing(pk=pk)
-        if assing == None:
-            return Response({"status": "fail", "message": f"Assing with id: {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
-        serializer = self.serializer_class(assing, data=request.data, partial=True)
+        assign = self.get_assign(pk=pk)
+        if assign == None:
+            return Response({"status": "fail", "message": f"Assign with id: {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
+        serializer = self.serializer_class(assign, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response({"status": "success", "data": {"assing": serializer.data}}, status=status.HTTP_200_OK)
+            return Response({"status": "success", "data": {"assign": serializer.data}}, status=status.HTTP_200_OK)
         else:
             return Response({"status": "fail", "data": serializer.errors}, status=status.HTTP_400_BAD)
     
