@@ -1,8 +1,10 @@
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework import status, generics
-from .models import Plan, Requirement, PlanRequirement
-from .serializer import PlanSerializer, RequirementSerializer, PlanRequirementSerializer
+from .models import Plan
+from .serializer import PlanSerializer
+from requirements.models import Requirement, PlanRequirement
+from requirements.serializer import RequirementSerializer, PlanRequirementSerializer
 from django.http import HttpResponse, JsonResponse
 from rest_framework.decorators import api_view
 from django.views.decorators.csrf import csrf_exempt
