@@ -4,7 +4,7 @@ from rest_framework import status, generics
 from .models import Plan
 from .serializer import PlanSerializer
 from requirements.models import Requirement, PlanRequirement
-from requirements.serializer import RequirementSerializer, PlanRequirementSerializer
+from requirements.serializer import RequirementSerializer, PlanRequirementSerializer, PlanRequiremenstSerializer
 from django.http import HttpResponse, JsonResponse
 from rest_framework.decorators import api_view
 from django.views.decorators.csrf import csrf_exempt
@@ -137,6 +137,8 @@ class PlanRequirement_Api(generics.GenericAPIView):
     serializer_class = PlanRequirementSerializer
 
     def get(self, request, *args, **kw):
+        serializer_class = PlanRequiremenstSerializer
+        queryset = PlanRequirement.objects.all()
         page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit', 10))
         start_num = (page_num) * limit_num
@@ -146,7 +148,7 @@ class PlanRequirement_Api(generics.GenericAPIView):
         total_plan_requirements = plan_requirements.count()
         if search_param:
             plan_requirements = plan_requirements.filter(title__icontains=search_param)
-        serializer = self.serializer_class(plan_requirements[start_num:end_num], many=True)
+        serializer = serializer_class(plan_requirements[start_num:end_num], many=True)
         return Response({
             "status": "success",
             "total": total_plan_requirements,
