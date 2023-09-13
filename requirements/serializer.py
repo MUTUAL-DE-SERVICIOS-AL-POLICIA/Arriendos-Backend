@@ -9,6 +9,11 @@ class RequirementSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class PlanRequirementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlanRequirement
+        fields = '__all__'
+
+class PlanRequiremenstSerializer(serializers.ModelSerializer):
     plan = PlanSerializer()
     requirement = RequirementSerializer()
     class Meta:
