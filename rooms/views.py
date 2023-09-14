@@ -21,7 +21,30 @@ class RoomListCreateView(generics.ListCreateAPIView):
 class RoomRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Room.objects.all()
     serializer_class = RoomSerializer
-def List_Rooms_Properties(request, id_number):
-    rooms = Room.objects.filter(property=id_number)
-    response_data = [{'name': room.name, 'capacity': room.capacity, 'warranty': room.warranty, 'is_active': room.is_active} for room in rooms]
-    return JsonResponse({"rooms": response_data}, safe=False, json_dumps_params={'ensure_ascii': False})
+def List_Properties_with_Rooms(request):
+    properties = Property.objects.all()
+    response_data = []
+
+    for property in properties:
+        property_data = {
+            'id': property.id,
+            'name': property.name,
+            'photo': property.photo.url,  # Agrega la URL de la foto si la necesitas
+            'rooms': []  # Lista para las habitaciones
+        }
+
+        # Obtén todas las habitaciones relacionadas con esta propiedad
+        rooms = Room.objects.filter(property=property)
+        for room in rooms:
+            room_data = {
+                'id': room.id,
+                'name': room.name,
+                'capacity': room.capacity,
+                'warranty': room.warranty,
+                'is_active': room.is_active,
+            }
+            property_data['rooms'].append(room_data)
+
+        response_data.append(property_data)
+
+    return JsonResponse({'properties': response_data}, safe=False, json_dumps_params={'ensure_ascii': False})
