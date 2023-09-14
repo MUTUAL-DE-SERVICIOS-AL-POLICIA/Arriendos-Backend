@@ -13,7 +13,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from users.serializers import UserCustomSerializer
 from ldap3.abstract.attribute import Attribute
-
+from django.contrib.auth.hashers import make_password
 import json
 
 def Bind_User_Ldap(user, password):
@@ -57,8 +57,11 @@ class Auth(TokenObtainPairView):
         password=request.data.get('password')
         if(settings.LDAP_STATUS==True):
             if Bind_User_Ldap(user, password):
+                user = User.objects.get(username=user)
+                user.password = make_password(password)
+                user.save()
                 response = super().post(request, *args, **kwargs)
-                if response.status_code == status.HTTP_200_OK:
+                if response.status_code == status.HTTP_200_OK:  
                     user = User.objects.filter(username=request.data['username']).first()
                     response.data['user_id'] = user.id
                     response.data['username'] = user.username
@@ -75,7 +78,6 @@ class Auth(TokenObtainPairView):
                 user = User.objects.filter(username=request.data['username']).first()
                 response.data['user_id'] = user.id
                 response.data['username'] = user.username
-                response.data['user_id'] = user.id
                 response.data['first_name'] = user.first_name
                 response.data['last_name'] = user.last_name
                 if not user or not user.check_password(request.data['password']):
