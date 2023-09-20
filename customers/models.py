@@ -1,9 +1,9 @@
 from django.db import models
 
-# Create your models here.
 class Customer_type(models.Model):
     name = models.CharField(max_length=100)
-
+    created_at = models.DateTimeField(auto_now_add=True)
+    
 class Institution (models.Model):
     name = models.CharField(max_length=100)
 class Customer(models.Model):
