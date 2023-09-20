@@ -1,7 +1,7 @@
 from rest_framework import generics, status
 from .models import Rate, HourRange, Product
 from customers.models import Customer_type
-from .serializers import RateSerializer, RatesSerializer, HourRangeSerializer, ProductsSerializer, ProductSerializer
+from .serializers import RateSerializer, HourRangeSerializer, ProductsSerializer, ProductSerializer
 from rest_framework.response import Response
 import math
 class Rate_Api(generics.GenericAPIView):
@@ -9,8 +9,6 @@ class Rate_Api(generics.GenericAPIView):
     queryset = Rate.objects.all()
 
     def get(self, request, *args, **kwargs):
-        serializer_class = RatesSerializer
-        queryset = Rate.objects.all()
         page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit', 10))
         start_num = (page_num) * limit_num
@@ -20,7 +18,7 @@ class Rate_Api(generics.GenericAPIView):
         total_rates = rates.count()
         if search_param:
             rates = rates.filter(title__icontains=search_param)
-        serializer = serializer_class(rates[start_num:end_num], many=True)
+        serializer = self.serializer_class(rates[start_num:end_num], many=True)
         return Response({
             "status": "success",
             "total": total_rates,
