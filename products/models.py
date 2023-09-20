@@ -5,7 +5,6 @@ from customers.models import Customer_type
 
 class Rate(models.Model):
     name=models.CharField(max_length=250)
-    customer_type = models.ForeignKey(Customer_type, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
 class HourRange(models.Model):
