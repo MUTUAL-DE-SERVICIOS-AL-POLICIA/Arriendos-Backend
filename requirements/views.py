@@ -5,13 +5,35 @@ from rest_framework.response import Response
 from django.http import HttpResponse, JsonResponse
 from rest_framework.decorators import api_view
 from .models import PlanRequirement, RateRequirement, Requirement
-from .serializer import PlanRequirementSerializer, RateRequirementSerializer, RequirementSerializer
+from .serializer import PlanRequirementSerializer, RateRequirementSerializer, RatesRequirementSerializer, RequirementSerializer, RateWithRelatedDataSerializer
+from products.models import Rate
+from customers.models import Customer_type
 import math
 from datetime import datetime
-
+from django.db.models import OuterRef, Subquery
+from rest_framework import serializers
 # Create your views here.
-class RateRequirement_Api(generics.GenericApiView):
-    serializer_class = RateRequirementSerializer
+class RateWithRelatedDataSerializer(serializers.ModelSerializer):
+    customer_type = serializers.SerializerMethodField()
+    requirements = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Rate
+        fields = '__all__'
+
+    def get_customer_type(self, obj):
+        return Customer_type.objects.filter(raterequirement__rate=obj).distinct().values_list('name', flat=True)
+
+    def get_requirements(self, obj):
+        return Requirement.objects.filter(raterequirement__rate=obj).distinct().values_list('requirement_name', flat=True)
+
+
+class RateWithRelatedDataView(generics.ListAPIView):
+    queryset = Rate.objects.all()
+    serializer_class = RateWithRelatedDataSerializer
+
+class RateRequirement_Api(generics.GenericAPIView):
+    serializer_class = RatesRequirementSerializer
     queryset = RateRequirement.objects.all()
 
     def get(self, request, *args, **kwargs):
@@ -42,7 +64,7 @@ class RateRequirement_Api(generics.GenericApiView):
         
 class RateRequirement_Detail(generics.GenericAPIView):
     queryset = RateRequirement.objects.all()
-    serializer_class = RateRequirementSerializer
+    serializer_class = RatesRequirementSerializer
 
     def get_raterequirement(self, request, pk, *args, **kw):
         try:
@@ -66,3 +88,15 @@ class RateRequirement_Detail(generics.GenericAPIView):
             return Response({"status":"success", "data": {"raterequirement": serializer.data}}, status=status.HTTP_200_OK)
         else:
             return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_404_NOT_FOUND)
+        
+class All_Rates (generics.GenericAPIView):
+
+    def get(self, request, *args, **kw):
+
+        rates = Rate.objects.all()
+
+        for rate in rates:
+            print(rate.name)
+
+        return HttpResponse("customers")
+

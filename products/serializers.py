@@ -7,13 +7,6 @@ class RateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rate
         fields = '__all__'
-
-class RatesSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Rate
-        fields = '__all__'
-        depth=1
-
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
@@ -27,5 +20,4 @@ class ProductsSerializer(serializers.ModelSerializer):
 class HourRangeSerializer(serializers.ModelSerializer):
     class Meta:
         model = HourRange
-        #fields = '__all__|'
         fields = ['name']
