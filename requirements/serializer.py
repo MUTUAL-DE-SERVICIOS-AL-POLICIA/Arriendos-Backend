@@ -21,12 +21,12 @@ class PlanRequiremenstSerializer(serializers.ModelSerializer):
     class Meta:
         model = PlanRequirement
         fields = '__all__'
-class RatesRequirementSerializer(serializers.ModelSerializer):
+class RateRequirementSerializer(serializers.ModelSerializer):
     class Meta:
         model = RateRequirement
         fields = '__all__'
 
-class RateRequirementSerializer(serializers.ModelSerializer):
+class RatesRequirementSerializer(serializers.ModelSerializer):
     requirement = RequirementSerializer(many=True)
     rate = serializers.StringRelatedField()
     customer_type = Customer_typeSerializer(many=True)

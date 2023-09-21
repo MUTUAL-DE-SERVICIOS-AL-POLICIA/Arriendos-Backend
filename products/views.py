@@ -28,6 +28,9 @@ class Rate_Api(generics.GenericAPIView):
         })
     
     def post(self, request, *args, **kwargs):
+        rate = request.data['name']
+        if Rate.objects.filter(name=rate).exists():
+            return Response({"status": "fail","message": "Ya existe en la base de datos"}, status=status.HTTP_400_BAD_REQUEST)
         serializer =self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save()
