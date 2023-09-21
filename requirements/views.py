@@ -32,8 +32,28 @@ class RateWithRelatedDataView(generics.ListAPIView):
     queryset = Rate.objects.all()
     serializer_class = RateWithRelatedDataSerializer
 
+    def get(self, request):
+        page_num = int(request.GET.get('page', 0))
+        limit_num = int(request.GET.get('limit',10))
+        start_num = (page_num) * limit_num
+        end_num = limit_num * (page_num + 1)
+        search_param = request.GET.get('search')
+        rates = Rate.objects.all()
+        total_rates = rates.count()
+        if search_param:
+            rates = Rate.filter(title_icotains=search_param)
+        serializer = self.serializer_class(rates[start_num:end_num], many=True)
+        return Response({
+            "status":"success",
+            "total": total_rates,
+            "page": page_num,
+            "last_page": math.ceil(total_rates/ limit_num),
+            "rates": serializer.data
+        })
+
+
 class RateRequirement_Api(generics.GenericAPIView):
-    serializer_class = RatesRequirementSerializer
+    serializer_class = RateRequirementSerializer
     queryset = RateRequirement.objects.all()
 
     def get(self, request, *args, **kwargs):
@@ -55,13 +75,21 @@ class RateRequirement_Api(generics.GenericAPIView):
             "raterequirements": serializer.data
         })
     def post(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"status": "success", "data": {"raterequirement": serializer.data}}, status=status.HTTP_201_CREATED)
-        else:
-            return Response({"status": "fail", "message":serializer.errors}, status=status.HTTP_404_NOT_FOUND)
-        
+        rate=request.data.get("rate")
+        customer_types = request.data.get("customer_type")
+        requirements = request.data.get("requirement")
+        if rate is None or customer_types is None or requirements is None:
+            return Response({"status": "fail", "message": "Los datos enviados no son los correctos"}, status=status.HTTP_400_BAD_REQUEST)
+        rate=Rate.objects.get(pk=rate)
+        if RateRequirement.objects.filter(rate_id=rate).exists():
+            return Response({"detail": "la tarifa ya existe"}, status=status.HTTP_404_NOT_FOUND)
+        for customer_type in customer_types:
+            customer_type = Customer_type.objects.get(pk=customer_type)
+            for requirement in requirements:
+                if Requirement.objects.filter(pk=requirement).exists():
+                    requirement = Requirement.objects.get(pk=requirement)
+                    RateRequirement.objects.create(requirement = requirement, rate = rate, customer_type = customer_type)
+        return Response({"status":"success"}, status=status.HTTP_201_CREATED)
 class RateRequirement_Detail(generics.GenericAPIView):
     queryset = RateRequirement.objects.all()
     serializer_class = RatesRequirementSerializer
