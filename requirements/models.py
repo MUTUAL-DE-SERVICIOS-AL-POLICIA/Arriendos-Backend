@@ -17,5 +17,6 @@ class RateRequirement(models.Model):
     requirement = models.ForeignKey(Requirement, on_delete=models.CASCADE)
     rate = models.ForeignKey(Rate, on_delete=models.CASCADE)
     customer_type = models.ForeignKey(Customer_type, on_delete=models.CASCADE)
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
