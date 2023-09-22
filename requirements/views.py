@@ -25,7 +25,7 @@ class RateWithRelatedDataSerializer(serializers.ModelSerializer):
         return Customer_type.objects.filter(raterequirement__rate=obj).distinct().values_list('name', flat=True)
 
     def get_requirements(self, obj):
-        return Requirement.objects.filter(raterequirement__rate=obj).distinct().values_list('requirement_name', flat=True)
+        return Requirement.objects.filter(raterequirement__rate=obj, raterequirement__is_active=True).distinct().values_list('requirement_name', flat=True)
 
 
 class RateWithRelatedDataView(generics.ListAPIView):
@@ -38,6 +38,7 @@ class RateWithRelatedDataView(generics.ListAPIView):
         start_num = (page_num) * limit_num
         end_num = limit_num * (page_num + 1)
         search_param = request.GET.get('search')
+        #rates = Rate.objects.all()
         rates = Rate.objects.all()
         total_rates = rates.count()
         if search_param:
@@ -92,31 +93,56 @@ class RateRequirement_Api(generics.GenericAPIView):
         return Response({"status":"success"}, status=status.HTTP_201_CREATED)
 class RateRequirement_Detail(generics.GenericAPIView):
     queryset = RateRequirement.objects.all()
-    serializer_class = RatesRequirementSerializer
+    serializer_class = RateRequirementSerializer
 
-    def get_raterequirement(self, request, pk, *args, **kw):
+    def get_raterequirement(self, pk, *args, **kw):
         try:
             return RateRequirement.objects.get(pk=pk)
         except:
             return None
         
-    def get(self, request, pk, *args, **kw):
+    def get(self, pk, *args, **kw):
         raterequirement = self.get_raterequirement(pk=pk)
         if raterequirement == None:
             return Response({"status": "fail", "message": f"Rate requirement with id: {pk} not found."}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.serializer_class(raterequirement)
         return Response({"status": "success", "data": {"raterequirement": serializer.data}}, status=status.HTTP_200_OK)
     def patch(self, request, pk, *args, **kw):
-        raterequirement = self.get_raterequirement(pk)
-        if raterequirement == None:
-            return Response({"status": "fail", "message": f"Rate requirement with id: {pk} not found."}, status=status.HTTP_404_NOT_FOUND)
-        serializer = self.serializer_class(raterequirement, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"status":"success", "data": {"raterequirement": serializer.data}}, status=status.HTTP_200_OK)
-        else:
-            return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_404_NOT_FOUND)
-        
+        name=request.data.get("name")
+        customer_types = request.data.get("customer_type")
+        rate_requirements = request.data.get("requirement")
+        rates_group = RateRequirement.objects.filter(rate=pk)
+        if name is not None:
+            rate_name=Rate.objects.get(pk=pk)
+            rate_name.name= name
+            rate_name.save()
+        #change state
+        for rate_group in rates_group:
+            rate_group.is_active = False
+            rate_group.save()
+        for customer_type in customer_types:
+            customer = RateRequirement.objects.filter(customer_type_id=customer_type, rate_id= pk).exists()
+            if customer:
+                for rate_requirement in rate_requirements:
+                    requirement = RateRequirement.objects.filter(requirement_id=rate_requirement, customer_type_id = customer_type, rate_id=pk).exists()
+                    if requirement:
+                        requirement = RateRequirement.objects.get(requirement_id=rate_requirement, customer_type_id = customer_type, rate_id=pk)
+                        requirement.is_active = True
+                        requirement.save()
+                    else:
+                        try: 
+                            requirement = RateRequirement.objects.create(requirement_id=rate_requirement, customer_type_id=customer_type, rate_id=pk)
+                            print("requisito agregado")
+                        except:
+                            return Response({"status":"fail", "message":"No se pudo agregar el cliente y tarifa"}, status=status.HTTP_400_BAD_REQUEST)    
+                        print("no existe el requisito con el cliente")
+            else:
+                print("no cliente existe")
+                for rate_requirement in rate_requirements:
+                    new_customer = RateRequirement.objects.create(requirement_id=rate_requirement, customer_type_id=customer_type, rate_id=pk)      
+        return Response({"status": "success", "message":"Tarifa actualizada con éxito"}, status=status.HTTP_200_OK)        
+
+
 class All_Rates (generics.GenericAPIView):
 
     def get(self, request, *args, **kw):
