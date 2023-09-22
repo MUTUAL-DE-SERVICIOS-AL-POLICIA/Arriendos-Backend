@@ -38,7 +38,6 @@ class RateWithRelatedDataView(generics.ListAPIView):
         start_num = (page_num) * limit_num
         end_num = limit_num * (page_num + 1)
         search_param = request.GET.get('search')
-        #rates = Rate.objects.all()
         rates = Rate.objects.all()
         total_rates = rates.count()
         if search_param:
@@ -116,7 +115,7 @@ class RateRequirement_Detail(generics.GenericAPIView):
             rate_name=Rate.objects.get(pk=pk)
             rate_name.name= name
             rate_name.save()
-        #change state
+        
         for rate_group in rates_group:
             rate_group.is_active = False
             rate_group.save()
@@ -132,12 +131,9 @@ class RateRequirement_Detail(generics.GenericAPIView):
                     else:
                         try: 
                             requirement = RateRequirement.objects.create(requirement_id=rate_requirement, customer_type_id=customer_type, rate_id=pk)
-                            print("requisito agregado")
                         except:
                             return Response({"status":"fail", "message":"No se pudo agregar el cliente y tarifa"}, status=status.HTTP_400_BAD_REQUEST)    
-                        print("no existe el requisito con el cliente")
             else:
-                print("no cliente existe")
                 for rate_requirement in rate_requirements:
                     new_customer = RateRequirement.objects.create(requirement_id=rate_requirement, customer_type_id=customer_type, rate_id=pk)      
         return Response({"status": "success", "message":"Tarifa actualizada con éxito"}, status=status.HTTP_200_OK)        
