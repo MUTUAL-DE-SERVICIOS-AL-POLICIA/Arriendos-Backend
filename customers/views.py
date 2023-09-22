@@ -9,7 +9,6 @@ from .models import Customer, Customer_type, Institution
 import math
 from datetime import datetime
 from rest_framework import status, generics
-from django.views import View
 from rest_framework import filters
 from django.db.models import Q
 # Create your views here.
@@ -208,4 +207,6 @@ class InstitutionSearchView(generics.ListAPIView):
         search_query = self.request.query_params.get('search', None)
         if search_query:
             queryset = queryset.filter(Q(name__icontains=search_query))
+        else:
+            queryset = Institution.objects.none()
         return queryset
