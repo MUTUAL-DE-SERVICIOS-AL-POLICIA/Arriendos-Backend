@@ -81,7 +81,7 @@ class Requirement_Api(generics.GenericAPIView):
         start_num = (page_num) * limit_num
         end_num = limit_num * (page_num + 1)
         search_param = request.GET.get('search')
-        requirements = Requirement.objects.all()
+        requirements = Requirement.objects.all().order_by('id')
         total_requirements = requirements.count()
         if search_param:
             requirements = requirements.filter(title__icontains=search_param)
