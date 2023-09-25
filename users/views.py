@@ -25,7 +25,7 @@ class User_Ldap(APIView):
         start_num = (page_num) * limit_num
         end_num = limit_num * (page_num + 1)
         search_param = request.GET.get('search')
-        users = User.objects.all()
+        users = User.objects.all().order_by('id')
         total_users = users.count()
         if search_param:
             users = users.filter(first_name__icontains=search_param)
