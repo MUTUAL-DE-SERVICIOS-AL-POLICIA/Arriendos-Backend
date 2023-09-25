@@ -13,21 +13,6 @@ from datetime import datetime
 from django.db.models import OuterRef, Subquery
 from rest_framework import serializers
 # Create your views here.
-class RateWithRelatedDataSerializer(serializers.ModelSerializer):
-    customer_type = serializers.SerializerMethodField()
-    requirements = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Rate
-        fields = '__all__'
-
-    def get_customer_type(self, obj):
-        return Customer_type.objects.filter(raterequirement__rate=obj).distinct().values_list('name', flat=True)
-
-    def get_requirements(self, obj):
-        return Requirement.objects.filter(raterequirement__rate=obj, raterequirement__is_active=True).distinct().values_list('requirement_name', flat=True)
-
-
 class RateWithRelatedDataView(generics.ListAPIView):
     queryset = Rate.objects.all()
     serializer_class = RateWithRelatedDataSerializer
@@ -38,7 +23,7 @@ class RateWithRelatedDataView(generics.ListAPIView):
         start_num = (page_num) * limit_num
         end_num = limit_num * (page_num + 1)
         search_param = request.GET.get('search')
-        rates = Rate.objects.all()
+        rates = Rate.objects.all().order_by('id')
         total_rates = rates.count()
         if search_param:
             rates = Rate.filter(title_icotains=search_param)
@@ -139,14 +124,4 @@ class RateRequirement_Detail(generics.GenericAPIView):
         return Response({"status": "success", "message":"Tarifa actualizada con éxito"}, status=status.HTTP_200_OK)        
 
 
-class All_Rates (generics.GenericAPIView):
-
-    def get(self, request, *args, **kw):
-
-        rates = Rate.objects.all()
-
-        for rate in rates:
-            print(rate.name)
-
-        return HttpResponse("customers")
 
