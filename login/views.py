@@ -53,9 +53,11 @@ def Search_User_Ldap(request):
 User = get_user_model()
 class Auth(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
+        print("ingresando usuario")
         user=request.data.get('username')
         password=request.data.get('password')
         if(settings.LDAP_STATUS==True):
+            print("ldap")
             if Bind_User_Ldap(user, password):
                 user = User.objects.get(username=user)
                 user.password = make_password(password)
@@ -67,6 +69,7 @@ class Auth(TokenObtainPairView):
                     response.data['username'] = user.username
                     response.data['first_name'] = user.first_name
                     response.data['last_name'] = user.last_name
+                    print("verificado")
                     if not user or not user.check_password(request.data['password']):
                         response.data['detail'] = "Credenciales inválidas"
                         response.status_code = status.HTTP_401_UNAUTHORIZED
