@@ -25,7 +25,7 @@ class User_Ldap(APIView):
         start_num = (page_num) * limit_num
         end_num = limit_num * (page_num + 1)
         search_param = request.GET.get('search')
-        users = User.objects.all()
+        users = User.objects.all().order_by('id')
         total_users = users.count()
         if search_param:
             users = users.filter(first_name__icontains=search_param)
@@ -58,11 +58,25 @@ class User_Ldap(APIView):
                     return Response({'detail': 'El usuario ya existe'}, status=status.HTTP_400_BAD_REQUEST)
                 if User.objects.filter(email=email).exists():
                     return Response({'detail': 'El correo ya existe'}, status=status.HTTP_400_BAD_REQUEST)
-                user = User.objects.create_user(username=username, password=username, email=email, first_name=first_name, last_name=last_name)
+                user = User.objects.create_user(username=username, email=email, first_name=first_name, last_name=last_name)
                 return Response({"message":"Usuario registrado con exito", "user": user.id, "username": user.username, "email": user.email, "first_name": user.first_name, "last_name": user.last_name}, status=status.HTTP_201_CREATED)
             else:
                 return Response({"status": "fail"}, status=status.HTTP_404_NOT_FOUND)
-        
+            
+class User_Delete(generics.GenericAPIView):
+
+    def delete(self, request, pk):
+        if not User.objects.filter(pk=pk).exists():
+            return Response({"status":"fail"}, status=status.HTTP_404_NOT_FOUND)
+        user = User.objects.get(pk=pk)
+        if user.is_active == True:
+            user.is_active= False
+            user.save()
+            return Response({"status": "success", "message":"Usuario desactivado"}, status=status.HTTP_200_OK)
+        else:
+            user.is_active= True
+            user.save()
+            return Response({"status":"success", "message":"Usuario activado"}, status=status.HTTP_200_OK)
         
 @api_view(['POST'])
 @csrf_exempt
