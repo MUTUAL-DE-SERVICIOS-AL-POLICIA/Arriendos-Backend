@@ -1,7 +1,7 @@
 from rest_framework import generics, status
-from .models import Rate, HourRange, Product
+from .models import Rate, HourRange, Product, Price
 from customers.models import Customer_type
-from .serializers import RateSerializer, HourRangeSerializer, ProductsSerializer, ProductSerializer
+from .serializers import RateSerializer, HourRangeSerializer, ProductsSerializer, ProductSerializer, PriceSerializer
 from rest_framework.response import Response
 import math
 class Rate_Api(generics.GenericAPIView):
@@ -26,7 +26,6 @@ class Rate_Api(generics.GenericAPIView):
             "last_page": math.ceil(total_rates/ limit_num),
             "rates": serializer.data
         })
-    
     def post(self, request, *args, **kwargs):
         rate = request.data['name']
         if Rate.objects.filter(name=rate).exists():
@@ -37,7 +36,6 @@ class Rate_Api(generics.GenericAPIView):
             return Response({"status":"success", "data": {"rate": serializer.data}}, status=status.HTTP_201_CREATED)
         else:
             return Response({"status":"fail", "message": serializer.errors}, status=status.HTTP_404_NOT_FOUND)
-        
 class Rate_Detail(generics.GenericAPIView):
     queryset = Rate.objects.all()
     serializer_class = RateSerializer
@@ -64,7 +62,7 @@ class Product_Api(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         serializer_class = ProductsSerializer
-        queryset = Product.objects.all()
+        queryset = Product.objects.prefetch_related('price_set')
         page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit', 10))
         start_num = (page_num) * limit_num
@@ -74,7 +72,7 @@ class Product_Api(generics.GenericAPIView):
         total_products = products.count()
         if search_param:
             products = Product.filter(title_icotains=search_param)
-        serializer = serializer_class(products[start_num:end_num],many=True)
+        serializer = serializer_class( queryset,many=True)
         return Response({
             "status": "success",
             "total": total_products,
@@ -86,7 +84,7 @@ class Product_Api(generics.GenericAPIView):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response({"status": "success", "data": {serializer.data}}, status=status.HTTP_201_CREATED)
+            return Response({"status": "success", "data": serializer.data}, status=status.HTTP_201_CREATED)
         else:
             return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -106,7 +104,6 @@ class Product_Detail(generics.GenericAPIView):
             return Response({"status": "fail", "message": "Product with id: {pk} not found"}, status=status.HTTP_400_BAD_REQUEST)
         serializer = self.serializer_class(product)
         return Response({"status": "success", "data": {"product": serializer.data}}, status=status.HTTP_200_OK)
-    
     def patch(self, request, pk):
         product = self.get_product(pk=pk)
         if product == None:
@@ -116,9 +113,6 @@ class Product_Detail(generics.GenericAPIView):
             serializer.save()
             return Response({"status": "success", "data": {"product": serializer.data}}, status=status.HTTP_200_OK)
         return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-
-        
 class HourRange_List_Create_View(generics.ListCreateAPIView):
     queryset = HourRange.objects.all()
     serializer_class = HourRangeSerializer
@@ -126,3 +120,11 @@ class HourRange_List_Create_View(generics.ListCreateAPIView):
 class HourRange_Retrieve_Update_Destroy_View(generics.RetrieveUpdateDestroyAPIView):
     queryset = HourRange.objects.all()
     serializer_class = HourRangeSerializer
+
+class Price_List_Create_View(generics.ListCreateAPIView):
+    queryset = Price.objects.all()
+    serializer_class = PriceSerializer
+
+class Price_Retrieve_Update_Destroy_View(generics.RetrieveUpdateDestroyAPIView):
+    queryset=Price.objects.all()
+    serializer_class = PriceSerializer
