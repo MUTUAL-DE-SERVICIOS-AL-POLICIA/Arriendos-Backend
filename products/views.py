@@ -83,8 +83,20 @@ class Product_Api(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response({"status": "success", "data": serializer.data}, status=status.HTTP_201_CREATED)
+            Product_saved=serializer.save()
+            mount=request.data.get('mount', '')
+            price_data = {
+                "mount": mount,
+                "is_active": True,
+                "product": Product_saved.id
+            }
+            PriceSerialized=PriceSerializer(data=price_data)
+            if (PriceSerialized.is_valid()):
+                PriceSerialized.save()
+                combined_response=[serializer.data, PriceSerialized.data]
+                return Response({"status": "success", "data": combined_response}, status=status.HTTP_201_CREATED)
+            else:
+                return Response({"status": "fail", "message": PriceSerialized.errors}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
