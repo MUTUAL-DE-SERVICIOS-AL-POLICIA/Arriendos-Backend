@@ -1,0 +1,18 @@
+[
+    {
+        "model": "rooms.Property",
+        "pk": 1,
+        "fields": {
+            "name": "GRAN HOTEL PARIS",
+            "photo": "property_photos/GRAN_HOTEL_PARIS.jpeg"
+        }
+    },
+    {
+        "model": "rooms.Property",
+        "pk": 2,
+        "fields": {
+            "name": "CLUB POLICIAL LOS OLIVOS",
+            "photo": "property_photos/CLUB_POLICIAL_LOS_OLIVOS.jpg"
+        }
+    }
+]
