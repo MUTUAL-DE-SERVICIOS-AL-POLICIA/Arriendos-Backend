@@ -1,51 +1,74 @@
 [
     {
-        "name": "SALÓN BIÓGRAFO",
-        "capacity": 200,
-        "warranty": 1000,
-        "is_active": true,
-        "property": 1
+        "model": "rooms.room",
+        "pk": 1,
+        "fields":{
+            "name": "SALÓN BIÓGRAFO",
+            "capacity": 200,
+            "warranty": 1000,
+            "is_active": true,
+            "property": 1,
+            "group":1
+        }
     },
     {
-        "name": "SALÓN GUZMÁN DE ROJAS",
-        "capacity": 250,
-        "warranty": 500,
-        "is_active": true,
-        "property": 1
+        "model": "rooms.room",
+        "pk": 2,
+        "fields":{
+            "name": "SALÓN GUZMÁN DE ROJAS",
+            "capacity": 250,
+            "warranty": 500,
+            "is_active": true,
+            "property": 1,
+            "group":2
+        }
     },
     {
-        "name": "SALON GOBELINO",
-        "capacity": 100,
-        "warranty": 700,
-        "is_active": true,
-        "property": 1
+        "model": "rooms.room",
+        "pk": 3,
+        "fields":{
+            "name": "SALON GOBELINO",
+            "capacity": 100,
+            "warranty": 700,
+            "is_active": true,
+            "property": 1,
+            "group":3
+        }
     },
     {
-        "name": "AREA DE EXPOSICION",
-        "capacity": 80,
-        "warranty": 200,
-        "is_active": true,
-        "property": 1
+        "model": "rooms.room",
+        "pk": 4,
+        "fields":{
+            "name": "AREA DE EXPOSICION",
+            "capacity": 80,
+            "warranty": 200,
+            "is_active": true,
+            "property": 1,
+            "group":4
+        }
     },
     {
-        "name": "AMBIENTES INTERIORES Y EXTERIORES",
-        "capacity": 500,
-        "warranty": 900,
-        "is_active": true,
-        "property": 2
+        "model": "rooms.room",
+        "pk": 5,
+        "fields":{
+            "name": "AMBIENTES INTERIORES",
+            "capacity": 200,
+            "warranty": 100,
+            "is_active": true,
+            "property": 2,
+            "group":5
+        }
     },
     {
-        "name": "AMBIENTES INTERIORES",
-        "capacity": 200,
-        "warranty": 100,
-        "is_active": true,
-        "property": 2
-    },
-    {
-        "name": "AMBIENTES EXTERIORES",
-        "capacity": 300,
-        "warranty": 400,
-        "is_active": true,
-        "property": 2
+        "model": "rooms.room",
+        "pk": 6,
+        "fields":{
+            "name": "AMBIENTES EXTERIORES",
+            "capacity": 300,
+            "warranty": 400,
+            "is_active": true,
+            "property": 2,
+            "group":5
+        }
     }
 ]
