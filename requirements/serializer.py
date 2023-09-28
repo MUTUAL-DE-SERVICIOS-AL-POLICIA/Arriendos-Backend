@@ -45,8 +45,10 @@ class RateWithRelatedDataSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_customer_type(self, obj):
-        return Customer_type.objects.filter(raterequirement__rate=obj, raterequirement__is_active=True).distinct().values_list('name', flat=True)
-
+        customer_types = Customer_type.objects.filter(raterequirement__rate=obj, raterequirement__is_active=True).distinct()
+        serializer = Customer_typeSerializer(customer_types, many=True)
+        return serializer.data
     def get_requirements(self, obj):
-        return Requirement.objects.filter(raterequirement__rate=obj, raterequirement__is_active=True).distinct().values_list('requirement_name', flat=True)
-
+        requirements = Requirement.objects.filter(raterequirement__rate=obj, raterequirement__is_active=True).distinct()
+        serializer = RequirementSerializer(requirements, many=True)
+        return serializer.data
