@@ -61,24 +61,29 @@ class Product_Api(generics.GenericAPIView):
     serializer_class = ProductSerializer
 
     def get(self, request, *args, **kwargs):
-        serializer_class = ProductsSerializer
-        queryset = Product.objects.prefetch_related('price_set')
+        queryset = self.get_queryset()
+        serializer = ProductsSerializer(queryset, many=True)
         page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', 10))
-        start_num = (page_num) * limit_num
+        limit_num = int(request.GET.get('limit', 1))
+        start_num = page_num * limit_num
         end_num = limit_num * (page_num + 1)
-        search_param = request.GET.get('search')
-        products = Product.objects.all().order_by('id')
-        total_products = products.count()
-        if search_param:
-            products = Product.filter(title_icotains=search_param)
-        serializer = serializer_class( queryset,many=True)
+        total_products = queryset.count()
+        products_with_active_prices = []
+        for product in queryset:
+            active_price_data = ProductSerializer.get_active_price(product)
+            queryset_list = list(queryset)
+            product_data = serializer.data[queryset_list.index(product)]
+            if active_price_data:
+                product_data['active_price'] = active_price_data
+            products_with_active_prices.append(product_data)
+        paged_products = products_with_active_prices[start_num:end_num]
+
         return Response({
-            "status": "success",
-            "total": total_products,
-            "page": page_num,
-            "last_page": math.ceil(total_products/ limit_num),
-            "products": serializer.data
+        "status": "success",
+        "total": total_products,
+        "page": page_num,
+        "last_page": math.ceil(total_products/ limit_num),
+        "products": paged_products
         })
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
