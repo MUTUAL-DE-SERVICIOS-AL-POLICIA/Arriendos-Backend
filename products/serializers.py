@@ -7,10 +7,28 @@ class RateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rate
         fields = '__all__'
+class PriceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Price
+        fields = '__all__'
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = '__all__'
+    @classmethod
+    def get_active_price(self, product):
+        active_price = product.price_set.filter(is_active=True).first()
+        if active_price:
+            return {
+                'id': active_price.id,
+                'mount': active_price.mount,
+                'is_active': active_price.is_active,
+            }
+        else:
+            return None
+class ProductPrice(serializers.ModelSerializer):
+    Product=ProductSerializer()
+    Price=PriceSerializer()
 
 class ProductsSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,8 +38,4 @@ class ProductsSerializer(serializers.ModelSerializer):
 class HourRangeSerializer(serializers.ModelSerializer):
     class Meta:
         model = HourRange
-        fields = ['name']
-class PriceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Price
         fields = '__all__'
