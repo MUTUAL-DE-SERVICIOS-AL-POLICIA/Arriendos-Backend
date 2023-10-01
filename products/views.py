@@ -60,6 +60,11 @@ class Product_Api(generics.GenericAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
+    def get_product(self, pk):
+        try:
+            return Product.objects.get(pk=pk)
+        except:
+            return None
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         serializer = ProductsSerializer(queryset, many=True)
@@ -104,8 +109,38 @@ class Product_Api(generics.GenericAPIView):
                 return Response({"status": "fail", "message": PriceSerialized.errors}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-
+    def patch(self,request, pk ):
+        product = self.get_product(pk=pk)
+        if product == None:
+            return Response({"status": "success", "message": f"Product with id {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
+        if 'mount' in request.data:
+            mount_value = request.data['mount']
+            Price.objects.filter(product_id=pk).update(is_active=False)
+            new_price={
+                "mount":mount_value,
+                "is_active":True,
+                "product":pk
+            }
+            price_serialized=PriceSerializer(data=new_price)
+            if price_serialized.is_valid():
+                price_serialized.save()
+                price_response=price_serialized.data
+            product_serialized = ProductSerializer(product, data=request.data, partial=True)
+            if product_serialized.is_valid():
+                product_serialized.save()
+                product_response=product_serialized.data
+                combined_response = {
+                    'price': price_response,
+                    'product': product_response
+                }
+                return Response({"status": "success", "data": combined_response}, status=status.HTTP_200_OK)
+            return Response({"status": "fail", "message": product_serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            serializer = self.serializer_class(product, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response({"status": "success", "data": {"product": serializer.data}}, status=status.HTTP_200_OK)
+            return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 class Product_Detail(generics.GenericAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
