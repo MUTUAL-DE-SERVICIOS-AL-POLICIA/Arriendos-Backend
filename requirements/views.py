@@ -85,7 +85,7 @@ class RateRequirement_Detail(generics.GenericAPIView):
         except:
             return None
         
-    def get(self, pk, *args, **kw):
+    def get(self, request, pk, *args, **kw):
         raterequirement = self.get_raterequirement(pk=pk)
         if raterequirement == None:
             return Response({"status": "fail", "message": f"Rate requirement with id: {pk} not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -122,6 +122,3 @@ class RateRequirement_Detail(generics.GenericAPIView):
                 for rate_requirement in rate_requirements:
                     new_customer = RateRequirement.objects.create(requirement_id=rate_requirement, customer_type_id=customer_type, rate_id=pk)      
         return Response({"status": "success", "message":"Tarifa actualizada con éxito"}, status=status.HTTP_200_OK)        
-
-
-
