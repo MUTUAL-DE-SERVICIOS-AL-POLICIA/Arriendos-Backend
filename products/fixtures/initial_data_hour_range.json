@@ -1,0 +1,16 @@
+[
+    {
+        "model":"products.HourRange",
+        "pk":1,
+        "fields":{
+            "name":"8 horas"
+        }
+    },
+    {
+        "model":"products.HourRange",
+        "pk":2,
+        "fields":{
+            "name":"4 horas"
+        }
+    }
+]
