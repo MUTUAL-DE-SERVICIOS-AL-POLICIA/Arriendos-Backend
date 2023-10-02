@@ -1,0 +1,50 @@
+[
+    {
+      "model": "products.rate",
+      "pk": 1,
+      "fields": {
+        "name": "Tarifa Regular",
+        "created_at": "2023-09-27 19:01:49.337 -0400"
+      }
+    },
+    {
+      "model": "products.rate",
+      "pk": 2,
+      "fields": {
+        "name": "Tarifa Preferencial",
+        "created_at": "2023-09-27 19:01:49.337 -0400"
+      }
+    },
+    {
+      "model": "products.rate",
+      "pk": 3,
+      "fields": {
+        "name": "Tarifa Funcionario Publico",
+        "created_at": "2023-09-27 19:01:49.337 -0400"
+      }
+    },
+    {
+      "model": "products.rate",
+      "pk": 4,
+      "fields": {
+        "name": "Tarifa Promocional Instituciones Policiales",
+        "created_at": "2023-09-27 19:01:49.337 -0400"
+      }
+    },
+    {
+      "model": "products.rate",
+      "pk": 5,
+      "fields": {
+        "name": "Tarifa Promocional Instituciones Públicas",
+        "created_at": "2023-09-27 19:01:49.337 -0400"
+      }
+    },
+    {
+      "model": "products.rate",
+      "pk": 6,
+      "fields": {
+        "name": "Tarifa Promocional Educativos, Culturales y Deportivas",
+        "created_at": "2023-09-27 19:01:49.337 -0400"
+      }
+    }
+  ]
