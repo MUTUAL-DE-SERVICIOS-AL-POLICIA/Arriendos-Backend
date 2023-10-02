@@ -1,0 +1,65 @@
+[
+    {
+        "model": "requirements.requirement",
+        "pk": 1,
+        "fields": {
+          "requirement_name": "Fotocopia CI",
+          "created_at": "2023-09-27 19:01:49.337 -0400",
+          "updated_at": "2023-09-27 19:01:49.337 -0400"
+        }
+    },
+    {
+        "model": "requirements.requirement",
+        "pk": 2,
+        "fields": {
+          "requirement_name": "Nota de Solicitud",
+          "created_at": "2023-09-27 19:01:49.337 -0400",
+          "updated_at": "2023-09-27 19:01:49.337 -0400"
+        }
+    },
+    {
+        "model": "requirements.requirement",
+        "pk": 3,
+        "fields": {
+          "requirement_name": "Beneficiario SIGEP",
+          "created_at": "2023-09-27 19:01:49.337 -0400",
+          "updated_at": "2023-09-27 19:01:49.337 -0400"
+        }
+    },
+    {
+        "model": "requirements.requirement",
+        "pk": 4,
+        "fields": {
+          "requirement_name": "Boleta de Pago",
+          "created_at": "2023-09-27 19:01:49.337 -0400",
+          "updated_at": "2023-09-27 19:01:49.337 -0400"
+        }
+    },
+    {
+        "model": "requirements.requirement",
+        "pk": 5,
+        "fields": {
+          "requirement_name": "Depósito de Alquiler",
+          "created_at": "2023-09-27 19:01:49.337 -0400",
+          "updated_at": "2023-09-27 19:01:49.337 -0400"
+        }
+    },
+    {
+        "model": "requirements.requirement",
+        "pk": 6,
+        "fields": {
+          "requirement_name": "Depósito de Garantía",
+          "created_at": "2023-09-27 19:01:49.337 -0400",
+          "updated_at": "2023-09-27 19:01:49.337 -0400"
+        }
+    },
+    {
+        "model": "requirements.requirement",
+        "pk": 7,
+        "fields": {
+          "requirement_name": "Resolución o Memorandum de designación",
+          "created_at": "2023-09-27 19:01:49.337 -0400",
+          "updated_at": "2023-09-27 19:01:49.337 -0400"
+        }
+    }
+]
