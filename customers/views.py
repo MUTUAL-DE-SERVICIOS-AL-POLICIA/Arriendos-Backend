@@ -3,23 +3,15 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from django.http import HttpResponse, JsonResponse
 from rest_framework.decorators import api_view
-from .serializer import CustomerSerializer, Customer_typeSerializer, CustomersSerializer, InstitutionSerializer
+from .serializer import CustomerSerializer, Customer_typeSerializer, CustomersSerializer, ContactSerializer
 from django.views.decorators.csrf import csrf_exempt
-from .models import Customer, Customer_type, Institution
+from .models import Customer, Customer_type, Contact
 import math
 from datetime import datetime
 from rest_framework import status, generics
 from rest_framework import filters
 from django.db.models import Q
 # Create your views here.
-class Institutions_ListCreateView(generics.ListCreateAPIView):
-    queryset = Institution.objects.all()
-    serializer_class = InstitutionSerializer
-
-class InstitutionRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Institution.objects.all()
-    serializer_class = InstitutionSerializer
-
 
 class Customer_Type_Api(generics.GenericAPIView):
     serializer_class = Customer_typeSerializer
@@ -79,7 +71,7 @@ class Customer_Type_Detail(generics.GenericAPIView):
         return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 class Customer_Api(generics.GenericAPIView):
-    serializer_class = CustomerSerializer
+    serializer_class = CustomersSerializer
     queryset = Customer.objects.all()
     def get(self, request, *args, **kwargs):
         serializer_class = CustomersSerializer
@@ -102,77 +94,45 @@ class Customer_Api(generics.GenericAPIView):
             "customers": serializer.data
         })
     def post(self, request, *args, **kwargs):
-        customer_request = request.data.get('customer', {})
-        institution_name = customer_request.get('institution', '')
-        if institution_name:
-            institution=Institution.objects.filter(name=institution_name)
-            if institution.exists():
-                Institution_current=Institution.objects.get(name=institution_name)
-                customer_data = {
-                    'name': customer_request.get('name'),
-                    'last_name': customer_request.get('last_name'),
-                    'ci': customer_request.get('ci'),
-                    'phone': customer_request.get('phone'),
-                    'customer_type': customer_request.get('customer_type'),
-                    'grade':customer_request.get('grade'),
-                    'institution': Institution_current.id
-                }
-                CustomerSerialized=CustomerSerializer(data=customer_data)
-                if CustomerSerialized.is_valid():
-                    CustomerSerialized.save()
-                    return Response({"status": "success", "data": {"Customer": customer_data}}, status=status.HTTP_201_CREATED)
-                return Response({"status": "fail", "message": CustomerSerialized.errors}, status=status.HTTP_400_BAD_REQUEST)
+        customer_type_req = request.data["customer_type"]
+        customer_type = Customer_type.objects.get(pk=customer_type_req)
+        if customer_type is not None:
+            customer_type_id = customer_type.id
+            if customer_type.is_institution == True:
+                institutions_data = request.data["institution"]
+                institution_name =institutions_data.get("name")
+                nit = institutions_data.get("nit")
+                contacts = institutions_data.get("contacts")
+                if Customer.objects.filter(nit=nit).exists():
+                    return Response({"status": "success", "message":"La institucion ya esta registrada"}, status=status.HTTP_200_OK)
+                customer_institution = Customer.objects.create(institution_name = institution_name, nit=nit, customer_type_id=customer_type_id)
+                for contact in contacts:
+                    name = contact.get("name", None)
+                    ci_nit = contact.get("ci_nit", None)
+                    phone = contact.get("phone", None)
+                    degree = contact.get("degree", None)
+                    Contact.objects.create(degree=degree, name=name, ci_nit=ci_nit, phone=phone, customer_id=customer_institution.id, is_customer=False)
+                return Response({"status":"success", "message": "Institucion registrado con éxito"}, status=status.HTTP_201_CREATED)
             else:
-                institution_data = {
-                    'name': institution_name,
-                }
-                InstitutionSerialized = InstitutionSerializer(data=institution_data)
-                if InstitutionSerialized.is_valid():
-                    InstitutionSerialized.save()
-                    Response_data_institution = {
-                        "status": "success",
-                        "data": {"Institution": institution_data}
-                    }
-                Institution_current=Institution.objects.get(name=institution_name)
-                customer_data = {
-                    'name': customer_request.get('name'),
-                    'last_name': customer_request.get('last_name'),
-                    'ci': customer_request.get('ci'),
-                    'phone': customer_request.get('phone'),
-                    'customer_type': customer_request.get('customer_type'),
-                    'grade':customer_request.get('grade'),
-                    'institution': Institution_current.id
-                }
-                CustomerSerialized=CustomerSerializer(data=customer_data)
-                if CustomerSerialized.is_valid():
-                    CustomerSerialized.save()
-                    Response_data_Customer ={
-                        "status": "success",
-                        "data": {"Customer": customer_data}
-                        }
-                    combined_response = [Response_data_institution, Response_data_Customer]
-                    return Response(combined_response, status=status.HTTP_201_CREATED)
-                return Response({"status": "fail", "message": CustomerSerialized.errors}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            customer_data = {
-                    'name': customer_request.get('name'),
-                    'last_name': customer_request.get('last_name'),
-                    'ci': customer_request.get('ci'),
-                    'phone': customer_request.get('phone'),
-                    'customer_type': customer_request.get('customer_type'),
-                    'grade':customer_request.get('grade'),
-                    'institution': customer_request.get('institution')
-                }
-            CustomerSerialized=CustomerSerializer(data=customer_data)
-            if CustomerSerialized.is_valid():
-                CustomerSerialized.save()
-                return Response({"status": "success", "data": {"Customer": customer_data}}, status=status.HTTP_201_CREATED)
-            return Response({"status": "fail", "message": CustomerSerialized.errors}, status=status.HTTP_400_BAD_REQUEST)
+                #cliente
+                customers = request.data["customer"]
+                degree = customers.get("degree", None)
+                name_customer = customers.get("name")
+                phone = customers.get("phone")
+                ci_nit = customers.get("ci_nit")
+                if Contact.objects.filter(ci_nit=ci_nit).exists():
+                    return Response({"status":"success", "message": "El cliente ya existe"}, status=status.HTTP_200_OK) 
+                customer = Customer.objects.create(customer_type_id=customer_type_id)
+                Contact.objects.create(degree=degree, name=name_customer, ci_nit=ci_nit, phone=phone, customer_id=customer.id)
+                return Response({"state": "success", "message": "Cliente registrado con exito" }, status=status.HTTP_201_CREATED)
+        return HttpResponse({"status":"success", "message":"Cliente guardado"}, status=status.HTTP_201_CREATED)
 
-class Customer_Detail(generics.GenericAPIView):
+
+
+
+class CustomerInsitution_Detail(generics.GenericAPIView):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
-
 
     def get_customer(self, pk, *args, **kwargs):
         try:
@@ -182,31 +142,76 @@ class Customer_Detail(generics.GenericAPIView):
     def get(self, request, pk, *args, **kwargs):
         customer = self.get_customer(pk=pk)
         if customer == None:
-            return Response({"status": "fail", "message": f"Customer with id: {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"status": "fail", "message": f"Customer institution with id: {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.serializer_class(customer)
-        return Response({"status": "success", "data": {"customer": serializer.data}}, status=status.HTTP_200_OK)
+        return Response({"status": "success", "data": {"customer institution": serializer.data}}, status=status.HTTP_200_OK)
 
     def patch(self, request, pk):
         customer = self.get_customer(pk=pk)
         if customer == None:
-            return Response({"status": "fail", "message": f"Customer with id: {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"status": "fail", "message": f"Customer institution with id: {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.serializer_class(customer, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response({"status": "success", "data": {"customer": serializer.data}}, status=status.HTTP_200_OK)
+            return Response({"status": "success", "data": {"customer institution": serializer.data}}, status=status.HTTP_200_OK)
         return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    
+class Contact_Api(generics.GenericAPIView):
+    queryset = Contact.objects.all()
+    serializer_class = ContactSerializer
 
-class InstitutionSearchView(generics.ListAPIView):
-    queryset = Institution.objects.all()
-    serializer_class = InstitutionSerializer
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['name']
+    def post(self, request, *args, **kwargs):
+        name = request.data.get('name')
+        degree = request.data.get('degree', None)
+        ci_nit = request.data.get('ci_nit', None)
+        phone = request.data.get('phone')
+        is_customer = False
+        customer = request.data.get('customer')
+        customers = Customer.objects.get(pk=customer)
+        if customers:
+            if customers.institution_name == None:
+                return Response({"status": "fail", "message": "No se puede agregar el contacto"}, status=status.HTTP_404_NOT_FOUND)
+        if Contact.objects.filter(ci_nit=ci_nit, customer_id =customer).exists():
+            return Response({"status": "Fail", "message":"El contacto ya existe"}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            contact = Contact.objects.create(name=name, phone=phone, is_customer=is_customer, ci_nit=ci_nit, degree=degree, customer_id=customer)
+            return Response({"status": "success", "message":"Contacto registrado con éxito"}, status=status.HTTP_201_CREATED)
+        except:
+            return Response({"status":"fail"}, status=status.HTTP_400_BAD_REQUEST)
+class Contact_Detail(generics.GenericAPIView):
+    queryset= Contact.objects.all()
+    serializer_class=ContactSerializer
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        search_query = self.request.query_params.get('search', None)
-        if search_query:
-            queryset = queryset.filter(Q(name__icontains=search_query))
+    def get_contact(self, pk):
+        try:
+            return Contact.objects.get(pk=pk)
+        except:
+            return None
+    def get(self, pk, request):
+        contact = self.get_contact(pk=pk)
+        if contact == None:
+            return Response({"status": "fail", "message": f"Contact with id: {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
+        serializer = self.serializer_class(contact)
+        return Response({"status": "success", "data": {"contact": serializer.data}}, status=status.HTTP_200_OK)
+    def patch(self, request, pk, *args, **kwargs):
+        contact = self.get_contact(pk=pk)
+        if contact == None:
+            return Response({"status": "fail", "message": f"Contact with id: {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
+        serializer = self.serializer_class(contact, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"status": "success", "data": {"contact": serializer.data}}, status=status.HTTP_200_OK)
+        return Response({"status": "error", "message": serializer.errors}, status=status.HTTP_404_NOT_FOUND)
+    def delete(self, request, pk): 
+        if not Contact.objects.filter(pk=pk).exists():
+            return Response({"status":"fail"}, status=status.HTTP_404_NOT_FOUND)
+        contact = Contact.objects.get(pk=pk)
+        if contact.is_active == True:
+            contact.is_active= False
+            contact.save()
+            return Response({"status": "success", "message":"Contacto desactivado"}, status=status.HTTP_200_OK)
         else:
-            queryset = Institution.objects.none()
-        return queryset
+            contact.is_active= True
+            contact.save()
+            return Response({"status":"success", "message":"Contacto activado"}, status=status.HTTP_200_OK)
+        
