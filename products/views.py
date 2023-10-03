@@ -26,16 +26,6 @@ class Rate_Api(generics.GenericAPIView):
             "last_page": math.ceil(total_rates/ limit_num),
             "rates": serializer.data
         })
-    def post(self, request, *args, **kwargs):
-        rate = request.data['name']
-        if Rate.objects.filter(name=rate).exists():
-            return Response({"status": "fail","message": "Ya existe en la base de datos"}, status=status.HTTP_400_BAD_REQUEST)
-        serializer =self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"status":"success", "data": {"rate": serializer.data}}, status=status.HTTP_201_CREATED)
-        else:
-            return Response({"status":"fail", "message": serializer.errors}, status=status.HTTP_404_NOT_FOUND)
 class Rate_Detail(generics.GenericAPIView):
     queryset = Rate.objects.all()
     serializer_class = RateSerializer
