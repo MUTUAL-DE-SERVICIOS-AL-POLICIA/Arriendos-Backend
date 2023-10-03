@@ -21,13 +21,9 @@ class Selected_Product_Api(generics.GenericAPIView):
         customer = request.data["customer"]
         selectedproducts = request.data["selectedproducts"]
         rental = Rental.objects.create(customer_id = customer)
-        print("rental es ")
-        print(rental.id)
         for selectedproduct in selectedproducts:
-            print(selectedproduct.get("nameevent")) 
             if Event_Type.objects.filter(name=selectedproduct.get("nameevent")).exists():
                 event = Event_Type.objects.get(name=selectedproduct.get("nameevent"))
-                #crear evento
                 fecha_string = selectedproduct.get("date")
                 fecha_objeto = datetime.strptime(fecha_string, "%d/%m/%Y").strftime("%Y-%m-%d")
 
