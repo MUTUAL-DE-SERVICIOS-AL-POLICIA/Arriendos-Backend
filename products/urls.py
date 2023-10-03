@@ -4,7 +4,8 @@ from .views import (
     HourRange_List_Create_View, HourRange_Retrieve_Update_Destroy_View,
     Product_Api,
     Price_List_Create_View,
-    Price_Retrieve_Update_Destroy_View
+    Price_Retrieve_Update_Destroy_View,
+    Posible_product
 )
 
 urlpatterns = [
@@ -18,5 +19,8 @@ urlpatterns = [
     path('hour-range/<int:pk>', HourRange_Retrieve_Update_Destroy_View.as_view(), name='range-retrieve-update-destroy'),
 
     path('price/', Price_List_Create_View.as_view(), name="price-list-create"),
-    path('price/<int:pk>', Price_Retrieve_Update_Destroy_View.as_view(), name="price-retrieve-update-destroy")
+    path('price/<int:pk>', Price_Retrieve_Update_Destroy_View.as_view(), name="price-retrieve-update-destroy"),
+
+    path("Posible_product/", Posible_product.as_view())
+
 ]

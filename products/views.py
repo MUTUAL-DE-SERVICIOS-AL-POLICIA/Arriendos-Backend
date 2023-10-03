@@ -1,9 +1,11 @@
 from rest_framework import generics, status
+from rest_framework.views import APIView
 from .models import Rate, HourRange, Product, Price
 from customers.models import Customer_type
 from .serializers import RateSerializer, HourRangeSerializer, ProductsSerializer, ProductSerializer, PriceSerializer
 from rest_framework.response import Response
 import math
+from requirements.models import RateRequirement
 class Rate_Api(generics.GenericAPIView):
     serializer_class = RateSerializer
     queryset = Rate.objects.all()
@@ -170,3 +172,19 @@ class Price_List_Create_View(generics.ListCreateAPIView):
 class Price_Retrieve_Update_Destroy_View(generics.RetrieveUpdateDestroyAPIView):
     queryset=Price.objects.all()
     serializer_class = PriceSerializer
+
+class Posible_product(APIView):
+    def post(self, request):
+        customer_type_id = request.data.get('customer_type')
+        room_id=request.data.get('room_id')
+        try:
+            rate_requirement = RateRequirement.objects.filter(customer_type_id=customer_type_id).first()
+            if rate_requirement:
+                rate_id = rate_requirement.rate.id
+                products_with_rate = Product.objects.filter(rate=rate_id,room=room_id)
+                products_serialized = ProductsSerializer(products_with_rate, many=True).data
+                return Response({'status': 'success', 'products': products_serialized})
+            else:
+                return Response({"error": "Tipo de cliente no encontrado"}, status=404)
+        except Customer_type.DoesNotExist:
+            return Response({"error": "Tipo de cliente no encontrado"}, status=404)
