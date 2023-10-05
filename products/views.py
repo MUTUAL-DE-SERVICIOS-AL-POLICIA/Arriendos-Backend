@@ -71,7 +71,7 @@ class Product_Api(generics.GenericAPIView):
             queryset_list = list(queryset)
             product_data = serializer.data[queryset_list.index(product)]
             if active_price_data:
-                product_data['active_price'] = active_price_data
+                product_data['mount'] = active_price_data.get("mount")
             products_with_active_prices.append(product_data)
         paged_products = products_with_active_prices[start_num:end_num]
 
@@ -182,8 +182,16 @@ class Posible_product(APIView):
             if rate_requirement:
                 rate_id = rate_requirement.rate.id
                 products_with_rate = Product.objects.filter(rate=rate_id,room=room_id)
-                products_serialized = ProductsSerializer(products_with_rate, many=True).data
-                return Response({'status': 'success', 'products': products_serialized})
+                serializer = ProductsSerializer(products_with_rate, many=True)
+                products_with_active_prices=[]
+                for product in products_with_rate:
+                    active_price_data = ProductSerializer.get_active_price(product)
+                    product_list = list(products_with_rate)
+                    product_data = serializer.data[product_list.index(product)]
+                    if active_price_data:
+                        product_data['active_price'] = active_price_data
+                        products_with_active_prices.append(product_data)
+                return Response({'status': 'success', 'products': products_with_active_prices})
             else:
                 return Response({"error": "Tipo de cliente no encontrado"}, status=404)
         except Customer_type.DoesNotExist:
