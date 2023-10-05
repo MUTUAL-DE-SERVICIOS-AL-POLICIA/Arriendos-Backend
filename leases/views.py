@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework.response import Response
 from django.http import HttpResponse, JsonResponse
 from rest_framework.decorators import api_view
-from .serializer import StateSerializer, RentalSerializer, Rental_StateSerializer, Event_TypeSerializer, Selected_ProductSerializer
+from .serializer import Event_TypeSerializer, Selected_ProductSerializer
 from .models import State, Rental, Rental_State, Event_Type, Selected_Product
 import math
 from datetime import datetime
@@ -39,8 +39,8 @@ class Selected_Product_Api(generics.GenericAPIView):
 
     def post(self, request):
         customer = request.data["customer"]
-        selectedproducts = request.data["selected_products"]
-        for selected_product in selectedproducts:
+        selected_products = request.data["selected_products"]
+        for selected_product in selected_products:
             event_type = selected_product.get("event_type_id", None)
             if event_type is not None:
                 try:
@@ -48,22 +48,22 @@ class Selected_Product_Api(generics.GenericAPIView):
                 except:
                     return Response({"message":f"El tipo de evento no es válido"}, status=status.HTTP_404_NOT_FOUND)
         rental = Rental.objects.create(customer_id = customer)
-        for selectedproduct in selectedproducts:
-            event_type = selectedproduct.get("event_type_id", None)
+        for selected_product in selected_products:
+            event_type = selected_product.get("event_type_id", None)
             if event_type is not None:
                 event = Event_Type.objects.get(pk=event_type)
-                date_string = selectedproduct.get("date")
+                date_string = selected_product.get("date")
                 date_object = datetime.strptime(date_string, "%d/%m/%Y").strftime("%Y-%m-%d")
-                start_time = selectedproduct.get("start_time")
-                end_time = selectedproduct.get("end_time")
-                Selected_Product.objects.create(product_id = selectedproduct.get("product"), event_type_id = event.id, rental_id = rental.id, date = date_object, start_time= start_time, end_time = end_time, detail = selectedproduct.get("detail", None))
+                start_time = selected_product.get("start_time")
+                end_time = selected_product.get("end_time")
+                Selected_Product.objects.create(product_id = selected_product.get("product"), event_type_id = event.id, rental_id = rental.id, date = date_object, start_time= start_time, end_time = end_time, detail = selected_product.get("detail", None))
             else:
-                event = Event_Type.objects.create(name=selectedproduct.get("event_type"))
-                date_string = selectedproduct.get("date")
+                event = Event_Type.objects.create(name=selected_product.get("event_type"))
+                date_string = selected_product.get("date")
                 date_object = datetime.strptime(date_string, "%d/%m/%Y").strftime("%Y-%m-%d")
-                start_time = selectedproduct.get("start_time")
-                end_time = selectedproduct.get("end_time")
-                Selected_Product.objects.create(product_id = selectedproduct.get("product"), event_type_id = event.id, rental_id = rental.id, date = date_object, start_time= start_time, end_time = end_time, detail = selectedproduct.get("detail", None))
+                start_time = selected_product.get("start_time")
+                end_time = selected_product.get("end_time")
+                Selected_Product.objects.create(product_id = selected_product.get("product"), event_type_id = event.id, rental_id = rental.id, date = date_object, start_time= start_time, end_time = end_time, detail = selected_product.get("detail", None))
         state = State.objects.get(pk=1)
         new_state = Rental_State.objects.create(state_id= state.id, rental_id = rental.id)
         return Response({"state":"success", "message":"Pre reserva creado con éxito"}, status= status.HTTP_201_CREATED)
