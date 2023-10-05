@@ -27,6 +27,8 @@ class Selected_Product(models.Model):
     rental = models.ForeignKey(Rental, on_delete=models.CASCADE)
     event_type = models.ForeignKey(Event_Type, on_delete=models.CASCADE)
     date = models.DateField()
+    start_time = models.TimeField(null=True)
+    end_time = models.TimeField(null=True)
     detail = models.CharField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
