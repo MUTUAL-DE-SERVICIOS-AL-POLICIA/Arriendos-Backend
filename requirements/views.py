@@ -5,14 +5,86 @@ from rest_framework.response import Response
 from django.http import HttpResponse, JsonResponse
 from rest_framework.decorators import api_view
 from .models import PlanRequirement, RateRequirement, Requirement
-from .serializer import PlanRequirementSerializer, RateRequirementSerializer, RatesRequirementSerializer, RequirementSerializer, RateWithRelatedDataSerializer
+from .serializer import RateRequirementSerializer, RequirementSerializer, RateWithRelatedDataSerializer
 from products.models import Rate
 from customers.models import Customer_type
 import math
 from datetime import datetime
 from django.db.models import OuterRef, Subquery
-from rest_framework import serializers
 # Create your views here.
+class Requirement_Api(generics.GenericAPIView):
+    serializer_class = RequirementSerializer
+    queryset = Requirement.objects.all()
+
+    def get(self, request, *args, **kw):
+        page_num = int(request.GET.get('page', 0))
+        limit_num = int(request.GET.get('limit', 10))
+        start_num = (page_num) * limit_num
+        end_num = limit_num * (page_num + 1)
+        search_param = request.GET.get('search')
+        requirements = Requirement.objects.filter(is_active = True).order_by('id')
+        total_requirements = requirements.count()
+        if search_param:
+            requirements = requirements.filter(title__icontains=search_param)
+        serializer = self.serializer_class(requirements[start_num:end_num], many=True)
+        return Response({
+            "status": "success",
+            "total": total_requirements,
+            "page": page_num,
+            "last_page": math.ceil(total_requirements/ limit_num),
+           'requirements': serializer.data,
+        })
+    
+    def post(self, request, *args, **kw):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"status": "success", "data": {"requirement": serializer.data}}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        
+class Requirement_Detail(generics.GenericAPIView):
+    queryset = Requirement.objects.all()
+    serializer_class = RequirementSerializer
+
+    def get_requirement(self, pk, *args, **kw):
+        try:
+            return Requirement.objects.get(pk=pk)
+        except:
+            return None
+        
+    def get(self, request, pk, *args, **kw):
+        requirement = self.get_requirement(pk=pk)
+        if requirement == None:
+            return Response({"status": "fail", "message": f"Requirement with id: {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
+        serializer = self.serializer_class(requirement)
+        return Response({"status": "success", "data": {"requirement": serializer.data}}, status=status.HTTP_200_OK)
+    
+    def patch(self, request, pk, *args, **kw):
+        requirement = self.get_requirement(pk)
+        if requirement == None:
+            return Response({"status": "fail", "message": f"Requirement with id: {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
+        serializer = self.serializer_class(requirement, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"status": "success", "data": {"requirement": serializer.data}}, status=status.HTTP_200_OK)
+        else:
+            return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request, pk): 
+        if not Requirement.objects.filter(pk=pk).exists():
+            return Response({"status":"fail"}, status=status.HTTP_404_NOT_FOUND)
+        requirement = Requirement.objects.get(pk=pk)
+        if requirement.is_active == True:
+            requirement.is_active= False
+            requirement.save()
+            return Response({"status": "success", "message":"Requisito desactivado"}, status=status.HTTP_200_OK)
+        else:
+            requirement.is_active= True
+            requirement.save()
+            return Response({"status":"success", "message":"Requisito activado"}, status=status.HTTP_200_OK)
+    
+
 class RateWithRelatedDataView(generics.ListAPIView):
     queryset = Rate.objects.all()
     serializer_class = RateWithRelatedDataSerializer
