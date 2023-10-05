@@ -3,6 +3,7 @@ from .models import State, Selected_Product, Rental, Event_Type, Rental_State
 from products.models import Rate
 from products.serializers import RateSerializer
 from rooms.models import Room
+from rooms.serializers import RoomSerializer
 from products.models import Product
 class StateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -24,10 +25,6 @@ class Event_TypeSerializer(serializers.ModelSerializer):
         model = Event_Type
         fields = '__all__'
 
-class RoomSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Room
-        fields = '__all__'
 class ProductSerializer(serializers.ModelSerializer):
     room = RoomSerializer()
     rate = RateSerializer()
