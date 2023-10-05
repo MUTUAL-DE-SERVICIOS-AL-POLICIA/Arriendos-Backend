@@ -2,8 +2,7 @@ from django.shortcuts import render
 from rest_framework.response import Response
 from django.http import HttpResponse, JsonResponse
 from rest_framework.decorators import api_view
-from .serializer import StateSerializer, RentalSerializer, Rental_StateSerializer, Event_TypeSerializer, Selected_ProductSerializer, Products_dateSerializer 
-from django.views.decorators.csrf import csrf_exempt
+from .serializer import StateSerializer, RentalSerializer, Rental_StateSerializer, Event_TypeSerializer, Selected_ProductSerializer
 from .models import State, Rental, Rental_State, Event_Type, Selected_Product
 import math
 from datetime import datetime
