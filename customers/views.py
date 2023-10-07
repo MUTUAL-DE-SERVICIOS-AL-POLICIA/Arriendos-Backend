@@ -127,8 +127,61 @@ class Customer_Api(generics.GenericAPIView):
                 return Response({"state": "success", "message": "Cliente registrado con exito" }, status=status.HTTP_201_CREATED)
         return HttpResponse({"status":"success", "message":"Cliente guardado"}, status=status.HTTP_201_CREATED)
 
+class Customer_Detail(generics.GenericAPIView):
+    queryset = Customer.objects.all()
+    serializer_class = CustomerSerializer
+    def get_customer(self, pk, **kwargs):
+        try:
+            return Customer.objects.get(pk=pk)
+        except:
+            return None
+    def patch(self, request, pk, **kwargs):
+        customer = Customer.objects.get(pk=pk)
+        customer_type = Customer_type.objects.get(pk=customer.customer_type_id)
+        if customer_type.is_institution == True:
+            institutions_data = request.data["institution"]
+            institution_name = institutions_data.get("name")
+            institution_nit = institutions_data.get("nit")
+            contacts = institutions_data.get("contacts")
+            institution = Customer.objects.get(pk=pk)
+            institution.institution_name = institution_name
+            institution.nit = institution_nit
+            institution.save()
+            for contact in contacts:
+                contact_data = Contact.objects.get(customer_id = contact.id)
+                contact_data.is_active = False
+                contact_data.save()
 
-
+            for contact in contacts:
+                contact_id = contact.get("id", None)
+                name = contact.get("name")
+                ci_nit = contact.get("ci_nit", None)
+                phone = contact.get("phone")
+                degree = contact.get("degree", None)
+                if contact_id is None:
+                    Contact.objects.create(degree=degree, name=name, ci_nit=ci_nit, phone=phone, customer_id=institution.id, is_customer=False)
+                else:
+                    contact_data = Contact.objects.get(pk=contact_id)
+                    contact_data.name = name
+                    contact_data.ci_nit = ci_nit
+                    contact_data.phone = phone
+                    contact_data.degree = degree
+                    contact_data.is_active = True
+                    contact_data.save()
+            return Response({"status": "success", "message": "Institución actualizada"}, status=status.HTTP_200_OK)
+        else:
+            customers = request.data["customer"]
+            degree = customers.get("degree", None)
+            name = customers.get("name")
+            phone = customers.get("phone", None)
+            ci_nit = customers.get("ci_nit")
+            customer_data = Contact.objects.get(customer_id =customer.id)
+            customer_data.name = name
+            customer_data.ci_nit = ci_nit
+            customer_data.phone = phone
+            customer_data.degree = degree
+            customer_data.save()
+            return Response({"status": "success", "message":"Cliente actualizado"}, status=status.HTTP_200_OK)
 
 class CustomerInsitution_Detail(generics.GenericAPIView):
     queryset = Customer.objects.all()
