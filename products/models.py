@@ -12,7 +12,7 @@ class Rate(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 class HourRange(models.Model):
-    name=models.CharField(max_length=250)
+    time=models.IntegerField()
 
 class Product(models.Model):
     rate = models.ForeignKey(Rate,on_delete=models.PROTECT)
