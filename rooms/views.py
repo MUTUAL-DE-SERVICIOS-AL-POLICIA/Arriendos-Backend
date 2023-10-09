@@ -1,6 +1,3 @@
-from django.shortcuts import render
-
-# Create your views here.
 from rest_framework import generics
 from .models import Property, Room
 from .serializers import PropertySerializer, RoomSerializer
@@ -30,10 +27,8 @@ def List_Properties_with_Rooms(request):
             'id': property.id,
             'name': property.name,
             'photo': request.build_absolute_uri(property.photo.url),  # Agrega la URL de la foto si la necesitas
-            'rooms': []  # Lista para las habitaciones
+            'rooms': []
         }
-
-        # Obtén todas las habitaciones relacionadas con esta propiedad
         rooms = Room.objects.filter(property=property)
         for room in rooms:
             room_data = {
@@ -42,6 +37,7 @@ def List_Properties_with_Rooms(request):
                 'capacity': room.capacity,
                 'warranty': room.warranty,
                 'is_active': room.is_active,
+                'group': room.group
             }
             property_data['rooms'].append(room_data)
 

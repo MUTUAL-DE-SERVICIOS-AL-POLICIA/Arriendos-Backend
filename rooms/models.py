@@ -14,6 +14,6 @@ class Room(models.Model):
     capacity=models.IntegerField()
     warranty=models.FloatField()
     is_active = models.BooleanField(default=True)
-    group = models.CharField(max_length=100, blank=True, null=True)
+    group = models.CharField(max_length=100)
     def __str__(self):
         return self.name
