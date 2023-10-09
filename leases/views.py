@@ -53,17 +53,19 @@ class Selected_Product_Api(generics.GenericAPIView):
         customer = request.data["customer"]
         selected_products = request.data["selected_products"]
         for selected_product in selected_products:
-            event_type = selected_product.get("event_type_id", None)
-            if event_type is not None:
+            event_type = selected_product.get("event_type", None)
+            if event_type != "":
                 try:
-                    event = Event_Type.objects.get(pk=event_type)
+                    event = Event_Type.objects.filter(name=event_type)
                 except:
                     return Response({"message":f"El tipo de evento no es válido"}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                return Response({"message": "El tipo de evento no es válido"})
         rental = Rental.objects.create(customer_id = customer)
         for selected_product in selected_products:
-            event_type = selected_product.get("event_type_id", None)
-            if event_type is not None:
-                event = Event_Type.objects.get(pk=event_type)
+            event_type = selected_product.get("event_type")
+            if Event_Type.objects.filter(name=event_type).exists():
+                event = Event_Type.objects.get(name=event_type)
                 start_time = selected_product.get("start_time")
                 date_time_obj = datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S.%f")
                 date = date_time_obj.date()  #Formato 'YYYY-MM-DD'
@@ -75,6 +77,7 @@ class Selected_Product_Api(generics.GenericAPIView):
                 Selected_Product.objects.create(product_id = selected_product.get("product"), event_type_id = event.id, rental_id = rental.id, date = date, start_time= start_time, end_time = end_time, detail = selected_product.get("detail", None))
             else:
                 event = Event_Type.objects.create(name=selected_product.get("event_type"))
+                
                 start_time = selected_product.get("start_time")
                 date_time_obj = datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S.%f")
                 date = date_time_obj.date()  #Formato 'YYYY-MM-DD'
