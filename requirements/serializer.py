@@ -26,6 +26,11 @@ class RateRequirementSerializer(serializers.ModelSerializer):
     class Meta:
         model = RateRequirement
         fields = '__all__'
+class RateRequirementDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RateRequirement
+        fields = '__all__'
+        depth = 1
 
 class RatesRequirementSerializer(serializers.ModelSerializer):
     requirement = RequirementSerializer(many=True)

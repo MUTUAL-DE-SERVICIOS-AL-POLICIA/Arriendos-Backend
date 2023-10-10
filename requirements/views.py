@@ -5,13 +5,14 @@ from rest_framework.response import Response
 from django.http import HttpResponse, JsonResponse
 from rest_framework.decorators import api_view
 from .models import PlanRequirement, RateRequirement, Requirement
-from .serializer import RateRequirementSerializer, RequirementSerializer, RateWithRelatedDataSerializer
+from .serializer import RateRequirementSerializer, RequirementSerializer, RateWithRelatedDataSerializer,RateRequirementDetailSerializer
 from products.models import Rate
 from customers.models import Customer_type
 import math
 from datetime import datetime
 from django.db.models import OuterRef, Subquery
-# Create your views here.
+from leases.models import Rental
+
 class Requirement_Api(generics.GenericAPIView):
     serializer_class = RequirementSerializer
     queryset = Requirement.objects.all()
@@ -196,3 +197,15 @@ class RateRequirement_Detail(generics.GenericAPIView):
                 for rate_requirement in rate_requirements:
                     new_customer = RateRequirement.objects.create(requirement_id=rate_requirement, customer_type_id=customer_type, rate_id=pk)      
         return Response({"status": "success", "message":"Tarifa actualizada con éxito"}, status=status.HTTP_200_OK)        
+
+class Requirements_customer(generics.GenericAPIView):
+     def post(self, request):
+        rental_id = request.data.get('id_rental')
+        try:
+            rental = Rental.objects.get(pk=rental_id)
+        except Rental.DoesNotExist:
+            return Response({"error": "No se encontró el arriendo"}, status=status.HTTP_404_NOT_FOUND)
+        customer_type = rental.customer_id
+        requirements = RateRequirement.objects.filter(customer_type=customer_type)
+        requirements_serialized = RateRequirementDetailSerializer(requirements, many=True)
+        return Response({"status": "success", "data": {"requirements": requirements_serialized.data}}, status=status.HTTP_200_OK)
