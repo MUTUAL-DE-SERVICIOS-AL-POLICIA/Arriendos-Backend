@@ -1,10 +1,11 @@
 from django.db import models
 from customers.models import Customer
 from products.models import Product
-
+from django.contrib.postgres.fields import ArrayField
 # Create your models here.
 class State(models.Model):
     name = models.CharField(max_length=50)
+    next_state = ArrayField(models.IntegerField(), default=list)
 
 class Rental(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
