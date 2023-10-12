@@ -6,6 +6,7 @@ from .serializer import Event_TypeSerializer, Selected_ProductSerializer
 from .models import State, Rental, Rental_State, Event_Type, Selected_Product
 from customers.models import Customer
 from customers.serializer import CustomersSerializer
+from products.models import Product
 import math
 from datetime import datetime, time
 import pytz
@@ -93,8 +94,15 @@ class Selected_Product_Api(generics.GenericAPIView):
                 except:
                     return Response({"message":f"El tipo de evento no es válido"}, status=status.HTTP_404_NOT_FOUND)
             else:
-                return Response({"message": "El tipo de evento no es válido"})
-        
+                return Response({"message": "El tipo de evento no es válido"}, status=status.HTTP_404_NOT_FOUND)
+        for selected_product in selected_products:
+            
+                product = selected_product.get("product")
+                try:
+                    product = Product.objects.get(pk=product)
+                except:
+                    return Response({"message":"el producto no es válido"}, status=status.HTTP_404_NOT_FOUND)
+                             
         rental = Rental.objects.create(customer_id = customer)
         for selected_product in selected_products:
             event_type = selected_product.get("event_type")
