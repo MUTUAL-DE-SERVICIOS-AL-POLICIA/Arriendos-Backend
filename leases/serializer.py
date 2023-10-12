@@ -5,6 +5,7 @@ from products.serializers import RateSerializer
 from rooms.models import Room
 from rooms.serializers import RoomSerializer
 from products.models import Product
+from customers.serializer import CustomerSerializer
 class StateSerializer(serializers.ModelSerializer):
     class Meta:
         model = State
@@ -35,6 +36,8 @@ class ProductSerializer(serializers.ModelSerializer):
 class Selected_ProductSerializer(serializers.ModelSerializer):
      product = ProductSerializer()
      event_type = Event_TypeSerializer()
+     rental = RentalSerializer()
+     
      class Meta:
         model = Selected_Product
         fields = '__all__'

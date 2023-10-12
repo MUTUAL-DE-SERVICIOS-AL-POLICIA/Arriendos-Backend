@@ -4,11 +4,14 @@ from django.http import HttpResponse, JsonResponse
 from rest_framework.decorators import api_view
 from .serializer import Event_TypeSerializer, Selected_ProductSerializer
 from .models import State, Rental, Rental_State, Event_Type, Selected_Product
+from customers.models import Customer
+from customers.serializer import CustomersSerializer
 import math
 from datetime import datetime, time
-from django.utils import timezone
+import pytz
 from rest_framework import status, generics
 from django.db.models import Count
+from django.utils import timezone
 # Create your views here.
 
 
@@ -16,41 +19,71 @@ class Selected_Product_Api(generics.GenericAPIView):
     queryset = Selected_Product.objects.all()
     serializer_class = Selected_ProductSerializer
 
-    def get(self, request):
-        all_dates = Selected_Product.objects.values_list('date', flat=True).distinct()
-        date_products = []
-        for date in all_dates:
-            date_str = date.strftime('%Y-%m-%d')
-            selected_products = Selected_Product.objects.filter(date=date)
+    def get(self, request, *args, **kwargs):
+        room = request.GET.get('room', None)
+        if room is None:
+            all_dates = Selected_Product.objects.values_list('start_time', flat=True).distinct().order_by('id')
+            date_products = []
+            for date in all_dates:
+                selected_products = Selected_Product.objects.filter(start_time=date)
+                for product in selected_products:
+                    customer = Customer.objects.get(pk=product.rental.customer_id)
+                    customer_serializer = CustomersSerializer(customer)
+                    serialized_customer_data = customer_serializer.data
+                    contacts = serialized_customer_data.get("contacts")
+                    start_time = timezone.localtime(product.start_time)
+                    end_time = timezone.localtime(product.end_time)
+                    product_data = {
+                        'selected_product_id': product.id,
+                        'room_id': product.product.room_id,
+                        'product_id': product.product.id,
+                        'room_name': product.product.room.name,
+                        'start_time': start_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                        'end_time': end_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                        'rental': product.rental.id,
+                        'customer_id': product.rental.customer_id,
+                        'institution_name': serialized_customer_data["institution_name"],
+                        'nit': serialized_customer_data["nit"],
+                        'contacts': contacts,
+                        'event_type_name': product.event_type.name
+                    }
+
+                    date_products.append(product_data)
+            return Response(date_products)
+        else:
+            selected_products = Selected_Product.objects.filter(product__room_id=room)
+            date_products = []
+            for product in selected_products:     
+                    customer = Customer.objects.get(pk=product.rental.customer_id)
+                    customer_serializer = CustomersSerializer(customer)
+                    serialized_customer_data = customer_serializer.data
+                    contacts = serialized_customer_data.get("contacts")
+                    start_time = timezone.localtime(product.start_time)
+                    end_time = timezone.localtime(product.end_time)
+                    product_data = {
+                        'selected_product_id': product.id,
+                        'room_id': product.product.room_id,
+                        'product_id': product.product.id,
+                        'room_name': product.product.room.name,
+                        'start_time': start_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                        'end_time': end_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                        'rental': product.rental.id,
+                        'customer_id': product.rental.customer_id,
+                        'institution_name': serialized_customer_data["institution_name"],
+                        'nit': serialized_customer_data["nit"],
+                        'contacts': contacts,
+                        'event_type_name': product.event_type.name
+                    }
+                    date_products.append(product_data)
+            return Response(date_products)
             
-            for product in selected_products:
-                start_time = product.start_time
-                end_time = product.end_time
-                date = product.date.strftime('%Y-%m-%d')
-                
-                start_date_time = datetime.combine(product.date, start_time)
-                end_date_time = datetime.combine(product.date, end_time)
-
-                date_time_format = "%Y-%m-%d %H:%M:%S.%f"
-                formatted_start_time = start_date_time.strftime(date_time_format)
-                formatted_end_time = end_date_time.strftime(date_time_format)
-
-                product_data = {
-                    'selected_product_id': product.id,
-                    'room_id': product.product.room_id,
-                    'product_id': product.product.id,
-                    'room_name': product.product.room.name,
-                    'start_time': formatted_start_time,
-                    'end_time': formatted_end_time,
-                    'date': product.date,
-                    'event_type_name': product.event_type.name
-                }
-                
-                date_products.append(product_data)
-        return Response(date_products)
 
     def post(self, request):
         customer = request.data["customer"]
+        try:
+            Customer.objects.get(pk=customer)
+        except:
+            return Response({"message": "Cliente no encontrado"}, status=status.HTTP_404_NOT_FOUND)
         selected_products = request.data["selected_products"]
         for selected_product in selected_products:
             event_type = selected_product.get("event_type", None)
@@ -61,32 +94,32 @@ class Selected_Product_Api(generics.GenericAPIView):
                     return Response({"message":f"El tipo de evento no es válido"}, status=status.HTTP_404_NOT_FOUND)
             else:
                 return Response({"message": "El tipo de evento no es válido"})
+        
         rental = Rental.objects.create(customer_id = customer)
         for selected_product in selected_products:
             event_type = selected_product.get("event_type")
             if Event_Type.objects.filter(name=event_type).exists():
+                
                 event = Event_Type.objects.get(name=event_type)
                 start_time = selected_product.get("start_time")
-                date_time_obj = datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S.%f")
-                date = date_time_obj.date()  #Formato 'YYYY-MM-DD'
-                start_time = date_time_obj.time()  #Formato 'HH:MM:SS'
-                end_time = selected_product.get("end_time")
-                date_time_obj = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S.%f")
-                end_time = date_time_obj.time()
+                start_time = datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%fZ')
+                start_time = pytz.timezone('America/La_Paz').localize(start_time)
                 
-                Selected_Product.objects.create(product_id = selected_product.get("product"), event_type_id = event.id, rental_id = rental.id, date = date, start_time= start_time, end_time = end_time, detail = selected_product.get("detail", None))
+                end_time = selected_product.get("end_time")
+                end_time = datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%fZ')
+                end_time = pytz.timezone('America/La_Paz').localize(end_time)
+                
+                Selected_Product.objects.create(product_id = selected_product.get("product"), event_type_id = event.id, rental_id = rental.id, start_time= start_time, end_time = end_time, detail = selected_product.get("detail", None))
             else:
                 event = Event_Type.objects.create(name=selected_product.get("event_type"))
-                
                 start_time = selected_product.get("start_time")
-                date_time_obj = datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S.%f")
-                date = date_time_obj.date()  #Formato 'YYYY-MM-DD'
-                start_time = date_time_obj.time()  #Formato 'HH:MM:SS'
+                start_time = datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%fZ')
+                start_time = pytz.timezone('America/La_Paz').localize(start_time)
                 end_time = selected_product.get("end_time")
-                date_time_obj = datetime.strptime(end_time, "%Y-%m-%d %H:%M:%S.%f")
-                end_time = date_time_obj.time()
+                end_time = datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%fZ')
+                end_time = pytz.timezone('America/La_Paz').localize(end_time)
 
-                Selected_Product.objects.create(product_id = selected_product.get("product"), event_type_id = event.id, rental_id = rental.id, date = date, start_time= start_time, end_time = end_time, detail = selected_product.get("detail", None))
+                Selected_Product.objects.create(product_id = selected_product.get("product"), event_type_id = event.id, rental_id = rental.id, start_time= start_time, end_time = end_time, detail = selected_product.get("detail", None))
         state = State.objects.get(pk=1)
         new_state = Rental_State.objects.create(state_id= state.id, rental_id = rental.id)
         return Response({"state":"success", "message":"Pre reserva creado con éxito"}, status= status.HTTP_201_CREATED)
