@@ -9,15 +9,10 @@ class State(models.Model):
 
 class Rental(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-class Rental_State(models.Model):
     state = models.ForeignKey(State, on_delete=models.CASCADE)
-    rental = models.ForeignKey(Rental, on_delete=models.CASCADE)
+    is_plan=models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
 class Event_Type(models.Model):
     name = models.CharField(max_length=50)
     created_at = models.DateTimeField(auto_now_add=True)
