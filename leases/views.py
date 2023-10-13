@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from django.http import HttpResponse, JsonResponse
 from rest_framework.decorators import api_view
 from .serializer import Event_TypeSerializer, Selected_ProductSerializer
-from .models import State, Rental, Rental_State, Event_Type, Selected_Product
+from .models import State, Rental, Event_Type, Selected_Product
 from customers.models import Customer
 from customers.serializer import CustomersSerializer
 from products.models import Product
@@ -135,3 +135,14 @@ class Selected_Product_Api(generics.GenericAPIView):
 class Event_Api(generics.ListAPIView):
     queryset = Event_Type.objects.all()
     serializer_class = Event_TypeSerializer
+class Change_state(generics.ListAPIView):
+    def get (self, request):
+        rental_id = request.query_params.get('rental', None)
+        try:
+            rental = Rental.objects.get(pk=rental_id)
+            current_state = rental.state_id
+            state = State.objects.get(pk=current_state)
+            next_possible_states = state.next_state
+        except Rental.DoesNotExist:
+            return Response({"message":f"El alquiler no es existe"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"current_state":current_state,"next_states":next_possible_states}, status= status.HTTP_201_CREATED)
