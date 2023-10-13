@@ -129,20 +129,26 @@ class Selected_Product_Api(generics.GenericAPIView):
 
                 Selected_Product.objects.create(product_id = selected_product.get("product"), event_type_id = event.id, rental_id = rental.id, start_time= start_time, end_time = end_time, detail = selected_product.get("detail", None))
         state = State.objects.get(pk=1)
-        new_state = Rental_State.objects.create(state_id= state.id, rental_id = rental.id)
+        # new_state = Rental_State.objects.create(state_id= state.id, rental_id = rental.id)
         return Response({"state":"success", "message":"Pre reserva creado con éxito"}, status= status.HTTP_201_CREATED)
 
 class Event_Api(generics.ListAPIView):
     queryset = Event_Type.objects.all()
     serializer_class = Event_TypeSerializer
-class Change_state(generics.ListAPIView):
-    def get (self, request):
-        rental_id = request.query_params.get('rental', None)
+class Get_state(generics.ListAPIView):
+    def get(self, request):
+        rental_id = request.query_params.get('rental')
+        if not rental_id:
+            return Response({"error": "Parámetro 'rental' faltante en la consulta."}, status=status.HTTP_400_BAD_REQUEST)
         try:
             rental = Rental.objects.get(pk=rental_id)
             current_state = rental.state_id
             state = State.objects.get(pk=current_state)
             next_possible_states = state.next_state
         except Rental.DoesNotExist:
-            return Response({"message":f"El alquiler no es existe"}, status=status.HTTP_404_NOT_FOUND)
-        return Response({"current_state":current_state,"next_states":next_possible_states}, status= status.HTTP_201_CREATED)
+            return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
+        response_data = {
+            "current_state": current_state,
+            "next_states": next_possible_states,
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
