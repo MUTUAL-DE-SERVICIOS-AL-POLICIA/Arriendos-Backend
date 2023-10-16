@@ -102,8 +102,13 @@ class Selected_Product_Api(generics.GenericAPIView):
                     product = Product.objects.get(pk=product)
                 except:
                     return Response({"message":"el producto no es válido"}, status=status.HTTP_404_NOT_FOUND)
-                             
-        rental = Rental.objects.create(customer_id = customer)
+        productos_plan = len(selected_products)
+        if productos_plan > 1:
+            rental = Rental.objects.create(customer_id = customer, is_plan = True, state_id = 1)
+        else:
+            rental = Rental.objects.create(customer_id = customer, is_plan = False, state_id = 1)
+            
+        
         for selected_product in selected_products:
             event_type = selected_product.get("event_type")
             if Event_Type.objects.filter(name=event_type).exists():
@@ -128,8 +133,7 @@ class Selected_Product_Api(generics.GenericAPIView):
                 end_time = pytz.timezone('America/La_Paz').localize(end_time)
 
                 Selected_Product.objects.create(product_id = selected_product.get("product"), event_type_id = event.id, rental_id = rental.id, start_time= start_time, end_time = end_time, detail = selected_product.get("detail", None))
-        state = State.objects.get(pk=1)
-        # new_state = Rental_State.objects.create(state_id= state.id, rental_id = rental.id)
+        
         return Response({"state":"success", "message":"Pre reserva creado con éxito"}, status= status.HTTP_201_CREATED)
 
 class Event_Api(generics.ListAPIView):

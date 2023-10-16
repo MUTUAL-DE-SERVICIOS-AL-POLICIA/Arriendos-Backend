@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import State, Selected_Product, Rental, Event_Type, Rental_State
+from .models import State, Selected_Product, Rental, Event_Type
 from products.models import Rate
 from products.serializers import RateSerializer
 from rooms.models import Room
@@ -10,11 +10,7 @@ class StateSerializer(serializers.ModelSerializer):
     class Meta:
         model = State
         fields = '__all__'
-
-class Rental_StateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Rental_State
-        fields = '__all__'
+        
 
 class RentalSerializer(serializers.ModelSerializer):
     class Meta:
