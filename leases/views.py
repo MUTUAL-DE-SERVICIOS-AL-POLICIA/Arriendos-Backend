@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework.response import Response
 from django.http import HttpResponse, JsonResponse
 from rest_framework.decorators import api_view
-from .serializer import Event_TypeSerializer, Selected_ProductSerializer
+from .serializer import Event_TypeSerializer, Selected_ProductSerializer, StateSerializer
 from .models import State, Rental, Event_Type, Selected_Product
 from customers.models import Customer
 from customers.serializer import CustomersSerializer
@@ -13,9 +13,11 @@ import pytz
 from rest_framework import status, generics
 from django.db.models import Count
 from django.utils import timezone
-# Create your views here.
 
 
+class StateRentalListCreateView(generics.ListCreateAPIView):
+    queryset = State.objects.all()
+    serializer_class = StateSerializer
 class Selected_Product_Api(generics.GenericAPIView):
     queryset = Selected_Product.objects.all()
     serializer_class = Selected_ProductSerializer
