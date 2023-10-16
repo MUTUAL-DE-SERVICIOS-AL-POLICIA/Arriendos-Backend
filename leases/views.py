@@ -144,11 +144,23 @@ class Get_state(generics.ListAPIView):
             rental = Rental.objects.get(pk=rental_id)
             current_state = rental.state_id
             state = State.objects.get(pk=current_state)
-            next_possible_states = state.next_state
+            current_states = {
+                "id":state.id,
+                "name":state.name
+                }
+            next_possible_states_id = state.next_state
+            next_possible_states=[]
+            for next_possible_state in next_possible_states_id:
+                state = State.objects.get(pk=next_possible_state)
+                next_state = {
+                    "id":state.id,
+                    "name":state.name
+                }
+                next_possible_states.append(next_state)
         except Rental.DoesNotExist:
             return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
         response_data = {
-            "current_state": current_state,
+            "current_state": current_states,
             "next_states": next_possible_states,
         }
         return Response(response_data, status=status.HTTP_200_OK)
