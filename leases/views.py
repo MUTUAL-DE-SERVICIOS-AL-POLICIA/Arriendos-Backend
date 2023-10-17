@@ -6,8 +6,8 @@ from .serializer import Event_TypeSerializer, Selected_ProductSerializer, StateS
 from .models import State, Rental, Event_Type, Selected_Product
 from customers.models import Customer
 from customers.serializer import CustomersSerializer
-from products.models import Product
-import math
+from products.models import Product, Price
+from plans.models import Plan
 from datetime import datetime, time
 import pytz
 from rest_framework import status, generics
@@ -29,7 +29,7 @@ class List_state(generics.GenericAPIView):
                 }
                 states.append(item)
         return Response(states)
-class Selected_Product_Api(generics.GenericAPIView):
+class Pre_Booking_Api(generics.GenericAPIView):
     queryset = Selected_Product.objects.all()
     serializer_class = Selected_ProductSerializer
 
@@ -67,7 +67,7 @@ class Selected_Product_Api(generics.GenericAPIView):
         else:
             selected_products = Selected_Product.objects.filter(product__room_id=room)
             date_products = []
-            for product in selected_products:     
+            for product in selected_products:
                     customer = Customer.objects.get(pk=product.rental.customer_id)
                     customer_serializer = CustomersSerializer(customer)
                     serialized_customer_data = customer_serializer.data
@@ -90,9 +90,10 @@ class Selected_Product_Api(generics.GenericAPIView):
                     }
                     date_products.append(product_data)
             return Response(date_products)
-            
+
 
     def post(self, request):
+
         customer = request.data["customer"]
         try:
             Customer.objects.get(pk=customer)
@@ -109,33 +110,38 @@ class Selected_Product_Api(generics.GenericAPIView):
             else:
                 return Response({"message": "El tipo de evento no es válido"}, status=status.HTTP_404_NOT_FOUND)
         for selected_product in selected_products:
-            
                 product = selected_product.get("product")
                 try:
                     product = Product.objects.get(pk=product)
                 except:
                     return Response({"message":"el producto no es válido"}, status=status.HTTP_404_NOT_FOUND)
+        initial_total = 0
+        for selected_product in selected_products:
+            product_id = selected_product.get("product")
+            product_price = Price.objects.get(product_id = product_id)
+            product_price = product_price.mount
+            initial_total = initial_total + product_price
         productos_plan = len(selected_products)
         if productos_plan > 1:
-            rental = Rental.objects.create(customer_id = customer, is_plan = True, state_id = 1)
+            plan_discount = Plan.objects.get(pk=request.data["plan"])
+            initial_total = initial_total - (initial_total*(plan_discount.plan_discount/100))
+            rental = Rental.objects.create(customer_id = customer, is_plan = True, state_id = 1, plan_id = request.data["plan"], initial_total=initial_total)
         else:
-            rental = Rental.objects.create(customer_id = customer, is_plan = False, state_id = 1)
-            
-        
+            rental = Rental.objects.create(customer_id = customer, is_plan = False, state_id = 1, initial_total = initial_total)
         for selected_product in selected_products:
             event_type = selected_product.get("event_type")
+            product_id = selected_product.get("product")
+            product_price = Price.objects.get(product_id = product_id)
+            product_price = product_price.mount
             if Event_Type.objects.filter(name=event_type).exists():
-                
                 event = Event_Type.objects.get(name=event_type)
                 start_time = selected_product.get("start_time")
                 start_time = datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%fZ')
                 start_time = pytz.timezone('America/La_Paz').localize(start_time)
-                
                 end_time = selected_product.get("end_time")
                 end_time = datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%fZ')
                 end_time = pytz.timezone('America/La_Paz').localize(end_time)
-                
-                Selected_Product.objects.create(product_id = selected_product.get("product"), event_type_id = event.id, rental_id = rental.id, start_time= start_time, end_time = end_time, detail = selected_product.get("detail", None))
+                Selected_Product.objects.create(product_id = selected_product.get("product"), event_type_id = event.id, rental_id = rental.id, start_time= start_time, end_time = end_time, detail = selected_product.get("detail", None), product_price = product_price)
             else:
                 event = Event_Type.objects.create(name=selected_product.get("event_type"))
                 start_time = selected_product.get("start_time")
@@ -144,9 +150,7 @@ class Selected_Product_Api(generics.GenericAPIView):
                 end_time = selected_product.get("end_time")
                 end_time = datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%fZ')
                 end_time = pytz.timezone('America/La_Paz').localize(end_time)
-
-                Selected_Product.objects.create(product_id = selected_product.get("product"), event_type_id = event.id, rental_id = rental.id, start_time= start_time, end_time = end_time, detail = selected_product.get("detail", None))
-        
+                Selected_Product.objects.create(product_id = selected_product.get("product"), event_type_id = event.id, rental_id = rental.id, start_time= start_time, end_time = end_time, detail = selected_product.get("detail", None), product_price = product_price)
         return Response({"state":"success", "message":"Pre reserva creado con éxito"}, status= status.HTTP_201_CREATED)
 
 class Event_Api(generics.ListAPIView):
