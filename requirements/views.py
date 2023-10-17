@@ -4,7 +4,7 @@ from rest_framework import status, generics
 from rest_framework.response import Response
 from django.http import HttpResponse, JsonResponse
 from rest_framework.decorators import api_view
-from .models import PlanRequirement, RateRequirement, Requirement
+from .models import RateRequirement, Requirement
 from .serializer import RateRequirementSerializer, RequirementSerializer, RateWithRelatedDataSerializer,RateRequirementDetailSerializer
 from products.models import Rate
 from customers.models import Customer_type

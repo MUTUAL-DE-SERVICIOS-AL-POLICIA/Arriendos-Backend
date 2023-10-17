@@ -1,5 +1,5 @@
 from django.db import models
-from plans.models import Plan
+from leases.models import Rental
 from products.models import Rate
 from customers.models import Customer_type
 # Create your models here.
@@ -9,8 +9,8 @@ class Requirement(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-class PlanRequirement(models.Model):
-    plan = models.ForeignKey(Plan, on_delete=models.CASCADE)
+class Requirement_Delivered(models.Model):
+    rental = models.ForeignKey(Rental, on_delete=models.CASCADE)
     requirement = models.ForeignKey(Requirement, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
