@@ -14,10 +14,21 @@ from rest_framework import status, generics
 from django.db.models import Count
 from django.utils import timezone
 
-
 class StateRentalListCreateView(generics.ListCreateAPIView):
     queryset = State.objects.all()
     serializer_class = StateSerializer
+class List_state(generics.GenericAPIView):
+    def get (self, request):
+        list= State.objects.all()
+        states=[]
+        for state in list:
+            if len(state.next_state) > 0:
+                item={
+                    "id":state.id,
+                    "name":state.name
+                }
+                states.append(item)
+        return Response(states)
 class Selected_Product_Api(generics.GenericAPIView):
     queryset = Selected_Product.objects.all()
     serializer_class = Selected_ProductSerializer
