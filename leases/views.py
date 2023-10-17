@@ -1,17 +1,15 @@
 from django.shortcuts import render
 from rest_framework.response import Response
-from django.http import HttpResponse, JsonResponse
-from rest_framework.decorators import api_view
+from django.http import HttpResponse
 from .serializer import Event_TypeSerializer, Selected_ProductSerializer, StateSerializer
 from .models import State, Rental, Event_Type, Selected_Product
 from customers.models import Customer
 from customers.serializer import CustomersSerializer
 from products.models import Product, Price
 from plans.models import Plan
-from datetime import datetime, time
+from datetime import datetime
 import pytz
 from rest_framework import status, generics
-from django.db.models import Count
 from django.utils import timezone
 
 class StateRentalListCreateView(generics.ListCreateAPIView):
@@ -29,7 +27,8 @@ class List_state(generics.GenericAPIView):
                 }
                 states.append(item)
         return Response(states)
-class Pre_Booking_Api(generics.GenericAPIView):
+
+class Selected_Product_Calendar_Api(generics.GenericAPIView):
     queryset = Selected_Product.objects.all()
     serializer_class = Selected_ProductSerializer
 
@@ -91,9 +90,9 @@ class Pre_Booking_Api(generics.GenericAPIView):
                     date_products.append(product_data)
             return Response(date_products)
 
+class Pre_Reserve_Api(generics.GenericAPIView):
 
     def post(self, request):
-
         customer = request.data["customer"]
         try:
             Customer.objects.get(pk=customer)
