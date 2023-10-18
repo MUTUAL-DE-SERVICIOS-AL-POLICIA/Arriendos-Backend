@@ -6,11 +6,13 @@ from .models import State, Rental, Event_Type, Selected_Product
 from customers.models import Customer
 from customers.serializer import CustomersSerializer
 from products.models import Product, Price
+from requirements.models import Requirement_Delivered, Requirement
 from plans.models import Plan
 from datetime import datetime
 import pytz
 from rest_framework import status, generics
 from django.utils import timezone
+from Arriendos_Backend.util import required_fields
 
 class StateRentalListCreateView(generics.ListCreateAPIView):
     queryset = State.objects.all()
@@ -184,3 +186,31 @@ class Get_state(generics.ListAPIView):
             "next_states": next_possible_states,
         }
         return Response(response_data, status=status.HTTP_200_OK)
+
+class Change_state_to_reserved(generics.ListAPIView):
+        def post(self, request):
+            validated_fields1 = ["rental","list_requirements"]
+            error_message = required_fields(request, validated_fields1)
+            if error_message:
+                return Response(error_message, status=400)
+            rental_id = request.data["rental"]
+            list_requirements = request.data["list_requirements"]
+            try:
+                if list_requirements:
+                    rental = Rental.objects.get(pk=rental_id)
+                    for requirement in list_requirements:
+                        requirement_delivered = Requirement_Delivered()
+                        requirement_register=Requirement.objects.get(pk=requirement)
+                        requirement_delivered.rental = rental
+                        requirement_delivered.requirement = requirement_register
+                        requirement_delivered.save()
+                    state = State.objects.get(pk=2)
+                    rental.state = state
+                    rental.save()
+                    response_data = {
+                        "state":"success",
+                        "message":"cambio de estado a Reserva exitosamente"
+                    }
+                    return Response(response_data, status=status.HTTP_200_OK)
+            except Rental.DoesNotExist:
+                    return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
