@@ -20,7 +20,6 @@ class StateRentalListCreateView(generics.ListCreateAPIView):
 class Get_Rental(generics.ListCreateAPIView):
     def get(sel, request):
         rental_id = request.GET.get('rental', None)
-        # product_selected_id = request.data["product_selected"]
         rental=Rental.objects.get(pk=rental_id)
         customer=rental.customer
         customer_contacts=Contact.objects.filter(customer_id=customer.id)
