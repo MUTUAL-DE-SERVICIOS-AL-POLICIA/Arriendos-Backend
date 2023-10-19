@@ -6,7 +6,6 @@ from .models import State, Rental, Event_Type, Selected_Product
 from customers.models import Customer,Contact
 from customers.serializer import CustomersSerializer
 from products.models import Product, Price
-from requirements.models import Requirement_Delivered, Requirement
 from plans.models import Plan
 from datetime import datetime
 import pytz
@@ -224,30 +223,23 @@ class Get_state(generics.ListAPIView):
         }
         return Response(response_data, status=status.HTTP_200_OK)
 
-class Change_state_to_reserved(generics.ListAPIView):
+class Change_state(generics.ListAPIView):
         def post(self, request):
-            validated_fields1 = ["rental","list_requirements"]
-            error_message = required_fields(request, validated_fields1)
+            validated_fields = ["rental","state"]
+            error_message = required_fields(request, validated_fields)
             if error_message:
                 return Response(error_message, status=400)
             rental_id = request.data["rental"]
-            list_requirements = request.data["list_requirements"]
+            state = request.data["state"]
             try:
-                if list_requirements:
-                    rental = Rental.objects.get(pk=rental_id)
-                    for requirement in list_requirements:
-                        requirement_delivered = Requirement_Delivered()
-                        requirement_register=Requirement.objects.get(pk=requirement)
-                        requirement_delivered.rental = rental
-                        requirement_delivered.requirement = requirement_register
-                        requirement_delivered.save()
-                    state = State.objects.get(pk=2)
-                    rental.state = state
-                    rental.save()
-                    response_data = {
-                        "state":"success",
-                        "message":"cambio de estado a Reserva exitosamente"
-                    }
-                    return Response(response_data, status=status.HTTP_200_OK)
+                state = State.objects.get(pk=state)
+                rental= Rental.objects.get(pk=rental_id)
+                rental.state = state
+                rental.save()
+                response_data = {
+                    "state":"success",
+                    "message":f"cambio de estado a {state.name} exitosamente"
+                }
+                return Response(response_data, status=status.HTTP_200_OK)
             except Rental.DoesNotExist:
-                    return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
