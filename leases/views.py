@@ -43,6 +43,7 @@ class Get_Rental(generics.ListCreateAPIView):
             room = product.room
             property=room.property
             product_data={
+                "id": selected_product.id,
                 "property":property.name,
                 "room":room.name,
                 "hour_range":product.hour_range.time,
