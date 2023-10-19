@@ -199,13 +199,31 @@ class RateRequirement_Detail(generics.GenericAPIView):
         return Response({"status": "success", "message":"Tarifa actualizada con éxito"}, status=status.HTTP_200_OK)        
 
 class Requirements_customer(generics.GenericAPIView):
-     def post(self, request):
-        rental_id = request.data.get('id_rental')
+     def get(self, request):
+        rental_id = request.GET.get('rental', None)
         try:
             rental = Rental.objects.get(pk=rental_id)
+            customer_type = rental.customer
+            required_requirements = RateRequirement.objects.filter(customer_type_id=customer_type.id)
+            required_requirements_list =  []
+            for required_requirement in required_requirements:
+                required_requirement_data ={
+                    "id":required_requirement.requirement.id,
+                    "name":required_requirement.requirement.requirement_name,
+                    "is_active":required_requirement.requirement.is_active
+                }
+                required_requirements_list.append(required_requirement_data)
+            all_requirements = Requirement.objects.all()
+            required_requirement_ids = [req['id'] for req in required_requirements_list]
+            other_requirements = all_requirements.exclude(id__in=required_requirement_ids)
+            other_requirements_list = []
+            for requirement in other_requirements:
+                other_requirement_data = {
+                    "id":requirement.id,
+                    "name": requirement.requirement_name,
+                    "is_active": requirement.is_active
+                }
+                other_requirements_list.append(other_requirement_data)
+            return Response({"status": "success", "data": {"required_requirements": required_requirements_list,"optional_requirements":other_requirements_list}}, status=status.HTTP_200_OK)
         except Rental.DoesNotExist:
             return Response({"error": "No se encontró el arriendo"}, status=status.HTTP_404_NOT_FOUND)
-        customer_type = rental.customer_id
-        requirements = RateRequirement.objects.filter(customer_type=customer_type)
-        requirements_serialized = RateRequirementDetailSerializer(requirements, many=True)
-        return Response({"status": "success", "data": {"requirements": requirements_serialized.data}}, status=status.HTTP_200_OK)
