@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from django.http import HttpResponse
 from .serializer import Event_TypeSerializer, Selected_ProductSerializer, StateSerializer
 from .models import State, Rental, Event_Type, Selected_Product
-from customers.models import Customer
+from customers.models import Customer,Contact
 from customers.serializer import CustomersSerializer
 from products.models import Product, Price
 from requirements.models import Requirement_Delivered, Requirement
@@ -17,6 +17,42 @@ from Arriendos_Backend.util import required_fields
 class StateRentalListCreateView(generics.ListCreateAPIView):
     queryset = State.objects.all()
     serializer_class = StateSerializer
+class Get_Rental(generics.ListCreateAPIView):
+    def get(sel, request):
+        rental_id = request.GET.get('rental', None)
+        rental=Rental.objects.get(pk=rental_id)
+        customer=rental.customer
+        customer_contacts=Contact.objects.filter(customer_id=customer.id)
+        contacts=[]
+        for customer_contact in customer_contacts:
+            customer_contact_data = {
+                "name":customer_contact.name,
+                "ci_nit":customer_contact.ci_nit,
+                "phone":customer_contact.phone
+            }
+        contacts.append(customer_contact_data)
+        customer={
+            "instition_name":customer.institution_name,
+            "nit":customer.nit,
+            "contacts":contacts
+        }
+        selected_products = Selected_Product.objects.filter(rental=rental_id)
+        products=[]
+        for selected_product in selected_products:
+            product=selected_product.product
+            room = product.room
+            property=room.property
+            product_data={
+                "property":property.name,
+                "room":room.name,
+                "hour_range":product.hour_range.time,
+                "start_time":selected_product.start_time,
+                "end_time":selected_product.end_time,
+                "detail":selected_product.detail,
+                "event":selected_product.event_type.name
+            }
+            products.append(product_data)
+        return Response({"customer":customer, "products":products})
 class List_state(generics.GenericAPIView):
     def get (self, request):
         list= State.objects.all()
