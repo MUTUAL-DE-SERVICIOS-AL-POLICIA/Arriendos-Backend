@@ -29,9 +29,9 @@ class Get_Rental(generics.ListCreateAPIView):
                 "ci_nit":customer_contact.ci_nit,
                 "phone":customer_contact.phone
             }
-        contacts.append(customer_contact_data)
+            contacts.append(customer_contact_data)
         customer={
-            "instition_name":customer.institution_name,
+            "institution_name":customer.institution_name,
             "nit":customer.nit,
             "contacts":contacts
         }
