@@ -4,7 +4,7 @@ from rest_framework import status, generics
 from rest_framework.response import Response
 from django.http import HttpResponse, JsonResponse
 from rest_framework.decorators import api_view
-from .models import RateRequirement, Requirement
+from .models import RateRequirement, Requirement,Requirement_Delivered
 from .serializer import RateRequirementSerializer, RequirementSerializer, RateWithRelatedDataSerializer,RateRequirementDetailSerializer
 from products.models import Rate
 from customers.models import Customer_type
@@ -12,6 +12,7 @@ import math
 from datetime import datetime
 from django.db.models import OuterRef, Subquery
 from leases.models import Rental
+from Arriendos_Backend.util import required_fields
 
 class Requirement_Api(generics.GenericAPIView):
     serializer_class = RequirementSerializer
@@ -227,3 +228,27 @@ class Requirements_customer(generics.GenericAPIView):
             return Response({"status": "success", "data": {"required_requirements": required_requirements_list,"optional_requirements":other_requirements_list}}, status=status.HTTP_200_OK)
         except Rental.DoesNotExist:
             return Response({"error": "No se encontró el arriendo"}, status=status.HTTP_404_NOT_FOUND)
+class Register_delivered_requirement(generics.ListAPIView):
+        def post(self, request):
+            validated_fields = ["rental","list_requirements"]
+            error_message = required_fields(request, validated_fields)
+            if error_message:
+                return Response(error_message, status=400)
+            rental_id = request.data["rental"]
+            list_requirements = request.data["list_requirements"]
+            try:
+                if list_requirements:
+                    rental = Rental.objects.get(pk=rental_id)
+                    for requirement in list_requirements:
+                        requirement_delivered = Requirement_Delivered()
+                        requirement_register=Requirement.objects.get(pk=requirement)
+                        requirement_delivered.rental = rental
+                        requirement_delivered.requirement = requirement_register
+                        requirement_delivered.save()
+                    response_data = {
+                        "state":"success",
+                        "message":"Requisitos entregados existosamente"
+                    }
+                    return Response(response_data, status=status.HTTP_200_OK)
+            except Rental.DoesNotExist:
+                    return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
