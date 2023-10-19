@@ -189,7 +189,7 @@ class Posible_product(APIView):
                     product_list = list(products_with_rate)
                     product_data = serializer.data[product_list.index(product)]
                     if active_price_data:
-                        product_data['active_price'] = active_price_data
+                        product_data['mount'] = active_price_data.get("mount")
                         products_with_active_prices.append(product_data)
                 return Response({'status': 'success', 'products': products_with_active_prices})
             else:
