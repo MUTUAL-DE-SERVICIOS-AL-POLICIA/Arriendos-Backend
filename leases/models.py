@@ -33,3 +33,9 @@ class Selected_Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+class Payment(models.Model):
+    rental = models.ForeignKey(Rental, on_delete=models.CASCADE)
+    voucher_number= models.IntegerField()
+    detail = models.CharField(null=True)
+    payable_mount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount_paid = models.DecimalField(max_digits=10, decimal_places=2)
