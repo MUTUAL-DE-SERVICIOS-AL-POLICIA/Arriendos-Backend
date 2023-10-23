@@ -245,6 +245,21 @@ class Change_state(generics.ListAPIView):
                 return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
 class Register_payment(generics.ListAPIView):
     serializer_class = Payment_Serializer
+    def get(self,request):
+        rental_id = request.query_params.get('rental')
+        if not rental_id:
+            return Response({"error": "Parámetro 'rental' faltante en la consulta."}, status=status.HTTP_400_BAD_REQUEST)
+        total_mount=Rental.objects.get(pk=rental_id).initial_total
+        payment = Payment.objects.filter(rental_id=rental_id)
+        payable_mount = payment.latest('id').payable_mount
+        payment_serialized = self.serializer_class(payment, many=True)
+        response_data= {
+            "state" :"success",
+            "total_mount": total_mount,
+            "payable_mount":payable_mount,
+            "payments":payment_serialized.data
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
     def post(self,request):
             rental_id = request.data["rental"]
             detail = request.data["detail"]
