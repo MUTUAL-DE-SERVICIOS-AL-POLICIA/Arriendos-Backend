@@ -11,7 +11,6 @@ class State(models.Model):
 class Rental(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     state = models.ForeignKey(State, on_delete=models.CASCADE)
-    is_plan=models.BooleanField(default=False)
     plan = models.ForeignKey(Plan, null=True, on_delete=models.CASCADE)
     initial_total = models.FloatField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
