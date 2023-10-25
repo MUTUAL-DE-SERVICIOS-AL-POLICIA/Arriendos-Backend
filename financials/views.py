@@ -170,3 +170,34 @@ class Discount_warranty(generics.ListAPIView):
                 return Response({"no tiene garantias registrada"}, status=status.HTTP_400_BAD_REQUEST)
         except Rental.DoesNotExist:
             return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
+class Warranty_Returned(generics.ListAPIView):
+    serializer_class = Warranty_Movement_Serializer
+    def post(self, request):
+        validated_fields = ["rental"]
+        error_message = required_fields(request, validated_fields)
+        if error_message:
+            return Response(error_message, status=status.HTTP_400_BAD_REQUEST)
+        rental_id = request.data["rental"]
+        try:
+            rental = Rental.objects.get(pk=rental_id)
+            warranty= Warranty_Movement.objects.filter(rental_id=rental.id)
+            if (warranty.exists()):
+                warranty_balance=warranty.latest('id').balance
+                total=  0
+                returned=warranty_balance
+                warranty_data = {
+                    "rental": rental_id,
+                    "income": 0,
+                    "discount": 0,
+                    "returned": returned,
+                    "balance": total,
+                    "voucher_number":0
+                }
+                serializer = self.serializer_class(data=warranty_data)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                return Response({"message": "Se retorno la garantía exitosamente"}, status=status.HTTP_201_CREATED)
+            else:
+                return Response({"error":"no tiene garantias registrada"}, status=status.HTTP_400_BAD_REQUEST)
+        except Rental.DoesNotExist:
+            return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
