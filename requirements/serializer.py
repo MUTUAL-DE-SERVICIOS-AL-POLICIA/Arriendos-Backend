@@ -46,7 +46,6 @@ class RateWithRelatedDataSerializer(serializers.ModelSerializer):
         return serializer.data
 
 class Requirement_DeliveredSerializer(serializers.ModelSerializer):
-    #requirement = RequirementSerializer()
     class Meta:
         model = Requirement_Delivered
         fields = ('rental_id', 'requirement_id', 'created_at', 'updated_at')
