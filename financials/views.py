@@ -1,9 +1,10 @@
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework import status, generics
-from financials.models import Payment
-from financials.serializer import Payment_Serializer
+from financials.models import Payment, Warranty_Movement
+from financials.serializer import Payment_Serializer, Warranty_Movement_Serializer
 from leases.models import Rental
+from Arriendos_Backend.util import required_fields
 # Create your views here.
 class Register_payment(generics.ListAPIView):
     serializer_class = Payment_Serializer
@@ -74,3 +75,48 @@ class Register_payment(generics.ListAPIView):
                     return Response(response_data, status=status.HTTP_201_CREATED)
             except Rental.DoesNotExist:
                 return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
+class Register_warranty(generics.ListAPIView):
+    serializer_class = Warranty_Movement_Serializer
+    def post(self, request):
+        validated_fields = ["rental","income", "detail"]
+        error_message = required_fields(request, validated_fields)
+        if error_message:
+            return Response(error_message, status=400)
+        rental_id = request.data["rental"]
+        income = request.data["income"]
+        detail = request.data["detail"]
+        if income<=0:
+            return Response({"error":"el monto ingresado es 0"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            rental = Rental.objects.get(pk=rental_id)
+            warranty= Warranty_Movement.objects.filter(rental_id=rental.id)
+            if (warranty.exists()):
+                warranty_balance=warranty.latest('id').balance
+                total= + income + warranty_balance
+                warranty_data = {
+                    "rental": rental_id,
+                    "income": income,
+                    "discount": 0,
+                    "returned": 0,
+                    "balance": total,
+                    "detail": detail,
+                }
+                serializer = self.serializer_class(data=warranty_data)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                return Response({"message": "La garantía se ha registrado exitosamente"}, status=status.HTTP_201_CREATED)
+            else:
+                warranty_data = {
+                    "rental": rental_id,
+                    "income": income,
+                    "discount": 0,
+                    "returned": 0,
+                    "balance": income,
+                    "detail": detail,
+                }
+                serializer = self.serializer_class(data=warranty_data)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+            return Response({"message": "La garantía se ha registrado exitosamente"}, status=status.HTTP_201_CREATED)
+        except Rental.DoesNotExist:
+            return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
