@@ -13,6 +13,7 @@ from datetime import datetime
 from django.db.models import OuterRef, Subquery
 from leases.models import Rental
 from Arriendos_Backend.util import required_fields
+from .function import Make_Rental_Form
 
 class Requirement_Api(generics.GenericAPIView):
     serializer_class = RequirementSerializer
@@ -249,6 +250,6 @@ class Register_delivered_requirement(generics.ListAPIView):
                         "state":"success",
                         "message":"Requisitos entregados existosamente"
                     }
-                    return Response(response_data, status=status.HTTP_200_OK)
+                    return Make_Rental_Form(request, rental_id)
             except Rental.DoesNotExist:
                     return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
