@@ -234,6 +234,7 @@ class Pre_Reserve_Api(generics.GenericAPIView):
                 end_time = datetime.strptime(end_time, '%Y-%m-%dT%H:%M:%S.%fZ')
                 end_time = pytz.timezone('America/La_Paz').localize(end_time)
                 Selected_Product.objects.create(product_id = selected_product.get("product"), event_type_id = event.id, rental_id = rental.id, start_time= start_time, end_time = end_time, detail = selected_product.get("detail", None), product_price = product_price)
+        return Response({"status":"success", "message": "Pre reserva creada con éxito"}, status=status.HTTP_201_CREATED)
 
 class Event_Api(generics.ListAPIView):
     queryset = Event_Type.objects.all()

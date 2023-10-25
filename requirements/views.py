@@ -231,25 +231,27 @@ class Requirements_customer(generics.GenericAPIView):
             return Response({"error": "No se encontró el arriendo"}, status=status.HTTP_404_NOT_FOUND)
 class Register_delivered_requirement(generics.ListAPIView):
         def post(self, request):
-            validated_fields = ["rental","list_requirements"]
+            validated_fields = ["rental"]
             error_message = required_fields(request, validated_fields)
             if error_message:
                 return Response(error_message, status=400)
             rental_id = request.data["rental"]
-            list_requirements = request.data["list_requirements"]
+            list_requirements = request.data.get("list_requirements")
             try:
                 if list_requirements:
                     rental = Rental.objects.get(pk=rental_id)
+                    for requirement in list_requirements:
+                        requirements_delivered = Requirement_Delivered.objects.filter(requirement_id = requirement, rental_id = rental_id).exists()
+                        if requirements_delivered:
+                            return Response({"message": "Los requisitos ya existen"}, status=status.HTTP_404_NOT_FOUND)
                     for requirement in list_requirements:
                         requirement_delivered = Requirement_Delivered()
                         requirement_register=Requirement.objects.get(pk=requirement)
                         requirement_delivered.rental = rental
                         requirement_delivered.requirement = requirement_register
                         requirement_delivered.save()
-                    response_data = {
-                        "state":"success",
-                        "message":"Requisitos entregados existosamente"
-                    }
+                    return Make_Rental_Form(request, rental_id)
+                else:
                     return Make_Rental_Form(request, rental_id)
             except Rental.DoesNotExist:
                     return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
