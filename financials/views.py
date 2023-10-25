@@ -78,13 +78,14 @@ class Register_payment(generics.ListAPIView):
 class Register_warranty(generics.ListAPIView):
     serializer_class = Warranty_Movement_Serializer
     def post(self, request):
-        validated_fields = ["rental","income", "detail"]
+        validated_fields = ["rental","income", "detail","voucher_number"]
         error_message = required_fields(request, validated_fields)
         if error_message:
             return Response(error_message, status=400)
         rental_id = request.data["rental"]
         income = request.data["income"]
         detail = request.data["detail"]
+        voucher = request.data["voucher_number"]
         if income<=0:
             return Response({"error":"el monto ingresado es 0"}, status=status.HTTP_400_BAD_REQUEST)
         try:
@@ -100,6 +101,7 @@ class Register_warranty(generics.ListAPIView):
                     "returned": 0,
                     "balance": total,
                     "detail": detail,
+                    "voucher_number":voucher
                 }
                 serializer = self.serializer_class(data=warranty_data)
                 serializer.is_valid(raise_exception=True)
@@ -113,6 +115,7 @@ class Register_warranty(generics.ListAPIView):
                     "returned": 0,
                     "balance": income,
                     "detail": detail,
+                    "voucher_number":voucher
                 }
                 serializer = self.serializer_class(data=warranty_data)
                 serializer.is_valid(raise_exception=True)
