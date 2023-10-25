@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Requirement, RateRequirement
+from .models import Requirement, RateRequirement, Requirement_Delivered
 from products.models import Rate
 from customers.serializer import Customer_typeSerializer
 from customers.models import Customer_type
@@ -44,3 +44,9 @@ class RateWithRelatedDataSerializer(serializers.ModelSerializer):
         requirements = Requirement.objects.filter(raterequirement__rate=obj, raterequirement__is_active=True).distinct()
         serializer = RequirementSerializer(requirements, many=True)
         return serializer.data
+
+class Requirement_DeliveredSerializer(serializers.ModelSerializer):
+    #requirement = RequirementSerializer()
+    class Meta:
+        model = Requirement_Delivered
+        fields = ('rental_id', 'requirement_id', 'created_at', 'updated_at')
