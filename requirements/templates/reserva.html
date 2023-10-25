@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>My Website</title>
+    <link rel="stylesheet" href="./style.css">
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+
+    <style>
+      table {
+        font-family: 'Arial', sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 11px;
+      }
+
+      th, td {
+        border: 1px solid #4e4e4e;
+        padding: 5px;
+        text-align: left;
+      }
+
+      th {
+        background-color: #f2f2f2;
+      }
+
+      tr:nth-child(even) {
+        background-color: #f2f2f2;
+      }
+
+      tr:hover {
+        background-color: #ddd;
+      }
+
+      .svg-icon {
+        width: 2em;
+        height: 2em;
+      }
+
+      .svg-icon path,
+      .svg-icon polygon,
+
+      .svg-icon circle {
+        stroke-width: 1;
+      }
+
+      .line1 {
+        border-top: 1px solid black;
+        height: 2px;
+        max-width: 190px;
+        padding: 0;
+        margin-top: 100px;
+
+      }
+      .line2 {
+        border-top: 1px solid black;
+        height: 2px;
+        max-width: 230px;
+        padding: 0;
+        margin-top: 100px;
+      }
+      .line3 {
+        border-top: 1px solid black;
+        height: 2px;
+        max-width: 220px;
+        padding: 0;
+        margin-top: 100px;
+      }
+      @page {
+        @bottom-center {
+        content: "Página " counter(page);
+      }
+    }
+    </style>
+  </head>
+  <body>
+    <main>
+        <table border="1">
+          <tr>
+            <th colspan="3">
+              <center>FORMULARIO DE SOLICITUD DE ARRENDAMIENTO DE
+                SALONES DE EVENTOS DE LA MUSEROL</center>
+            </th>
+          </tr>
+          <tr>
+            <th colspan="3" style="text-align: right">
+              No. {{ rental }}
+            </th>
+          </tr>
+
+          <tr>
+            <th>NOMBRE DEL SOLICITANTE</th>
+            <td colspan="2">{{ name }}</td>
+          </tr>
+
+          <tr>
+            <th>CI. DEL SOLICITANTE</th>
+            <td colspan="2">{{ nit }}</td>
+          </tr>
+
+          {% for selected_product in selected_products %}
+
+          <tr style="border-top: solid; border-left: solid; border-right: solid;">
+            <th>NOMBRE DEL SALÓN SOLICITADO</th>
+            <td colspan="2">
+              <p>
+                {{ selected_product.product.room.name }}
+              </p>
+              </td>
+          </tr>
+
+          <tr style="border-left: solid; border-right: solid;">
+            <th>FECHA DE EVENTO (DÍA)</th>
+            <td colspan="2">
+              <p id="formatted-date">
+                {{ selected_product.start_time }}
+              </p>
+            </td>
+          </tr>
+
+          <tr style="border-left: solid; border-right: solid;">
+            <th>TIPO DE EVENTO</th>
+            <td colspan="2">
+              <p>
+                {{ selected_product.event_type.name }}
+              </p>
+            </td>
+          </tr>
+
+          <tr style="border-left: solid; border-right: solid;">
+            <th>CANTIDAD DE HORAS DE USO</th>
+            <td colspan="2">
+              <p>
+                {{ selected_product.product.hour_range.time }} Horas
+              </p>
+            </td>
+          </tr>
+
+          <tr style="border-left: solid; border-right: solid;">
+            <th>HORA DE INICIO DEL EVENTO</th>
+            <td colspan="2">
+              <p>
+                {{ selected_product.start_time_only_hour }}
+              </p>
+            </td>
+          </tr>
+
+          <tr style="border-left: solid; border-right: solid;">
+            <th>HORA DE FINALIZACIÓN DEL EVENTO</th>
+            <td colspan="2">
+              <p>
+                {{ selected_product.end_time_only_hour }}
+              </p>
+            </td>
+          </tr>
+
+          <tr style="border-left: solid; border-right: solid;">
+            <th>PRECIO</th>
+            <td colspan="2">
+            <p>{{ selected_product.product_price }}</p>
+            </td>
+          </tr>
+
+          <tr style="border-left: solid; border-right: solid; border-bottom: solid;">
+            <th>GARANTÍA</th>
+            <td colspan="2">
+              <p>
+                {{ selected_product.product.room.warranty }}
+              </p>
+            </td>
+          </tr>
+          {% endfor %}
+
+          <tr>
+            <th>CANON DE ARRENDAMIENTO</th>
+            <td colspan="2">
+            <p>{{ initial_total }}</p>
+            </td>
+          </tr>
+
+          <tr>
+            <th>DATOS DE CONTACTO</th>
+            <td colspan="2">
+              {% for contact in contacts %}
+              <p>
+                Contacto: {{ contact.name}} Teléfono: {{ contact.phone }}
+              </p>
+              {% endfor %}
+            </td>
+          </tr>
+
+          <tr>
+            <th>DATOS DE FACTURACIÓN</th>
+            <td colspan="2">
+              <p>
+                {{ name }} {{ nit }}
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <th rowspan="{{num}}">DOCUMENTACIÓN REQUERIDA <br> (adjunta)</th>
+            <td>Favor adjuntar la siguiente documentación</td>
+            <td>Verif.</td>
+          </tr>
+
+          {% for requirement in requirements %}
+          <tr>
+            <th>{{ requirement.name }}</th>
+            <td>
+
+              <svg class="svg-icon" viewBox="0 0 20 20">
+                <path d="M10.219,1.688c-4.471,0-8.094,3.623-8.094,8.094s3.623,8.094,8.094,8.094s8.094-3.623,8.094-8.094S14.689,1.688,10.219,1.688 M10.219,17.022c-3.994,0-7.242-3.247-7.242-7.241c0-3.994,3.248-7.242,7.242-7.242c3.994,0,7.241,3.248,7.241,7.242C17.46,13.775,14.213,17.022,10.219,17.022 M15.099,7.03c-0.167-0.167-0.438-0.167-0.604,0.002L9.062,12.48l-2.269-2.277c-0.166-0.167-0.437-0.167-0.603,0c-0.166,0.166-0.168,0.437-0.002,0.603l2.573,2.578c0.079,0.08,0.188,0.125,0.3,0.125s0.222-0.045,0.303-0.125l5.736-5.751C15.268,7.466,15.265,7.196,15.099,7.03"></path>
+              </svg>
+
+            </td>
+          </tr>
+          {% endfor %}
+
+</table>
+<br>
+<div style="text-align:left; float: left;">
+  <div class="line1">
+    <p style="text-align:left;">FIRMA FUNCIONARIO</p>
+  </div>
+</div>
+
+<div style="text-align:right; float: right;">
+  <div class="line2">
+    <p style="text-align:right;">FIRMA ARRENDATARIO</p>
+  </div>
+</div>
+
+<br>
+<br>
+
+<div style="text-align:center; margin: 0; display: flex; justify-content: center; ">
+  <div class="line3">
+    <p style="text-align:center;">VoBo Inmediato Superior</p>  </div>
+</div>
+
+    </main>
+  </body>
+</html>
