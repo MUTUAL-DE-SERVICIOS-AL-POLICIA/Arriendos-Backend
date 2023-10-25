@@ -12,6 +12,7 @@ class Payment(models.Model):
 
 class Warranty_Movement (models.Model):
     rental = models.ForeignKey(Rental, on_delete=models.CASCADE)
+    voucher_number= models.IntegerField()
     income = models.DecimalField(max_digits=10, decimal_places=2)
     discount = models.DecimalField(max_digits=10, decimal_places=2)
     returned = models.DecimalField(max_digits=10, decimal_places=2)
