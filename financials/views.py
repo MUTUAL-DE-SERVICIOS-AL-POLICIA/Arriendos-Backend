@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework import status, generics
-from financials.models import Payment, Warranty_Movement
-from financials.serializer import Payment_Serializer, Warranty_Movement_Serializer
+from financials.models import Payment, Warranty_Movement, Event_Damage
+from financials.serializer import Payment_Serializer, Warranty_Movement_Serializer, Event_Damage_Serializer
 from leases.models import Rental
 from Arriendos_Backend.util import required_fields
 # Create your views here.
@@ -121,5 +121,52 @@ class Register_warranty(generics.ListAPIView):
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
             return Response({"message": "La garantía se ha registrado exitosamente"}, status=status.HTTP_201_CREATED)
+        except Rental.DoesNotExist:
+            return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
+class Discount_warranty(generics.ListAPIView):
+    serializer_class = Warranty_Movement_Serializer
+    def post(self, request):
+        validated_fields = ["rental","product", "detail","discount"]
+        error_message = required_fields(request, validated_fields)
+        if error_message:
+            return Response(error_message, status=400)
+        rental_id = request.data["rental"]
+        product = request.data["product"]
+        detail = request.data["detail"]
+        discount = request.data["discount"]
+        if discount<=0:
+            return Response({"error":"el monto ingresado es 0 no se registra el descuento"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            rental = Rental.objects.get(pk=rental_id)
+            warranty= Warranty_Movement.objects.filter(rental_id=rental.id)
+            if warranty.latest('id').balance <discount:
+                return Response({"error":"el monto ingresado mayor al del saldo"}, status=status.HTTP_400_BAD_REQUEST)
+            if (warranty.exists()):
+                warranty_balance=warranty.latest('id').balance
+                total=  warranty_balance - discount
+                warranty_data = {
+                    "rental": rental_id,
+                    "income": 0,
+                    "discount": discount,
+                    "returned": 0,
+                    "balance": total,
+                    "detail": detail,
+                    "voucher_number":0
+                }
+                serializer = self.serializer_class(data=warranty_data)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                last_warranty= warranty.latest('id').id
+                event_damaged_data= {
+                    "mount": discount,
+                    "selected_product": product,
+                    "warranty_movement":last_warranty
+                }
+                event_damaged_serialized = Event_Damage_Serializer(data=event_damaged_data)
+                event_damaged_serialized.is_valid(raise_exception=True)
+                event_damaged_serialized.save()
+                return Response({"message": "Se desconto el monto de la garantía exitosamente"}, status=status.HTTP_201_CREATED)
+            else:
+                return Response({"no tiene garantias registrada"}, status=status.HTTP_400_BAD_REQUEST)
         except Rental.DoesNotExist:
             return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
