@@ -31,13 +31,15 @@ class Register_payment(generics.ListAPIView):
             detail = request.data["detail"]
             mount=request.data["mount"]
             voucher = request.data["voucher_number"]
+            if mount<=0:
+                return Response({"error":"el monto ingresado debe ser mayor 0"}, status=status.HTTP_400_BAD_REQUEST)
             try:
                 rental = Rental.objects.get(pk=rental_id)
                 exist_payment= Payment.objects.filter(rental_id=rental_id).exists()
                 if (exist_payment):
                     last_payment = Payment.objects.filter(rental_id=rental_id).latest('id')
                     total =last_payment.payable_mount-mount
-                    if total<0:
+                    if total<=0:
                         return Response({"error": "El monto de pago es mayor al del monto total."}, status=status.HTTP_400_BAD_REQUEST)
                     payment_data={
                         "rental": rental_id,
@@ -74,7 +76,59 @@ class Register_payment(generics.ListAPIView):
                     }
                     return Response(response_data, status=status.HTTP_201_CREATED)
             except Rental.DoesNotExist:
-                return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error": "El alquiler no existe."}, status=status.HTTP_400_BAD_REQUEST)
+class Register_total_payment(generics.ListAPIView):
+    serializer_class = Payment_Serializer
+    def post(self,request):
+        rental_id = request.data["rental"]
+        detail = request.data["detail"]
+        voucher = request.data["voucher_number"]
+        try:
+            rental = Rental.objects.get(pk=rental_id)
+            exist_payment= Payment.objects.filter(rental_id=rental_id).exists()
+            if (exist_payment):
+                last_payment = Payment.objects.filter(rental_id=rental_id).latest('id')
+                mount=last_payment.payable_mount
+                total =last_payment.payable_mount-mount
+                if total<=0:
+                    return Response({"error": "El monto de pago es mayor al del monto total."}, status=status.HTTP_400_BAD_REQUEST)
+                payment_data={
+                    "rental": rental_id,
+                    "detail": detail,
+                    "payable_mount": total,
+                    "amount_paid": mount,
+                    "voucher_number":voucher
+                }
+                serializer = self.get_serializer(data=payment_data)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                response_data = {
+                "state":"success",
+                "message":"El pago se ha registrado exitosamente"
+                }
+                return Response(response_data, status=status.HTTP_201_CREATED)
+            else:
+                mount= rental.initial_total
+                total =rental.initial_total-mount
+                if total<0:
+                    return Response({"error": "El monto de pago es mayor al del monto total."}, status=status.HTTP_400_BAD_REQUEST)
+                payment_data={
+                    "rental": rental_id,
+                    "detail": detail,
+                    "payable_mount": total,
+                    "amount_paid": mount,
+                    "voucher_number":voucher
+                }
+                serializer = self.get_serializer(data=payment_data)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                response_data = {
+                "state":"success",
+                "message":"El pago se ha registrado exitosamente"
+                }
+                return Response(response_data, status=status.HTTP_201_CREATED)
+        except Rental.DoesNotExist:
+                return Response({"error": "El alquiler no existe."}, status=status.HTTP_400_BAD_REQUEST)
 class Register_warranty(generics.ListAPIView):
     serializer_class = Warranty_Movement_Serializer
     def post(self, request):
