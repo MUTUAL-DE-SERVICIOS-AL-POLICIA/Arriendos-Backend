@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Rate, HourRange, Product, Price
+from .models import Rate, HourRange, Product, Price, Price_Additional_Hour
 from customers.models import Customer_type
 from customers.serializer import Customer_typeSerializer
 
@@ -38,4 +38,8 @@ class ProductsSerializer(serializers.ModelSerializer):
 class HourRangeSerializer(serializers.ModelSerializer):
     class Meta:
         model = HourRange
+        fields = '__all__'
+class PriceAdditionalHourSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Price_Additional_Hour
         fields = '__all__'

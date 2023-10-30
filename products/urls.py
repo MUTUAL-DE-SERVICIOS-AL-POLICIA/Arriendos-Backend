@@ -5,7 +5,9 @@ from .views import (
     Product_Api,
     Price_List_Create_View,
     Price_Retrieve_Update_Destroy_View,
-    Posible_product
+    Posible_product,
+    Additional_Hour_List_Create_View,
+    Additional_Hour_Retrieve_Update_Destroy_View
 )
 
 urlpatterns = [
@@ -20,6 +22,9 @@ urlpatterns = [
 
     path('price/', Price_List_Create_View.as_view(), name="price-list-create"),
     path('price/<int:pk>', Price_Retrieve_Update_Destroy_View.as_view(), name="price-retrieve-update-destroy"),
+
+    path('additional_hour/',Additional_Hour_List_Create_View.as_view()),
+    path('additional_hour/<int:pk>', Additional_Hour_Retrieve_Update_Destroy_View.as_view()),
 
     path("Posible_product/", Posible_product.as_view())
 
