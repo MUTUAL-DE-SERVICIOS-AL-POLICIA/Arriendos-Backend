@@ -26,3 +26,11 @@ class Price(models.Model):
     mount = models.FloatField()
     is_active = models.BooleanField()
     created_at = models.DateTimeField(auto_now_add=True)
+
+class Price_Additional_Hour(models.Model):
+    hourRange = models.ForeignKey(HourRange, on_delete=models.CASCADE)
+    room= models.ForeignKey(Room,on_delete=models.PROTECT)
+    mount = models.FloatField()
+    state = models.BooleanField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
