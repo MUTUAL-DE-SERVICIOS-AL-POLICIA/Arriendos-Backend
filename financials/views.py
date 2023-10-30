@@ -26,7 +26,13 @@ class Register_payment(generics.ListAPIView):
             }
             return Response(response_data, status=status.HTTP_200_OK)
         else:
-            return Response({"error": "El alquiler no tiene pagos registrados."}, status=status.HTTP_404_NOT_FOUND)
+            response_data= {
+                "state" :"success",
+                "total_mount": total_mount,
+                "payable_mount":0,
+                "payments":[]
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
     def post(self,request):
             rental_id = request.data["rental"]
             detail = request.data["detail"]
