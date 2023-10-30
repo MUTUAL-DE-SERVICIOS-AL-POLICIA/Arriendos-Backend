@@ -79,7 +79,7 @@ class Register_payment(generics.ListAPIView):
             except Rental.DoesNotExist:
                 return Response({"error": "El alquiler no existe."}, status=status.HTTP_400_BAD_REQUEST)
     def delete(self,request):
-        rental_id = request.data["rental"]
+        rental_id = request.data.get("rental")
         try:
             exist_payment= Payment.objects.filter(rental_id=rental_id).exists()
             if (exist_payment):
