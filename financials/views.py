@@ -3,8 +3,9 @@ from rest_framework.response import Response
 from rest_framework import status, generics
 from financials.models import Payment, Warranty_Movement, Event_Damage
 from financials.serializer import Payment_Serializer, Warranty_Movement_Serializer, Event_Damage_Serializer
-from leases.models import Rental
+from leases.models import Rental, Selected_Product
 from Arriendos_Backend.util import required_fields
+from .function import Make_Damage_Warranty_Form
 # Create your views here.
 class Register_payment(generics.ListAPIView):
     serializer_class = Payment_Serializer
@@ -203,6 +204,12 @@ class Discount_warranty(generics.ListAPIView):
         if discount<=0:
             return Response({"error":"el monto ingresado es 0 no se registra el descuento"}, status=status.HTTP_400_BAD_REQUEST)
         try:
+            selected_product = Selected_Product.objects.get(rental_id = rental_id, pk = product)
+            if selected_product is None:
+                return Response({'error': 'No se ha podido obtener el producto'}, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response({'error': 'No se ha podido obtener el producto'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
             rental = Rental.objects.get(pk=rental_id)
             warranty= Warranty_Movement.objects.filter(rental_id=rental.id)
             if warranty.latest('id').balance <discount:
@@ -231,7 +238,7 @@ class Discount_warranty(generics.ListAPIView):
                 event_damaged_serialized = Event_Damage_Serializer(data=event_damaged_data)
                 event_damaged_serialized.is_valid(raise_exception=True)
                 event_damaged_serialized.save()
-                return Response({"message": "Se desconto el monto de la garantía exitosamente"}, status=status.HTTP_201_CREATED)
+                return Make_Damage_Warranty_Form(request, rental_id, product, discount, total, detail)
             else:
                 return Response({"no tiene garantias registrada"}, status=status.HTTP_400_BAD_REQUEST)
         except Rental.DoesNotExist:
