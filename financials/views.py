@@ -77,6 +77,18 @@ class Register_payment(generics.ListAPIView):
                     return Response(response_data, status=status.HTTP_201_CREATED)
             except Rental.DoesNotExist:
                 return Response({"error": "El alquiler no existe."}, status=status.HTTP_400_BAD_REQUEST)
+    def delete(self,request):
+        rental_id = request.data["rental"]
+        try:
+            exist_payment= Payment.objects.filter(rental_id=rental_id).exists()
+            if (exist_payment):
+                last_payment = Payment.objects.filter(rental_id=rental_id).latest('id')
+                last_payment.delete()
+                return Response({'mensaje': 'Registro eliminado exitosamente'})
+            else:
+                return Response({"error": "No existen pagos para ese alquiler"}, status=status.HTTP_400_BAD_REQUEST)
+        except Payment.DoesNotExist:
+            return Response({"error": "El pago no existe."}, status=status.HTTP_400_BAD_REQUEST)
 class Register_total_payment(generics.ListAPIView):
     serializer_class = Payment_Serializer
     def post(self,request):
@@ -128,7 +140,7 @@ class Register_total_payment(generics.ListAPIView):
                 }
                 return Response(response_data, status=status.HTTP_201_CREATED)
         except Rental.DoesNotExist:
-                return Response({"error": "El alquiler no existe."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
 class Register_warranty(generics.ListAPIView):
     serializer_class = Warranty_Movement_Serializer
     def post(self, request):
