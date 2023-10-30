@@ -1,8 +1,8 @@
 from rest_framework import generics, status
 from rest_framework.views import APIView
-from .models import Rate, HourRange, Product, Price
+from .models import Rate, HourRange, Product, Price, Price_Additional_Hour
 from customers.models import Customer_type
-from .serializers import RateSerializer, HourRangeSerializer, ProductsSerializer, ProductSerializer, PriceSerializer
+from .serializers import RateSerializer, HourRangeSerializer, ProductsSerializer, ProductSerializer, PriceSerializer, PriceAdditionalHourSerializer
 from rest_framework.response import Response
 import math
 from requirements.models import RateRequirement
@@ -172,7 +172,13 @@ class Price_List_Create_View(generics.ListCreateAPIView):
 class Price_Retrieve_Update_Destroy_View(generics.RetrieveUpdateDestroyAPIView):
     queryset=Price.objects.all()
     serializer_class = PriceSerializer
+class Additional_Hour_List_Create_View(generics.ListCreateAPIView):
+    queryset = Price_Additional_Hour.objects.all()
+    serializer_class = PriceAdditionalHourSerializer
 
+class Additional_Hour_Retrieve_Update_Destroy_View(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Price_Additional_Hour.objects.all()
+    serializer_class = PriceAdditionalHourSerializer
 class Posible_product(APIView):
     def post(self, request):
         customer_type_id = request.data.get('customer_type')
