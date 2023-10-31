@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>My Website</title>
+    <link rel="stylesheet" href="./style.css">
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+
+    <style>
+      table {
+        font-family: 'Arial', sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 11px;
+      }
+
+      th, td {
+        border: 1px solid #4e4e4e;
+        padding: 5px;
+        text-align: left;
+      }
+
+      th {
+        background-color: #f2f2f2;
+      }
+
+      tr:nth-child(even) {
+        background-color: #f2f2f2;
+      }
+
+      tr:hover {
+        background-color: #ddd;
+      }
+
+      .svg-icon {
+        width: 2em;
+        height: 2em;
+      }
+
+      .svg-icon path,
+      .svg-icon polygon,
+
+      .svg-icon circle {
+        stroke-width: 1;
+      }
+
+      .line1 {
+        border-top: 1px solid black;
+        height: 2px;
+        max-width: 190px;
+        padding: 0;
+        margin-top: 100px;
+
+      }
+      .line2 {
+        border-top: 1px solid black;
+        height: 2px;
+        max-width: 230px;
+        padding: 0;
+        margin-top: 100px;
+      }
+      .line3 {
+        border-top: 1px solid black;
+        height: 2px;
+        max-width: 220px;
+        padding: 0;
+        margin-top: 100px;
+      }
+      .ref{
+        text-align: right;
+
+      }
+      .text-warranty{
+        text-align: justify;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p>La Paz, {{ date }}
+          <br>
+
+          <strong>Señor</strong>
+          <br>
+          {{ director }}
+          <br>
+          <strong>DIRECTOR GENERAL EJECUTIVO</strong>
+          <br>
+          <strong>MUSERPOL</strong>
+          <br>
+          Presente.-
+          </p>
+          <div class="ref">
+              <p><u><strong>REF.-: SOLICITUD DE DEVOLUCIÓN DE GARANTÍA</strong></u></p>
+          </div>
+          <br>
+          
+      <div class="text-warranty">
+          <p>Mediante la presente me dirijo a su autoridad para informarle que realicé:
+<br>
+<br>
+            {% for selected_product in selected_products %}
+            -En fecha {{ selected_product.start_time }}, realicé el evento {{ selected_product.event_type.name }} en el Salón {{ selected_product.product.room.name }}.
+            <br>
+            {% endfor %}
+
+            <br>
+
+              Solicito la devolución de Bs. {{ warranty }} que fueron otorgados en calidad de garantía para cubrir posibles daños, en vista de la conclusión del evento y de la devolución de los ambientes en las mismas condiciones que fueron recibidos y sin ninguna observación. 
+              
+              <br>
+              <br>
+              Sin otro particular, saludo a usted atentamente.
+              </p>
+      </div>
+
+<br>
+<div class="line1">
+  <p> {{ name }}
+    <br>
+      {{ nit }}
+      <strong>ARRENDATARIO</strong>
+      </p>
+</div>
+    </main>
+  </body>
+</html>
