@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from .models import Rate, HourRange, Product, Price, Price_Additional_Hour
 from customers.models import Customer_type
 from .serializers import RateSerializer, HourRangeSerializer, ProductsSerializer, ProductSerializer, PriceSerializer, PriceAdditionalHourSerializer
+from leases.models import Selected_Product
 from rest_framework.response import Response
 import math
 from requirements.models import RateRequirement
@@ -179,6 +180,20 @@ class Additional_Hour_List_Create_View(generics.ListCreateAPIView):
 class Additional_Hour_Retrieve_Update_Destroy_View(generics.RetrieveUpdateDestroyAPIView):
     queryset = Price_Additional_Hour.objects.all()
     serializer_class = PriceAdditionalHourSerializer
+class Get_price_additional_hour(generics.ListAPIView):
+    def get(self,request):
+        selected_product_id = request.query_params.get('selected_product')
+        try:
+            selected_product=Selected_Product.objects.get(pk=selected_product_id)
+            room = selected_product.product.room.id
+            hour = selected_product.product.hour_range.id
+            price_additional_hour=Price_Additional_Hour.objects.filter(room=room, hourRange=hour, state=True)
+            if price_additional_hour.exists():
+                price=price_additional_hour.first().mount
+                return Response({"price":price}, status=status.HTTP_200_OK)
+            return Response({"error": "No existe hora extra para ese producto"}, status=status.HTTP_404_NOT_FOUND)
+        except Selected_Product.DoesNotExist:
+            return Response({"no existe el producto seleccionado"}, status=status.HTTP_404_NOT_FOUND)
 class Posible_product(APIView):
     def post(self, request):
         customer_type_id = request.data.get('customer_type')

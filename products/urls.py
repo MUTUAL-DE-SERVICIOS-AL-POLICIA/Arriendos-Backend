@@ -7,7 +7,8 @@ from .views import (
     Price_Retrieve_Update_Destroy_View,
     Posible_product,
     Additional_Hour_List_Create_View,
-    Additional_Hour_Retrieve_Update_Destroy_View
+    Additional_Hour_Retrieve_Update_Destroy_View,
+    Get_price_additional_hour
 )
 
 urlpatterns = [
@@ -25,6 +26,7 @@ urlpatterns = [
 
     path('additional_hour/',Additional_Hour_List_Create_View.as_view()),
     path('additional_hour/<int:pk>', Additional_Hour_Retrieve_Update_Destroy_View.as_view()),
+    path('get_price_additional_hour/',Get_price_additional_hour.as_view()),
 
     path("Posible_product/", Posible_product.as_view())
 
