@@ -5,7 +5,7 @@ from financials.models import Payment, Warranty_Movement, Event_Damage
 from financials.serializer import Payment_Serializer, Warranty_Movement_Serializer, Event_Damage_Serializer
 from leases.models import Rental, Selected_Product
 from Arriendos_Backend.util import required_fields
-from .function import Make_Damage_Warranty_Form, Make_Warranty_Form
+from .function import Make_Damage_Warranty_Form, Make_Warranty_Form, Make_Return_Warranty_Form
 # Create your views here.
 class Register_payment(generics.ListAPIView):
     serializer_class = Payment_Serializer
@@ -286,3 +286,10 @@ class Warranty_Returned(generics.ListAPIView):
                 return Response({"error":"no tiene garantias registrada"}, status=status.HTTP_400_BAD_REQUEST)
         except Rental.DoesNotExist:
             return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
+
+class Return_Warranty_Form(generics.GenericAPIView):
+    def get(self, request, *args, **kwargs):
+        rental = int(request.GET.get('rental', None))
+        if rental is None:
+            return Response({"error": "No se ha enviado rental"}, status=status.HTTP_404_NOT_FOUND)
+        return Make_Return_Warranty_Form(request, rental)
