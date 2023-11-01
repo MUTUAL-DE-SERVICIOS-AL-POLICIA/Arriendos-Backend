@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import State, Selected_Product, Rental, Event_Type
 from products.serializers import RateSerializer
-from rooms.serializers import RoomSerializer
+from rooms.serializers import RoomSerializer, RoomsSerializer
 from products.models import Product, HourRange
 from products.serializers import HourRangeSerializer
 from customers.serializer import CustomersSerializer
@@ -24,7 +24,7 @@ class Event_TypeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ProductSerializer(serializers.ModelSerializer):
-    room = RoomSerializer()
+    room = RoomsSerializer()
     rate = RateSerializer()
     hour_range = HourRangeSerializer()
 
