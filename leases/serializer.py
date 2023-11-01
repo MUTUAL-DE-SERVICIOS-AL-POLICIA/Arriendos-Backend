@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import State, Selected_Product, Rental, Event_Type
+from .models import State, Selected_Product, Rental, Event_Type, Additional_Hour_Applied
 from products.serializers import RateSerializer
 from rooms.serializers import RoomSerializer, RoomsSerializer
 from products.models import Product, HourRange
@@ -104,3 +104,7 @@ class RentalsSerializer(serializers.ModelSerializer):
         selected_products = Selected_Product.objects.filter(rental_id = obj)
         selected_product_serializer = Selected_ProductsSerializer(selected_products, many=True)
         return selected_product_serializer.data
+class Additional_hour_AppliedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Additional_Hour_Applied
+        fields = '__all__'
