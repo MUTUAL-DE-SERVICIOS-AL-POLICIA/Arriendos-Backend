@@ -2,6 +2,8 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from leases.models import Rental
 from leases.serializer import RentalsSerializer
+from requirements.models import Requirement
+from requirements.models import Requirement_Delivered
 from .models import Warranty_Movement
 from weasyprint import HTML, CSS
 from django.template.loader import render_to_string
@@ -109,5 +111,59 @@ def Make_Damage_Warranty_Form(request, rental_id, product, mount, total, observa
 
     HTML(string=html_string).write_pdf(response, stylesheets=[CSS(
         string='@page { margin-left: 2cm; margin-right: 1cm; margin-top: 2cm; margin-bottom: 1.5cm; }'
+        )])
+    return response
+
+def Make_Return_Warranty_Form(request, rental_id):
+    serializer_class = RentalsSerializer
+    rental = rental_id
+    rental =  Rental.objects.get(pk=rental)
+    serializer = serializer_class(rental)
+    rental = serializer.data
+
+    customer = rental.get("customer")
+    contacts = customer.get("contacts")
+    customers = customer.get("contacts")
+    for customer in customers:
+        name = customer.get("name")
+        nit = customer.get("ci_nit")
+
+    selected_products = rental.get("selected_products")
+    warranty = Warranty_Movement.objects.filter(rental_id=rental_id).latest('id')
+   
+    requirements_data = Requirement_Delivered.objects.filter(rental_id = rental_id)
+    num = len(requirements_data) +1
+    requirements = []
+    for requirement_data in requirements_data:
+        requirement_id = requirement_data.requirement_id
+        requirement = Requirement.objects.get(pk=requirement_id)
+
+        data = {
+            'name': requirement.requirement_name
+        }
+        requirements.append(data)
+
+    ruta_archivo_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'devolucion_de_garantia.html')
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="devolucion_de_garantia.pdf"'
+    if os.path.exists(ruta_archivo_html):
+
+        with open(ruta_archivo_html, 'r', encoding='utf-8') as archivo_html:
+                html_content = archivo_html.read()
+
+    html_string = render_to_string('devolucion_de_garantia.html', {
+        'num':num,
+        'name': name,
+        'nit': nit,
+        'selected_products':selected_products,
+        'initial_total': rental.get("initial_total"),
+        'contacts': contacts,
+        'requirements': requirements,
+        'rental': rental_id,
+        'warranty': warranty.balance
+        })
+
+    HTML(string=html_string).write_pdf(response, stylesheets=[CSS(
+        string='@page { margin-left: 2cm; margin-right: 1cm; margin-top: 1cm; margin-bottom: 1.6cm; }'
         )])
     return response
