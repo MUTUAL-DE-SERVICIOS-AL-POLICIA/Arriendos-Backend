@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from rest_framework.response import Response
 from django.http import HttpResponse
-from .serializer import Event_TypeSerializer, Selected_ProductSerializer, StateSerializer
-from .models import State, Rental, Event_Type, Selected_Product
+from .serializer import Event_TypeSerializer, Selected_ProductSerializer, StateSerializer, Additional_hour_AppliedSerializer
+from .models import State, Rental, Event_Type, Selected_Product, Additional_Hour_Applied
 from customers.models import Customer,Contact
 from customers.serializer import CustomersSerializer
 from products.models import Product, Price
@@ -300,3 +300,40 @@ class Delivery_Form(generics.GenericAPIView):
         if selected_product is None:
             return Response({"error": "No se ha enviado selected_product"}, status=status.HTTP_404_NOT_FOUND)
         return Make_Delivery_Form(request, rental, selected_product)
+
+class Register_additional_hour_applied(generics.ListAPIView):
+    serializer_class = Additional_Hour_Applied
+    def post(self, request):
+        selected_product_id = request.data.get('selected_product')
+        number = request.data.get('number')
+        description = request.data.get('description')
+        voucher_number = request.data.get('voucher_number')
+        price = request.data.get('price')
+        total = number*price
+        data= {
+            'selected_product': selected_product_id,
+            'number': number,
+            'description': description,
+            'voucher_number': voucher_number,
+            'total': total
+        }
+        data_serialized = Additional_hour_AppliedSerializer(data=data)
+        if data_serialized.is_valid():
+            data_serialized.save()
+            return Response({"message":"hora extra registrada existosamente"}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({"error":"no se pudo registar la hora extra"}, status=status.HTTP_400_BAD_REQUEST)
+    def get (self, request):
+        selected_product_id = request.query_params.get('selected_product')
+        additional_hour_applieds = Additional_Hour_Applied.objects.filter(selected_product=selected_product_id)
+        list_additional_hour_applied=[]
+        for additional_hour_applied in additional_hour_applieds:
+            additional_hour_applied_data = {
+            'selected_product': additional_hour_applied.selected_product_id,
+            'number': additional_hour_applied.number,
+            'description': additional_hour_applied.description,
+            'voucher_number': additional_hour_applied.voucher_number,
+            'total': additional_hour_applied.total
+            }
+            list_additional_hour_applied.append(additional_hour_applied_data)
+        return Response(list_additional_hour_applied, status=status.HTTP_200_OK)
