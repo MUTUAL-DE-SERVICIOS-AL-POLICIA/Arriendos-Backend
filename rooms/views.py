@@ -28,6 +28,7 @@ def List_Properties_with_Rooms(request):
         property_data = {
             'id': property.id,
             'name': property.name,
+            'address': property.address,
             'photo': request.build_absolute_uri(property.photo.url),  # Agrega la URL de la foto si la necesitas
             'rooms': []
         }

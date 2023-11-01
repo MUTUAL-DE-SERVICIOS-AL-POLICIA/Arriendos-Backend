@@ -3,6 +3,7 @@ from django.db import models
 # Create your models here.
 class Property(models.Model):
     name=models.CharField(max_length=250)
+    address = models.CharField(max_length=250, null=True)
     def get_upload_to(instance, filename):
         return f'property_photos/{filename}'
     photo = models.ImageField(upload_to=get_upload_to)
