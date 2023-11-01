@@ -32,3 +32,11 @@ class Selected_Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+class Additional_Hour_Applied(models.Model):
+    selected_product = models.ForeignKey(Selected_Product, on_delete=models.CASCADE)
+    number = models.IntegerField()
+    voucher_number = models.CharField()
+    total = models.FloatField()
+    description = models.CharField(null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
