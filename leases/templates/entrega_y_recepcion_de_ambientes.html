@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>My Website</title>
+    <link rel="stylesheet" href="./style.css">
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+
+    <style>
+      body{
+        font-size: 10pt;
+      }
+      table {
+        font-family: 'Arial', sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 12pt;
+      }
+
+      th, td {
+        border: 1px solid #4e4e4e;
+        padding: 5px;
+        text-align: left;
+      }
+
+      th {
+        background-color: #f2f2f2;
+      }
+
+      tr:nth-child(even) {
+        background-color: #f2f2f2;
+      }
+
+      tr:hover {
+        background-color: #ddd;
+      }
+
+      .svg-icon {
+        width: 2em;
+        height: 2em;
+      }line-height: 0;
+
+      .svg-icon path,
+      .svg-icon polygon,
+
+      .svg-icon circle {
+        stroke-width: 1;
+      }
+
+      .line1 {
+        border-top: 1px solid black;
+        height: 2px;
+        max-width: 230px;
+        padding: 0;
+        margin-top: 50px;
+        line-height: 0;
+
+      }
+      .line2 {
+        border-top: 1px solid black;
+        height: 2px;
+        max-width: 230px;
+        padding: 0;
+        margin-top: 50px;
+        line-height: 0;
+      }
+      .line3 {
+        margin-top: 100px;
+        line-height: 0;
+      }
+      .text-header{
+        text-align: center;
+        line-height: 0pt;
+        border-bottom: 1px solid black;
+      }
+      .text-form{
+        text-align: justify;
+        font-size: 9pt;
+      }
+      .title-form{
+        font-size: 16px;
+        line-height: 0;
+      }
+      @page {
+        @bottom-center {
+        content: "Página " counter(page);
+      }
+    }
+    </style>
+  </head>
+  <body>
+    <main>
+
+      <div class="text-header"><p>MUTUAL DE SERVICIOS AL POLICÍA "MUSERPOL"</p>
+      <p>UNIDAD DE INVERSIÓN EN SERVICIOS, BIENES Y PATRIMONIO</p>
+      </div>
+      
+      {% for selected_product in selected_products %}
+      <div class="title-form">
+        <center><p><strong>ACTA DE ENTREGA Y RECEPCIÓN DE AMBIENTES</strong></p></center>
+        <center><p>ARRENDAMIENTO "{{ selected_product.product.room.name }}"</p></center>
+      </div>
+
+      <div class="text-form">
+        
+        <p>En la ciudad de La Paz, en instalaciones del 
+          <strong>{{ selected_product.product.room.name }}</strong> ubicado en {{ selected_product.product.room.property.address }}, a Hrs. ...... del día ………. ….DE ……… DEL……., de conformidad a Solicitud de Arrendamiento del {{ selected_product.product.room.name }},
+          en calidad de arrendamiento con Contrato N° .......... solicitada por el <strong>{{ name }} CON C.I. {{ nit }}</strong>, se acuerda la presente: <strong>ACTA DE ENTREGA Y RECEPCION DE INSTALACIONES - ARRENDAMIENTO “{{ selected_product.product.room.name }}”.</strong> 
+          De conformidad a requerimiento en calidad de arrendamiento, el arrendatario tiene compromiso de reestablecer en las mismas condiciones, para su efecto se formaliza la entrega de las instalaciones y sus componentes, 
+          para realización de evento: {{ selected_product.event_type.name }} a desarrollarse el día <strong>{{ selected_product.start_time }}</strong>, quien está obligado a cumplir con todas las medidas de bioseguridad con número razonable de participantes de acuerdo a disposición, bajo el siguiente detalle:</p>
+          
+      </div>
+      {% endfor %}
+        <table border="1">
+          {% for selected_product in selected_products %}
+          <tr>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th>FECHA DE ENTREGA ............</th>
+            <th>FECHA DE DEVOLUCIÓN ...........</th>
+            <th>OBSERVACIONES</th>
+          </tr>
+          <tr>
+            <th>No</th>
+            <th>DETALLE</th>
+            <th>CANT.</th>
+            <th>ESTADO DE ENTREGA</th>
+            <th>ESTADO DE RECEPCIÓN</th>
+            <th></th>
+          </tr>
+          {% for sub_environment in selected_product.product.room.sub_environments %}
+          <tr>
+            <td>{{ sub_environment.quantity}}</td>
+            <td>{{ sub_environment.name }}</td>
+            <td>{{ sub_environment.quantity }}</td>
+            <td>{{ sub_environment.state }}</td>
+            <td></td>
+            <td></td>
+          </tr>
+          {% endfor %}
+          {% endfor %}
+
+</table>
+<div class="text-form">
+  <p>La entrega se desarrolla en condiciones apropiadas y de conservación para EVENTO SOCIAL, 
+    al arrendatario, quien, concluido el evento, <u>al momento de la entrega está comprometida, a la devolución de todas las dependencias entregadas en las <strong>MISMAS CONDICIONES</strong> que inicialmente se la concedió en sujeción a 
+      contrato de arrendamiento con la entidad (Físicas y estructurales, muros, puertas, etc.) incluida la limpieza y retiro de basura de las instalaciones.</u> Para conformidad de las partes intervinientes, durante y posterior 
+    a la recepción del Salón Biógrafo, se sujetará a valoración técnica final, en aceptación de la presente abajo firman.</p>
+</div>
+
+<div><p><strong>ENTREGA DE AMBIENTES</strong></p></div>
+<div>
+  
+  <br>
+  <div style="text-align:left; float: left; font-size: 8pt;">
+    <div class="line1">
+      <p style="text-align:left;">ENTREGUE CONFORME</p>
+      <p style="text-align:left;"><strong>MUSERPOL</strong></p>
+      
+    </div>
+  </div>
+  
+  <div style="text-align:right; float: right; font-size: 8pt;">
+    <div class="line2">
+      <p style="text-align:right;">RECIBÍ CONFORME</p>
+      <p style="text-align:right;">CI. .......................</p>
+      <p style="text-align:right;"><strong>ARRENDATARIO</strong></p>
+    </div>
+  </div>
+</div>
+<br>
+<div class="line3"><p><strong>DEVOLUCIÓN DE AMBIENTES</strong></p></div>
+
+<br>
+
+<div style="text-align:left; float: left; font-size: 8pt;">
+  <div class="line1">
+    <p style="text-align:left;">ENTREGUE CONFORME</p>
+    <p style="text-align:left;">CI. .......................</p>
+    <p style="text-align:left;"><strong>ARRENDATARIO</strong></p>
+  </div>
+</div>
+
+<div style="text-align:right; float: right; font-size: 8pt;">
+  <div class="line2">
+    <p style="text-align:right;">RECIBÍ CONFORME</p>
+    <p style="text-align:right;"><strong>MUSERPOL</strong></p>
+  </div>
+</div>
+
+    </main>
+  </body>
+</html>
