@@ -12,6 +12,7 @@ import pytz
 from rest_framework import status, generics
 from django.utils import timezone
 from Arriendos_Backend.util import required_fields
+from .function import Make_Delivery_Form
 
 class StateRentalListCreateView(generics.ListCreateAPIView):
     queryset = State.objects.all()
@@ -289,3 +290,13 @@ class Change_state(generics.ListAPIView):
                 return Response(response_data, status=status.HTTP_200_OK)
             except Rental.DoesNotExist:
                 return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
+
+class Delivery_Form(generics.GenericAPIView):
+    def post(self, request, *args, **kwargs):
+        rental = int(request.data["rental"])
+        selected_product = int(request.data["product"])
+        if rental is None:
+            return Response({"error": "No se ha enviado rental"}, status=status.HTTP_404_NOT_FOUND)
+        if selected_product is None:
+            return Response({"error": "No se ha enviado selected_product"}, status=status.HTTP_404_NOT_FOUND)
+        return Make_Delivery_Form(request, rental, selected_product)
