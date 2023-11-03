@@ -45,8 +45,8 @@ class Register_payment(generics.ListAPIView):
                 exist_payment= Payment.objects.filter(rental_id=rental_id).exists()
                 if (exist_payment):
                     last_payment = Payment.objects.filter(rental_id=rental_id).latest('id')
-                    total =last_payment.payable_mount-mount
-                    if total<=0:
+                    total =float(last_payment.payable_mount)-mount
+                    if total<0:
                         return Response({"error": "El monto de pago es mayor al del monto total."}, status=status.HTTP_400_BAD_REQUEST)
                     payment_data={
                         "rental": rental_id,
@@ -64,7 +64,7 @@ class Register_payment(generics.ListAPIView):
                     }
                     return Response(response_data, status=status.HTTP_201_CREATED)
                 else:
-                    total =rental.initial_total-mount
+                    total =float(rental.initial_total)-mount
                     if total<0:
                         return Response({"error": "El monto de pago es mayor al del monto total."}, status=status.HTTP_400_BAD_REQUEST)
                     payment_data={
@@ -108,7 +108,7 @@ class Register_total_payment(generics.ListAPIView):
                 last_payment = Payment.objects.filter(rental_id=rental_id).latest('id')
                 mount=last_payment.payable_mount
                 total =last_payment.payable_mount-mount
-                if total<=0:
+                if total<0:
                     return Response({"error": "El monto de pago es mayor al del monto total."}, status=status.HTTP_400_BAD_REQUEST)
                 payment_data={
                     "rental": rental_id,
