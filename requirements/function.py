@@ -20,9 +20,7 @@ def Make_Rental_Form(request, rental_id):
     rental = serializer.data
 
     customer = rental.get("customer")
-    customer_id = customer.get("id")
     customer_type = customer.get("customer_type")
-    customer_type_name = customer_type.get("name")
     contacts = customer.get("contacts")
 
     if customer.get("institution_name") is None:
@@ -69,6 +67,6 @@ def Make_Rental_Form(request, rental_id):
         })
 
     HTML(string=html_string).write_pdf(response, stylesheets=[CSS(
-        string='@page { margin-left: 2cm; margin-right: 1cm; margin-top: 2cm; margin-bottom: 1.5cm; }'
+        string='@page { margin-left: 2cm; margin-right: 1cm; margin-top: 1.5cm; margin-bottom: 1cm; }'
         )])
     return response

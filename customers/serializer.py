@@ -7,7 +7,6 @@ class Customer_typeSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class CustomerSerializer(serializers.ModelSerializer):
-    #customer_type = Customer_typeSerializer()
     class Meta:
         model = Customer
         fields = '__all__'
@@ -22,6 +21,6 @@ class CustomersSerializer(serializers.ModelSerializer):
         model = Customer
         fields = '__all__'
     def get_contacts(self, obj):
-        contacts = Contact.objects.filter(customer_id=obj, is_active=True)
-        contact_serializer = ContactSerializer(contacts, many=True) 
+        contacts = Contact.objects.filter(customer_id=obj, is_active=True).order_by('id')
+        contact_serializer = ContactSerializer(contacts, many=True)
         return contact_serializer.data
