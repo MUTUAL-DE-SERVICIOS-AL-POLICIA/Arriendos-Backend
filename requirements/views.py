@@ -243,7 +243,7 @@ class Register_delivered_requirement(generics.ListAPIView):
                     for requirement in list_requirements:
                         requirements_delivered = Requirement_Delivered.objects.filter(requirement_id = requirement, rental_id = rental_id).exists()
                         if requirements_delivered:
-                            return Response({"message": "Los requisitos ya existen"}, status=status.HTTP_404_NOT_FOUND)
+                            return Response({"error": "Los requisitos ya existen"}, status=status.HTTP_404_NOT_FOUND)
                     for requirement in list_requirements:
                         requirement_delivered = Requirement_Delivered()
                         requirement_register=Requirement.objects.get(pk=requirement)
