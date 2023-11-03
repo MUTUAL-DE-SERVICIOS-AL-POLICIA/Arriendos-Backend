@@ -1,5 +1,5 @@
 from django.urls import include, path
-from leases.views import Pre_Reserve_Api, Selected_Product_Calendar_Api, Event_Api,Get_state, StateRentalListCreateView, List_state,Change_state,Get_Rental, Selected_Product_Detail, Delivery_Form, Register_additional_hour_applied
+from leases.views import Pre_Reserve_Api, Selected_Product_Calendar_Api, Event_Api,Get_state, StateRentalListCreateView, List_state,Change_state,Get_Rental, Selected_Product_Detail, Delivery_Form, Register_additional_hour_applied, List_additional_hour_applied
 
 urlpatterns = [
     path('', Pre_Reserve_Api.as_view()),
@@ -12,5 +12,6 @@ urlpatterns = [
     path('list_state/',List_state.as_view()),
     path('change_state/', Change_state.as_view()),
     path('deliveryform/', Delivery_Form.as_view()),
-    path('register_additional_hour_applied/', Register_additional_hour_applied.as_view())
+    path('register_additional_hour_applied/', Register_additional_hour_applied.as_view()),
+    path('list_additional_hour_applied/', List_additional_hour_applied.as_view())
     ]

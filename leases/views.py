@@ -339,3 +339,32 @@ class Register_additional_hour_applied(generics.ListAPIView):
             }
             list_additional_hour_applied.append(additional_hour_applied_data)
         return Response(list_additional_hour_applied, status=status.HTTP_200_OK)
+class List_additional_hour_applied(generics.ListAPIView):
+    serializer_class = Additional_Hour_Applied
+    def get (self, request):
+        rental_id = request.query_params.get('rental')
+        list_selected_product = Selected_Product.objects.filter(rental_id=rental_id)
+        try:
+            for selected_product in list_selected_product:
+                room = selected_product.product.room.name
+                property =  selected_product.product.room.property.name
+                event = selected_product.event_type.name
+                date = selected_product.start_time
+                additional_hour_applieds = Additional_Hour_Applied.objects.filter(selected_product=selected_product)
+                list_additional_hour_applied=[]
+                for additional_hour_applied in additional_hour_applieds:
+                    additional_hour_applied_data = {
+                    'selected_product': additional_hour_applied.selected_product_id,
+                    'number': additional_hour_applied.number,
+                    'description': additional_hour_applied.description,
+                    'voucher_number': additional_hour_applied.voucher_number,
+                    'total': additional_hour_applied.total,
+                    'room': room,
+                    'property': property,
+                    'event': event,
+                    'date': date,
+                    }
+                    list_additional_hour_applied.append(additional_hour_applied_data)
+            return Response(list_additional_hour_applied, status=status.HTTP_200_OK)
+        except Selected_Product.DoesNotExist:
+            return Response({"error": "No existe el arriendo"}, status=status.HTTP_404_NOT_FOUND)
