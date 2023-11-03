@@ -345,13 +345,13 @@ class List_additional_hour_applied(generics.ListAPIView):
         rental_id = request.query_params.get('rental')
         list_selected_product = Selected_Product.objects.filter(rental_id=rental_id)
         try:
+            list_additional_hour_applied=[]
             for selected_product in list_selected_product:
                 room = selected_product.product.room.name
                 property =  selected_product.product.room.property.name
                 event = selected_product.event_type.name
                 date = selected_product.start_time
                 additional_hour_applieds = Additional_Hour_Applied.objects.filter(selected_product=selected_product)
-                list_additional_hour_applied=[]
                 for additional_hour_applied in additional_hour_applieds:
                     additional_hour_applied_data = {
                     'selected_product': additional_hour_applied.selected_product_id,
