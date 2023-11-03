@@ -7,8 +7,7 @@ class Property(models.Model):
     def get_upload_to(instance, filename):
         return f'property_photos/{filename}'
     photo = models.ImageField(upload_to=get_upload_to)
-    def __str__(self):
-        return self.name
+
 class Room(models.Model):
     property=models.ForeignKey(Property, on_delete=models.CASCADE)
     name=models.CharField(max_length=250)
