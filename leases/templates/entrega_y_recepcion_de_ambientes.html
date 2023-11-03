@@ -133,7 +133,7 @@
           </tr>
           {% for sub_environment in selected_product.product.room.sub_environments %}
           <tr>
-            <td>{{ sub_environment.quantity}}</td>
+            <td>{{ forloop.counter}}</td>
             <td>{{ sub_environment.name }}</td>
             <td>{{ sub_environment.quantity }}</td>
             <td>{{ sub_environment.state }}</td>
