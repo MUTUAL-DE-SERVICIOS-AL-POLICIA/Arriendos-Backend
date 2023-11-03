@@ -195,6 +195,23 @@ class Register_warranty(generics.ListAPIView):
             return Response({"message": "La garantía se ha registrado exitosamente"}, status=status.HTTP_201_CREATED)
         except Rental.DoesNotExist:
             return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
+    def get(self,request):
+        rental_id = request.query_params.get('rental')
+        if not rental_id:
+            return Response({"error": "Parámetro 'rental' faltante en la consulta."}, status=status.HTTP_400_BAD_REQUEST)
+        warranties=Warranty_Movement.objects.filter(rental=rental_id)
+        list_warranties=[]
+        for warranty in warranties:
+            response_data= {
+                "income":warranty.income,
+                "discount":warranty.discount,
+                "returned":warranty.returned,
+                "balance":warranty.balance,
+                "detail":warranty.detail,
+                "voucher":warranty.voucher_number
+            }
+            list_warranties.append(response_data)
+        return Response(list_warranties, status=status.HTTP_200_OK)
 
 class Warranty_Return_Request(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
