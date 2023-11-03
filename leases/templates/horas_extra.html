@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>My Website</title>
+    <link rel="stylesheet" href="./style.css">
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+
+    <style>
+      table {
+        font-family: 'Arial', sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 11px;
+      }
+
+      th, td {
+        border: 1px solid #4e4e4e;
+        padding: 5px;
+        text-align: left;
+      }
+
+      th {
+        background-color: #f2f2f2;
+      }
+
+      tr:nth-child(even) {
+        background-color: #f2f2f2;
+      }
+
+      tr:hover {
+        background-color: #ddd;
+      }
+
+      .svg-icon {
+        width: 2em;
+        height: 2em;
+      }
+
+      .svg-icon path,
+      .svg-icon polygon,
+
+      .svg-icon circle {
+        stroke-width: 1;
+      }
+
+      .line1 {
+        border-top: 1px solid black;
+        height: 2px;
+        max-width: 190px;
+        padding: 0;
+        margin-top: 100px;
+
+      }
+      .line2 {
+        border-top: 1px solid black;
+        height: 2px;
+        max-width: 230px;
+        padding: 0;
+        margin-top: 100px;
+      }
+      .line3 {
+        border-top: 1px solid black;
+        height: 2px;
+        max-width: 220px;
+        padding: 0;
+        margin-top: 100px;
+      }
+      .text-header{
+        text-align: center;
+        line-height: 0pt;
+        border-bottom: 1px solid black;
+        font-size: 10pt;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="text-header"><p>MUTUAL DE SERVICIOS AL POLICÍA "MUSERPOL"</p>
+        <p>UNIDAD DE INVERSIÓN EN SERVICIOS, BIENES Y PATRIMONIO</p>
+        </div>
+        <br>
+        <br>
+        <table border="1">
+          <tr>
+            <th colspan="3">
+              <center>FORMULARIO DE HORAS ADICIONALES DE ARRENDAMIENTO DE SALONES DE EVENTOS DE LA MUSERPOL</center>
+            </th>
+          </tr>
+          <tr>
+            <th colspan="3" style="text-align: right">
+              No. {{ rental }}
+            </th>
+          </tr>
+
+          <tr>
+            <th>NOMBRE DEL SOLICITANTE</th>
+            <td colspan="2">{{ name }}</td>
+          </tr>
+
+          <tr>
+            <th>CI. DEL SOLICITANTE</th>
+            <td colspan="2">{{ nit }}</td>
+          </tr>
+
+          {% for selected_product in selected_products %}
+
+          <tr>
+            <th>NOMBRE DEL SALÓN SOLICITADO</th>
+            <td colspan="2">
+              <p>
+                {{ selected_product.product.room.name }}
+              </p>
+              </td>
+          </tr>
+
+          <tr>
+            <th>AMBIENTES SOLICITADOS</th>
+            <td colspan="2">
+                {% for sub_environment in selected_product.product.room.sub_environments %}
+              <p>
+                    {{ sub_environment.quantity}} {{ sub_environment.name }}
+              </p>
+              {% endfor %}
+              </td>
+          </tr>
+
+          <tr>
+            <th>FECHA DE EVENTO (DÍA)</th>
+            <td colspan="2">
+              <p id="formatted-date">
+                {{ selected_product.start_time }}
+              </p>
+            </td>
+          </tr>
+
+          {% endfor %}
+          <tr>
+            <th>CANTIDAD DE HORAS ADICIONALES</th>
+            <td colspan="2">
+                {{ hours }}
+            </td>
+          </tr>
+          <tr>
+            <th>TARIFA POR HORA ADICIONAL EN Bs.</th>
+            <td colspan="2">
+                {{ rates }}
+            </td>
+          </tr>
+          <tr>
+            <th>MONTO TOTAL EN Bs.</th>
+            <td colspan="2">
+                {{ total }}
+            </td>
+          </tr>
+</table>
+<br>
+<div style="text-align:left; float: left;">
+  <div class="line1">
+    <p style="text-align:left;">FIRMA FUNCIONARIO</p>
+  </div>
+</div>
+
+<div style="text-align:right; float: right;">
+  <div class="line2">
+    <p style="text-align:right;">FIRMA ARRENDATARIO <br> (aceptación)</p>
+  </div>
+</div>
+
+<br>
+<br>
+
+<div style="text-align:center; margin: 0; display: flex; justify-content: center; ">
+  <div class="line3">
+    <p style="text-align:center;">VoBo Inmediato Superior</p>  </div>
+</div>
+
+    </main>
+  </body>
+</html>
