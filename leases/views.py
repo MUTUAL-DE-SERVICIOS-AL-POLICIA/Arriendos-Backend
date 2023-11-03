@@ -12,7 +12,7 @@ import pytz
 from rest_framework import status, generics
 from django.utils import timezone
 from Arriendos_Backend.util import required_fields
-from .function import Make_Delivery_Form
+from .function import Make_Delivery_Form, Make_Overtime_Form
 
 class StateRentalListCreateView(generics.ListCreateAPIView):
     queryset = State.objects.all()
@@ -305,6 +305,8 @@ class Register_additional_hour_applied(generics.ListAPIView):
     serializer_class = Additional_Hour_Applied
     def post(self, request):
         selected_product_id = request.data.get('selected_product')
+        rental = Selected_Product.objects.get(pk=selected_product_id)
+        rental = rental.rental_id
         number = request.data.get('number')
         description = request.data.get('description')
         voucher_number = request.data.get('voucher_number')
@@ -320,7 +322,7 @@ class Register_additional_hour_applied(generics.ListAPIView):
         data_serialized = Additional_hour_AppliedSerializer(data=data)
         if data_serialized.is_valid():
             data_serialized.save()
-            return Response({"message":"hora extra registrada existosamente"}, status=status.HTTP_201_CREATED)
+            return Make_Overtime_Form(request, rental, selected_product_id, number, price, total)
         else:
             return Response({"error":"no se pudo registar la hora extra"}, status=status.HTTP_400_BAD_REQUEST)
     def get (self, request):
