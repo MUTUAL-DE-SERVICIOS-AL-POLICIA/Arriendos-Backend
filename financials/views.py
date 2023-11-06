@@ -212,6 +212,21 @@ class Register_warranty(generics.ListAPIView):
             }
             list_warranties.append(response_data)
         return Response(list_warranties, status=status.HTTP_200_OK)
+    def delete(self,request,rental_id):
+        try:
+            Rental.objects.get(pk=rental_id)
+            exist_warranty= Warranty_Movement.objects.filter(rental_id=rental_id).exists()
+            if (exist_warranty):
+                last_warranty = Warranty_Movement.objects.filter(rental_id=rental_id).latest('id')
+                if last_warranty.discount >0:
+                    event_damage = Event_Damage.objects.filter(warranty_movement=last_warranty).latest('id')
+                    event_damage.delete()
+                last_warranty.delete()
+                return Response({'mensaje': 'Registro eliminado exitosamente'})
+            else:
+                return Response({"error": "No existen garantías registradas para ese alquiler"}, status=status.HTTP_400_BAD_REQUEST)
+        except Rental.DoesNotExist:
+            return Response({"error": "El Arriendo no existe."}, status=status.HTTP_400_BAD_REQUEST)
 
 class Warranty_Return_Request(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
