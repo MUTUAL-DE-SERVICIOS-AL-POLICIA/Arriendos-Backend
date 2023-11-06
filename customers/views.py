@@ -94,15 +94,20 @@ class Customer_Api(generics.GenericAPIView):
             "customers": serializer.data
         })
     def post(self, request, *args, **kwargs):
-        customer_type_req = request.data["customer_type"]
-        customer_type = Customer_type.objects.get(pk=customer_type_req)
+        try:
+            customer_type_req = request.data["customer_type"]
+            customer_type = Customer_type.objects.get(pk=customer_type_req)
+        except:
+            return Response({"error":"Customer type no válido"},status=status.HTTP_404_NOT_FOUND)
         if customer_type is not None:
             customer_type_id = customer_type.id
             if customer_type.is_institution == True:
                 institutions_data = request.data["institution"]
-                institution_name =institutions_data.get("name")
-                nit = institutions_data.get("nit")
+                institution_name =institutions_data.get("name", None)
+                nit = institutions_data.get("nit", None)
                 contacts = institutions_data.get("contacts")
+                if institution_name is None or nit is None:
+                    return Response({"error":"los campos no son válidos"}, status=status.HTTP_400_BAD_REQUEST)
                 if Customer.objects.filter(nit=nit).exists():
                     return Response({"status": "success", "message":"La institucion ya esta registrada"}, status=status.HTTP_200_OK)
                 customer_institution = Customer.objects.create(institution_name = institution_name, nit=nit, customer_type_id=customer_type_id)
@@ -112,20 +117,22 @@ class Customer_Api(generics.GenericAPIView):
                     phone = contact.get("phone", None)
                     degree = contact.get("degree", None)
                     Contact.objects.create(degree=degree, name=name, ci_nit=ci_nit, phone=phone, customer_id=customer_institution.id, is_customer=False)
-                return Response({"status":"success", "message": "Institucion registrado con éxito"}, status=status.HTTP_201_CREATED)
+                return Response({"message": "Institucion registrado con éxito"}, status=status.HTTP_201_CREATED)
             else:
                 #cliente
                 customers = request.data["customer"]
                 degree = customers.get("degree", None)
-                name_customer = customers.get("name")
-                phone = customers.get("phone")
-                ci_nit = customers.get("ci_nit")
+                name_customer = customers.get("name",None)
+                phone = customers.get("phone", None)
+                ci_nit = customers.get("ci_nit", None)
+                if name_customer is None or ci_nit is None or phone is None:
+                    return Response({"error":"los campos no son válidos"}, status=status.HTTP_400_BAD_REQUEST)
                 if Contact.objects.filter(ci_nit=ci_nit).exists():
-                    return Response({"status":"success", "message": "El cliente ya existe"}, status=status.HTTP_200_OK) 
+                    return Response({"message": "El cliente ya existe"}, status=status.HTTP_200_OK)
                 customer = Customer.objects.create(customer_type_id=customer_type_id)
                 Contact.objects.create(degree=degree, name=name_customer, ci_nit=ci_nit, phone=phone, customer_id=customer.id)
-                return Response({"state": "success", "message": "Cliente registrado con exito" }, status=status.HTTP_201_CREATED)
-        return HttpResponse({"status":"success", "message":"Cliente guardado"}, status=status.HTTP_201_CREATED)
+                return Response({"message": "Cliente registrado con exito" }, status=status.HTTP_201_CREATED)
+        return HttpResponse({"error":"El tipo de cliente no es válido"}, status=status.HTTP_404_NOT_FOUND)
 
 class Customer_Detail(generics.GenericAPIView):
     queryset = Customer.objects.all()
@@ -147,8 +154,8 @@ class Customer_Detail(generics.GenericAPIView):
             institution.institution_name = institution_name
             institution.nit = institution_nit
             institution.save()
-            for contact in contacts:
-                contact_data = Contact.objects.get(customer_id = contact.id)
+            contacts_data = Contact.objects.filter(customer_id = pk)
+            for contact_data in contacts_data:
                 contact_data.is_active = False
                 contact_data.save()
 
@@ -168,7 +175,7 @@ class Customer_Detail(generics.GenericAPIView):
                     contact_data.degree = degree
                     contact_data.is_active = True
                     contact_data.save()
-            return Response({"status": "success", "message": "Institución actualizada"}, status=status.HTTP_200_OK)
+            return Response({"message": "Institución actualizada"}, status=status.HTTP_200_OK)
         else:
             customers = request.data["customer"]
             degree = customers.get("degree", None)
@@ -181,7 +188,7 @@ class Customer_Detail(generics.GenericAPIView):
             customer_data.phone = phone
             customer_data.degree = degree
             customer_data.save()
-            return Response({"status": "success", "message":"Cliente actualizado"}, status=status.HTTP_200_OK)
+            return Response({"message":"Cliente actualizado"}, status=status.HTTP_200_OK)
 
 class CustomerInsitution_Detail(generics.GenericAPIView):
     queryset = Customer.objects.all()
