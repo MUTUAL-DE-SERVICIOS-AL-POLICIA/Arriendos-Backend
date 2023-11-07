@@ -201,8 +201,18 @@ class Register_warranty(generics.ListAPIView):
             return Response({"error": "Parámetro 'rental' faltante en la consulta."}, status=status.HTTP_400_BAD_REQUEST)
         warranties=Warranty_Movement.objects.filter(rental=rental_id)
         list_warranties=[]
+        n=0
         for warranty in warranties:
+            n=n+1
+            if warranty.income>0:
+                type= "INGRESO"
+            if warranty.discount>0:
+                type = "DESCUENTO"
+            if warranty.returned>0:
+                type = "RETORNO"
             response_data= {
+                "correlative":n,
+                "type": type,
                 "income":warranty.income,
                 "discount":warranty.discount,
                 "returned":warranty.returned,
