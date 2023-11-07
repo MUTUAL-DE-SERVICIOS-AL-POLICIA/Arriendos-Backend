@@ -17,6 +17,7 @@ def Make_Warranty_Form(request, rental_id):
     rental= Rental.objects.get(pk=rental)
     serializer = serializer_class(rental)
     rental = serializer.data
+    contract_number = rental.get("contract_number")
     director = "Cnl. MSc. CAD. LUCIO ENRIQUE RENÉ JIMÉNEZ VARGAS"
     customer = rental.get("customer")
     contacts = customer.get("contacts")
@@ -52,7 +53,7 @@ def Make_Warranty_Form(request, rental_id):
         'director': director,
         'selected_products':selected_products,
         'contacts': contacts,
-        'rental': rental_id,
+        'contract_number': contract_number,
         'warranty': warranty.balance,
         'date':formatted_date
         })
@@ -69,6 +70,7 @@ def Make_Damage_Warranty_Form(request, rental_id, product, mount, total, observa
     rental = Rental.objects.get(pk = rental_id)
     serializer = serializer_class(rental)
     rental = serializer.data
+    contract_number = rental.get("contract_number")
 
     customer = rental.get("customer")
     contacts = customer.get("contacts")
@@ -88,21 +90,21 @@ def Make_Damage_Warranty_Form(request, rental_id, product, mount, total, observa
             }
             selected_products.append(selected_product)
 
-    ruta_archivo_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ejecución_de_garantía.html')
+    ruta_archivo_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ejecucion_de_garantia.html')
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="formulariodesolicitudreserva.pdf"'
+    response['Content-Disposition'] = 'attachment; filename="formulariodeejecuciondegarantia.pdf"'
     if os.path.exists(ruta_archivo_html):
 
         with open(ruta_archivo_html, 'r', encoding='utf-8') as archivo_html:
                 html_content = archivo_html.read()
 
-    html_string = render_to_string('ejecución_de_garantía.html', {
+    html_string = render_to_string('ejecucion_de_garantiaa.html', {
         'name': name,
         'nit': nit,
         'selected_products':selected_products,
         'warranty': rental.get("initial_total"),
         'contacts': contacts,
-        'rental': rental_id,
+        'contract_number': contract_number,
         'mount': mount,
         'observations': observations,
         'product':product,
@@ -120,6 +122,7 @@ def Make_Return_Warranty_Form(request, rental_id):
     rental =  Rental.objects.get(pk=rental)
     serializer = serializer_class(rental)
     rental = serializer.data
+    contract_number = rental.get("contract_number")
 
     customer = rental.get("customer")
     contacts = customer.get("contacts")
@@ -159,7 +162,7 @@ def Make_Return_Warranty_Form(request, rental_id):
         'initial_total': rental.get("initial_total"),
         'contacts': contacts,
         'requirements': requirements,
-        'rental': rental_id,
+        'contract_number': contract_number,
         'warranty': warranty.balance
         })
 
