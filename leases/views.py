@@ -58,7 +58,7 @@ class Get_Rental(generics.ListCreateAPIView):
         return Response({"customer":customer, "products":products})
 class List_state(generics.GenericAPIView):
     def get (self, request):
-        list= State.objects.all()
+        list= State.objects.all().order_by('id')
         states=[]
         for state in list:
             if len(state.next_state) > 0:
@@ -419,6 +419,18 @@ class Register_additional_hour_applied(generics.ListAPIView):
             }
             list_additional_hour_applied.append(additional_hour_applied_data)
         return Response(list_additional_hour_applied, status=status.HTTP_200_OK)
+    def delete(self,request,selected_product_id):
+        try:
+            Selected_Product.objects.get(pk=selected_product_id)
+            additional_hour_applieds= Additional_Hour_Applied.objects.filter(selected_product_id=selected_product_id).exists()
+            if (additional_hour_applieds):
+                last_additional_hour_applieds = Additional_Hour_Applied.objects.filter(selected_product_id=selected_product_id).latest('id')
+                last_additional_hour_applieds.delete()
+                return Response({'mensaje': 'Registro eliminado exitosamente'})
+            else:
+                return Response({"error": "No existen horas adicionales registradas para ese producto seleccionado"}, status=status.HTTP_400_BAD_REQUEST)
+        except Selected_Product.DoesNotExist:
+            return Response({"error": "El producto seleccionado no existe."}, status=status.HTTP_400_BAD_REQUEST)
 class List_additional_hour_applied(generics.ListAPIView):
     serializer_class = Additional_Hour_Applied
     def get (self, request):
