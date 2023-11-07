@@ -122,7 +122,7 @@ class Assign_Api(generics.GenericAPIView):
             "assigns": serializer.data
             })
     def post(self, request, *args, **kwargs):
-        serializer = self.serializer_class(data=request.data)
+        serializer = self.serializer_class(data=request.data, many=True)
         if serializer.is_valid():
             serializer.save()
             return Response({"status":"success","data": {"assigns": serializer.data}}, status=status.HTTP_201_CREATED)
