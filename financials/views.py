@@ -248,17 +248,17 @@ class Discount_warranty(generics.ListAPIView):
         if discount<=0:
             return Response({"error":"el monto ingresado es 0 no se registra el descuento"}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            selected_product = Selected_Product.objects.get(rental_id = rental_id, pk = product)
-            if selected_product is None:
-                return Response({'error': 'No se ha podido obtener el producto'}, status=status.HTTP_400_BAD_REQUEST)
-        except:
-            return Response({'error': 'No se ha podido obtener el producto'}, status=status.HTTP_400_BAD_REQUEST)
-        try:
             rental = Rental.objects.get(pk=rental_id)
+            try:
+                selected_product = Selected_Product.objects.get(rental_id = rental_id, pk = product)
+                if selected_product is None:
+                    return Response({'error': 'No se ha podido obtener el producto'}, status=status.HTTP_400_BAD_REQUEST)
+            except:
+                return Response({'error': 'No se encuentra el producto relacionado al arriendo'}, status=status.HTTP_400_BAD_REQUEST)
             warranty= Warranty_Movement.objects.filter(rental_id=rental.id)
-            if warranty.latest('id').balance <discount:
-                return Response({"error":"el monto ingresado mayor al del saldo"}, status=status.HTTP_400_BAD_REQUEST)
             if (warranty.exists()):
+                if warranty.latest('id').balance <discount:
+                   return Response({"error":"el monto ingresado mayor al del saldo"}, status=status.HTTP_400_BAD_REQUEST)
                 warranty_balance=warranty.latest('id').balance
                 total=  warranty_balance - discount
                 warranty_data = {
@@ -284,7 +284,7 @@ class Discount_warranty(generics.ListAPIView):
                 event_damaged_serialized.save()
                 return Make_Damage_Warranty_Form(request, rental_id, product, discount, total, detail)
             else:
-                return Response({"no tiene garantias registrada"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error":"no tiene garantias registrada"}, status=status.HTTP_400_BAD_REQUEST)
         except Rental.DoesNotExist:
             return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
 class Warranty_Returned(generics.ListAPIView):
