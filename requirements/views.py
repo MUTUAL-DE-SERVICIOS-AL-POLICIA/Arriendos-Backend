@@ -8,6 +8,7 @@ from .models import RateRequirement, Requirement,Requirement_Delivered
 from .serializer import RateRequirementSerializer, RequirementSerializer, RateWithRelatedDataSerializer,RateRequirementDetailSerializer
 from products.models import Rate
 from customers.models import Customer_type
+from django.db import models
 import math
 from datetime import datetime
 from django.db.models import OuterRef, Subquery
@@ -250,6 +251,17 @@ class Register_delivered_requirement(generics.ListAPIView):
                         requirement_delivered.rental = rental
                         requirement_delivered.requirement = requirement_register
                         requirement_delivered.save()
+
+                    now = datetime.now()
+                    year = now.year
+                    max_contract_number = Rental.objects.filter(created_at__year=year).aggregate(models.Max('contract_number'))['contract_number__max']
+                    if max_contract_number is None:
+                        max_contract_number = 0
+                    else:
+                        max_contract_number = int(max_contract_number.split('-')[0])
+                    contract_number = '{}-{}'.format(max_contract_number +1, year)
+                    rental.contract_number = contract_number
+                    rental.save()
                     return Make_Rental_Form(request, rental_id)
                 else:
                     return Make_Rental_Form(request, rental_id)

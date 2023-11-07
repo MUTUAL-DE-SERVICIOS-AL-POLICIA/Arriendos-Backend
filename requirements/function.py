@@ -18,6 +18,7 @@ def Make_Rental_Form(request, rental_id):
     rental =  Rental.objects.get(pk=rental)
     serializer = serializer_class(rental)
     rental = serializer.data
+    contract_number = rental.get("contract_number")
 
     customer = rental.get("customer")
     customer_type = customer.get("customer_type")
@@ -63,7 +64,7 @@ def Make_Rental_Form(request, rental_id):
         'initial_total': rental.get("initial_total"),
         'contacts': contacts,
         'requirements': requirements,
-        'rental': rental_id
+        'contract_number': contract_number
         })
 
     HTML(string=html_string).write_pdf(response, stylesheets=[CSS(
