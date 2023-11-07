@@ -13,6 +13,7 @@ class Rental(models.Model):
     state = models.ForeignKey(State, on_delete=models.CASCADE)
     plan = models.ForeignKey(Plan, null=True, on_delete=models.CASCADE)
     initial_total = models.FloatField(null=True)
+    contract_number = models.CharField(max_length=10,null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
