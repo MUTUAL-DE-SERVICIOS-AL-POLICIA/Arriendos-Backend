@@ -98,7 +98,7 @@ def Make_Damage_Warranty_Form(request, rental_id, product, mount, total, observa
         with open(ruta_archivo_html, 'r', encoding='utf-8') as archivo_html:
                 html_content = archivo_html.read()
 
-    html_string = render_to_string('ejecucion_de_garantiaa.html', {
+    html_string = render_to_string('ejecucion_de_garantia.html', {
         'name': name,
         'nit': nit,
         'selected_products':selected_products,
