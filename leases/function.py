@@ -12,6 +12,7 @@ def Make_Delivery_Form(request, rental_id, product):
     rental = Rental.objects.get(pk = rental_id)
     serializer = serializer_class(rental)
     rental = serializer.data
+    contract_number = rental.get("contract_number")
     customer = rental.get("customer")
     contacts = customer.get("contacts")
     customers = customer.get("contacts")
@@ -44,7 +45,7 @@ def Make_Delivery_Form(request, rental_id, product):
         'selected_products':selected_products,
         'warranty': rental.get("initial_total"),
         'contacts': contacts,
-        'rental': rental_id,
+        'contract_number': contract_number,
         'product':product,
         })
 
@@ -62,6 +63,7 @@ def Make_Overtime_Form(request, rental_id, product, hours, rate, total):
     rental = Rental.objects.get(pk = rental_id)
     serializer = serializer_class(rental)
     rental = serializer.data
+    contract_number = rental.get("contract_number")
     customer = rental.get("customer")
     contacts = customer.get("contacts")
     customers = customer.get("contacts")
@@ -96,7 +98,7 @@ def Make_Overtime_Form(request, rental_id, product, hours, rate, total):
         'total':total_data,
         'selected_products':selected_products,
         'contacts': contacts,
-        'rental': rental_id
+        'contract_number': contract_number
         })
 
     HTML(string=html_string).write_pdf(response, stylesheets=[CSS(
