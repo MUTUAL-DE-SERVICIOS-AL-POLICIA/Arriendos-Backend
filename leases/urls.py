@@ -13,5 +13,6 @@ urlpatterns = [
     path('change_state/', Change_state.as_view()),
     path('deliveryform/', Delivery_Form.as_view()),
     path('register_additional_hour_applied/', Register_additional_hour_applied.as_view()),
+    path('register_additional_hour_applied/<int:selected_product_id>/', Register_additional_hour_applied.as_view()),
     path('list_additional_hour_applied/', List_additional_hour_applied.as_view())
     ]
