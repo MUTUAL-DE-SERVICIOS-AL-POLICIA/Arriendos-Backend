@@ -28,6 +28,6 @@ urlpatterns = [
     path('additional_hour/<int:pk>', Additional_Hour_Retrieve_Update_Destroy_View.as_view()),
     path('get_price_additional_hour/',Get_price_additional_hour.as_view()),
 
-    path("Posible_product/", Posible_product.as_view())
+    path("posible_product/", Posible_product.as_view())
 
 ]
