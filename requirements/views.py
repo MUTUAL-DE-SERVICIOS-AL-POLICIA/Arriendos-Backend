@@ -12,7 +12,7 @@ from django.db import models
 import math
 from datetime import datetime
 from django.db.models import OuterRef, Subquery
-from leases.models import Rental
+from leases.models import Rental, Selected_Product
 from Arriendos_Backend.util import required_fields
 from .function import Make_Rental_Form
 
@@ -205,9 +205,9 @@ class Requirements_customer(generics.GenericAPIView):
      def get(self, request):
         rental_id = request.GET.get('rental', None)
         try:
-            rental = Rental.objects.get(pk=rental_id)
-            customer_type = rental.customer
-            required_requirements = RateRequirement.objects.filter(customer_type_id=customer_type.id)
+            selected_product = Selected_Product.objects.filter(rental_id=rental_id).first()
+            rate_id = selected_product.product.rate.id
+            required_requirements = RateRequirement.objects.filter(rate_id=rate_id)
             required_requirements_list =  []
             for required_requirement in required_requirements:
                 required_requirement_data ={
@@ -227,7 +227,7 @@ class Requirements_customer(generics.GenericAPIView):
                     "is_active": requirement.is_active
                 }
                 other_requirements_list.append(other_requirement_data)
-            return Response({"status": "success", "data": {"required_requirements": required_requirements_list,"optional_requirements":other_requirements_list}}, status=status.HTTP_200_OK)
+            return Response({"data": {"required_requirements": required_requirements_list,"optional_requirements":other_requirements_list}}, status=status.HTTP_200_OK)
         except Rental.DoesNotExist:
             return Response({"error": "No se encontró el arriendo"}, status=status.HTTP_404_NOT_FOUND)
 class Register_delivered_requirement(generics.ListAPIView):
