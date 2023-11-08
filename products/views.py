@@ -215,6 +215,6 @@ class Posible_product(APIView):
                 return Response({'status': 'success', 'products': products_with_active_prices})
             else:
                 customer=Customer_type.objects.get(pk=customer_type_id)
-                return Response({"error": f"No hay requisitos asociados a la tarifa perteneciente al tipo de cliente: {customer.name}"}, status=404)
+                return Response({"error": f"No hay requisitos asociados a la tarifa perteneciente al tipo de cliente: {customer.name}"}, status=status.HTTP_400_BAD_REQUEST)
         except Customer_type.DoesNotExist:
-            return Response({"error": "Tipo de cliente no encontrado"}, status=404)
+            return Response({"error": "Tipo de cliente no encontrado"}, status=status.HTTP_400_BAD_REQUEST)
