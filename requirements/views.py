@@ -82,11 +82,11 @@ class Requirement_Detail(generics.GenericAPIView):
         if requirement.is_active == True:
             requirement.is_active= False
             requirement.save()
-            return Response({"status": "success", "message":"Requisito desactivado"}, status=status.HTTP_200_OK)
+            return Response({"message":"Requisito desactivado"}, status=status.HTTP_200_OK)
         else:
             requirement.is_active= True
             requirement.save()
-            return Response({"status":"success", "message":"Requisito activado"}, status=status.HTTP_200_OK)
+            return Response({"message":"Requisito activado"}, status=status.HTTP_200_OK)
     
 
 class RateWithRelatedDataView(generics.ListAPIView):
@@ -140,9 +140,9 @@ class RateRequirement_Api(generics.GenericAPIView):
         customer_types = request.data.get("customer_type")
         requirements = request.data.get("requirement")
         if rate is None or customer_types is None or requirements is None:
-            return Response({"status": "fail", "message": "Los datos enviados no son los correctos"}, status=status.HTTP_400_BAD_REQUEST)
-        if Rate.objects.filter(name__icontains = rate).exists():
-            return Response({"status": "fail", "message": "La tarifa ya existe"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Los datos enviados no son los correctos"}, status=status.HTTP_400_BAD_REQUEST)
+        if Rate.objects.filter(name = rate).exists():
+            return Response({"error": "La tarifa ya existe"}, status=status.HTTP_400_BAD_REQUEST)
         else:
             rate = Rate.objects.create(name = rate)
         rate=Rate.objects.get(pk=rate.id)
@@ -192,14 +192,14 @@ class RateRequirement_Detail(generics.GenericAPIView):
                         requirement.is_active = True
                         requirement.save()
                     else:
-                        try: 
+                        try:
                             requirement = RateRequirement.objects.create(requirement_id=rate_requirement, customer_type_id=customer_type, rate_id=pk)
                         except:
-                            return Response({"status":"fail", "message":"No se pudo agregar el cliente y tarifa"}, status=status.HTTP_400_BAD_REQUEST)    
+                            return Response({"error":"No se pudo agregar el cliente y tarifa"}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 for rate_requirement in rate_requirements:
-                    new_customer = RateRequirement.objects.create(requirement_id=rate_requirement, customer_type_id=customer_type, rate_id=pk)      
-        return Response({"status": "success", "message":"Tarifa actualizada con éxito"}, status=status.HTTP_200_OK)        
+                    new_customer = RateRequirement.objects.create(requirement_id=rate_requirement, customer_type_id=customer_type, rate_id=pk)
+        return Response({"status": "success", "message":"Tarifa actualizada con éxito"}, status=status.HTTP_200_OK)
 
 class Requirements_customer(generics.GenericAPIView):
      def get(self, request):

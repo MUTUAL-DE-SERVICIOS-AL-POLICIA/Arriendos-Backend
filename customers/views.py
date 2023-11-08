@@ -75,24 +75,40 @@ class Customer_Api(generics.GenericAPIView):
     queryset = Customer.objects.all()
     def get(self, request, *args, **kwargs):
         serializer_class = CustomersSerializer
-        queryset = Customer.objects.all()
         page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit', 10))
         start_num = (page_num) * limit_num
         end_num = limit_num * (page_num + 1)
         search_param = request.GET.get('search')
-        customers = Customer.objects.all().order_by('id')
-        total_customers = customers.count()
         if search_param:
-            customers = customers.filter(title__icontains=search_param)
-        serializer = serializer_class(customers[start_num:end_num], many=True)
-        return Response({
+            customers = Customer.objects.all()
+            customers = customers.filter(
+                Q(contact__name__icontains=search_param) |
+                Q(contact__ci_nit__icontains=search_param) |
+                Q(institution_name__icontains=search_param) |
+                Q(nit__icontains=search_param)
+            )
+            total_customers = customers.count()
+            serializer = serializer_class(customers[start_num:end_num], many=True)
+            return Response({
             "status": "success",
             "total": total_customers,
             "page": page_num,
             "last_page": math.ceil(total_customers/ limit_num),
             "customers": serializer.data
-        })
+            })
+        else:
+            customers = Customer.objects.all().order_by('id')
+            total_customers = customers.count()
+            serializer = serializer_class(customers[start_num:end_num], many=True)
+            return Response({
+            "status": "success",
+            "total": total_customers,
+            "page": page_num,
+            "last_page": math.ceil(total_customers/ limit_num),
+            "customers": serializer.data
+            })
+
     def post(self, request, *args, **kwargs):
         try:
             customer_type_req = request.data["customer_type"]
@@ -109,7 +125,7 @@ class Customer_Api(generics.GenericAPIView):
                 if institution_name is None or nit is None:
                     return Response({"error":"los campos no son válidos"}, status=status.HTTP_400_BAD_REQUEST)
                 if Customer.objects.filter(nit=nit).exists():
-                    return Response({"status": "success", "message":"La institucion ya esta registrada"}, status=status.HTTP_200_OK)
+                    return Response({"error":"La institucion ya esta registrada"}, status=status.HTTP_400_BAD_REQUEST)
                 customer_institution = Customer.objects.create(institution_name = institution_name, nit=nit, customer_type_id=customer_type_id)
                 for contact in contacts:
                     name = contact.get("name", None)
@@ -128,7 +144,7 @@ class Customer_Api(generics.GenericAPIView):
                 if name_customer is None or ci_nit is None or phone is None:
                     return Response({"error":"los campos no son válidos"}, status=status.HTTP_400_BAD_REQUEST)
                 if Contact.objects.filter(ci_nit=ci_nit).exists():
-                    return Response({"message": "El cliente ya existe"}, status=status.HTTP_200_OK)
+                    return Response({"error": "El cliente ya existe"}, status=status.HTTP_400_BAD_REQUEST)
                 customer = Customer.objects.create(customer_type_id=customer_type_id)
                 Contact.objects.create(degree=degree, name=name_customer, ci_nit=ci_nit, phone=phone, customer_id=customer.id)
                 return Response({"message": "Cliente registrado con exito" }, status=status.HTTP_201_CREATED)
@@ -230,9 +246,9 @@ class Contact_Api(generics.GenericAPIView):
         customers = Customer.objects.get(pk=customer)
         if customers:
             if customers.institution_name == None:
-                return Response({"status": "fail", "message": "No se puede agregar el contacto"}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"status": "fail", "error": "No se puede agregar el contacto"}, status=status.HTTP_404_NOT_FOUND)
         if Contact.objects.filter(ci_nit=ci_nit, customer_id =customer).exists():
-            return Response({"status": "Fail", "message":"El contacto ya existe"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error":"El contacto ya existe"}, status=status.HTTP_404_NOT_FOUND)
         try:
             contact = Contact.objects.create(name=name, phone=phone, is_customer=is_customer, ci_nit=ci_nit, degree=degree, customer_id=customer)
             return Response({"status": "success", "message":"Contacto registrado con éxito"}, status=status.HTTP_201_CREATED)
@@ -262,7 +278,7 @@ class Contact_Detail(generics.GenericAPIView):
             serializer.save()
             return Response({"status": "success", "data": {"contact": serializer.data}}, status=status.HTTP_200_OK)
         return Response({"status": "error", "message": serializer.errors}, status=status.HTTP_404_NOT_FOUND)
-    def delete(self, request, pk): 
+    def delete(self, request, pk):
         if not Contact.objects.filter(pk=pk).exists():
             return Response({"status":"fail"}, status=status.HTTP_404_NOT_FOUND)
         contact = Contact.objects.get(pk=pk)
