@@ -1,16 +1,13 @@
 from django.shortcuts import render
-from rest_framework import viewsets
 from rest_framework.response import Response
 from django.http import HttpResponse, JsonResponse
-from rest_framework.decorators import api_view
-from .serializer import CustomerSerializer, Customer_typeSerializer, CustomersSerializer, ContactSerializer
-from django.views.decorators.csrf import csrf_exempt
+from .serializer import CustomerSerializer, Customer_typeSerializer, CustomersSerializer
 from .models import Customer, Customer_type, Contact
 import math
-from datetime import datetime
 from rest_framework import status, generics
-from rest_framework import filters
 from django.db.models import Q
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 # Create your views here.
 
 class Customer_Type_Api(generics.GenericAPIView):
@@ -40,14 +37,13 @@ class Customer_Type_Api(generics.GenericAPIView):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response({"status": "success", "data": {"customers": serializer.data}}, status=status.HTTP_201_CREATED)
+            return Response({"data": {"customers": serializer.data}}, status=status.HTTP_201_CREATED)
         else:
-            return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 class Customer_Type_Detail(generics.GenericAPIView):
     queryset = Customer_type.objects.all()
     serializer_class = Customer_typeSerializer
-
 
     def get_customer_type(self, pk, *args, **kwargs):
         try:
@@ -57,22 +53,64 @@ class Customer_Type_Detail(generics.GenericAPIView):
     def get(self,request, pk, *args, **kwargs):
         customer_type = self.get_customer_type(pk=pk)
         if customer_type == None:
-            return Response({"status": "fail", "message": f"Customer_type with id: {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": f"Customer_type with id: {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.serializer_class(customer_type)
-        return Response({"status": "success", "data": {"customer_type": serializer.data}}, status=status.HTTP_200_OK)
+        return Response({"data": {"customer_type": serializer.data}}, status=status.HTTP_200_OK)
     def patch(self, request, pk):
         customer_type = self.get_customer_type(pk)
         if customer_type == None:
-            return Response({"status": "fail", "message": "Customer type not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Customer type not found"}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.serializer_class(customer_type, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response({"status": "success", "data": {"customer_type": serializer.data}}, status=status.HTTP_200_OK)
-        return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"data": {"customer_type": serializer.data}}, status=status.HTTP_200_OK)
+        return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+search = openapi.Parameter('search', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING)
+customer_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'name': openapi.Schema(type=openapi.TYPE_STRING),
+        'ci_nit': openapi.Schema(type=openapi.TYPE_STRING),
+        'phone': openapi.Schema(type=openapi.TYPE_STRING),
+        'degree': openapi.Schema(type=openapi.TYPE_STRING),
+    }
+)
+
+contact_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'name': openapi.Schema(type=openapi.TYPE_STRING),
+        'ci_nit': openapi.Schema(type=openapi.TYPE_STRING),
+        'phone': openapi.Schema(type=openapi.TYPE_STRING),
+    }
+)
+
+institution_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'name': openapi.Schema(type=openapi.TYPE_STRING),
+        'nit': openapi.Schema(type=openapi.TYPE_STRING),
+        'contacts': openapi.Schema(type=openapi.TYPE_ARRAY, items=contact_schema),
+    }
+)
+
+request_body_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'customer_type': openapi.Schema(type=openapi.TYPE_INTEGER),
+        'customer': customer_schema,
+        'institution': institution_schema,
+    }
+)
 class Customer_Api(generics.GenericAPIView):
     serializer_class = CustomersSerializer
     queryset = Customer.objects.all()
+
+    @swagger_auto_schema(
+    operation_description="Search es opcional para buscar el cliente",
+    manual_parameters=[search],
+    )
     def get(self, request, *args, **kwargs):
         serializer_class = CustomersSerializer
         page_num = int(request.GET.get('page', 0))
@@ -109,6 +147,10 @@ class Customer_Api(generics.GenericAPIView):
             "customers": serializer.data
             })
 
+    @swagger_auto_schema(
+    operation_description="Se envia customer o institution segun el tipo de cliente",
+    request_body=request_body_schema
+    )
     def post(self, request, *args, **kwargs):
         try:
             customer_type_req = request.data["customer_type"]
@@ -150,6 +192,43 @@ class Customer_Api(generics.GenericAPIView):
                 return Response({"message": "Cliente registrado con exito" }, status=status.HTTP_201_CREATED)
         return HttpResponse({"error":"El tipo de cliente no es válido"}, status=status.HTTP_404_NOT_FOUND)
 
+
+
+contact_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'id': openapi.Schema(type=openapi.TYPE_INTEGER),
+        'name': openapi.Schema(type=openapi.TYPE_STRING),
+        'ci_nit': openapi.Schema(type=openapi.TYPE_STRING),
+        'phone': openapi.Schema(type=openapi.TYPE_STRING),
+        'degree': openapi.Schema(type=openapi.TYPE_STRING),
+    }
+)
+
+institution_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'name': openapi.Schema(type=openapi.TYPE_STRING),
+        'nit': openapi.Schema(type=openapi.TYPE_STRING),
+        'contacts': openapi.Schema(type=openapi.TYPE_ARRAY, items=contact_schema),
+    }
+)
+
+request_body_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'customer': openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'name': openapi.Schema(type=openapi.TYPE_STRING),
+                'ci_nit': openapi.Schema(type=openapi.TYPE_STRING),
+                'phone': openapi.Schema(type=openapi.TYPE_STRING),
+                'degree': openapi.Schema(type=openapi.TYPE_STRING),
+            }
+        ),
+        'institution': institution_schema,
+    }
+)
 class Customer_Detail(generics.GenericAPIView):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
@@ -158,6 +237,10 @@ class Customer_Detail(generics.GenericAPIView):
             return Customer.objects.get(pk=pk)
         except:
             return None
+    @swagger_auto_schema(
+    operation_description="Para editar clientes se envia customer o institution segun el tipo de cliente, en contactos el id es opcional",
+    request_body=request_body_schema
+    )
     def patch(self, request, pk, **kwargs):
         customer = Customer.objects.get(pk=pk)
         customer_type = Customer_type.objects.get(pk=customer.customer_type_id)
@@ -205,89 +288,3 @@ class Customer_Detail(generics.GenericAPIView):
             customer_data.degree = degree
             customer_data.save()
             return Response({"message":"Cliente actualizado"}, status=status.HTTP_200_OK)
-
-class CustomerInsitution_Detail(generics.GenericAPIView):
-    queryset = Customer.objects.all()
-    serializer_class = CustomerSerializer
-
-    def get_customer(self, pk, *args, **kwargs):
-        try:
-            return Customer.objects.get(pk=pk)
-        except:
-            return None
-    def get(self, request, pk, *args, **kwargs):
-        customer = self.get_customer(pk=pk)
-        if customer == None:
-            return Response({"status": "fail", "message": f"Customer institution with id: {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
-        serializer = self.serializer_class(customer)
-        return Response({"status": "success", "data": {"customer institution": serializer.data}}, status=status.HTTP_200_OK)
-
-    def patch(self, request, pk):
-        customer = self.get_customer(pk=pk)
-        if customer == None:
-            return Response({"status": "fail", "message": f"Customer institution with id: {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
-        serializer = self.serializer_class(customer, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"status": "success", "data": {"customer institution": serializer.data}}, status=status.HTTP_200_OK)
-        return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-    
-class Contact_Api(generics.GenericAPIView):
-    queryset = Contact.objects.all()
-    serializer_class = ContactSerializer
-
-    def post(self, request, *args, **kwargs):
-        name = request.data.get('name')
-        degree = request.data.get('degree', None)
-        ci_nit = request.data.get('ci_nit', None)
-        phone = request.data.get('phone')
-        is_customer = False
-        customer = request.data.get('customer')
-        customers = Customer.objects.get(pk=customer)
-        if customers:
-            if customers.institution_name == None:
-                return Response({"status": "fail", "error": "No se puede agregar el contacto"}, status=status.HTTP_404_NOT_FOUND)
-        if Contact.objects.filter(ci_nit=ci_nit, customer_id =customer).exists():
-            return Response({"error":"El contacto ya existe"}, status=status.HTTP_404_NOT_FOUND)
-        try:
-            contact = Contact.objects.create(name=name, phone=phone, is_customer=is_customer, ci_nit=ci_nit, degree=degree, customer_id=customer)
-            return Response({"status": "success", "message":"Contacto registrado con éxito"}, status=status.HTTP_201_CREATED)
-        except:
-            return Response({"status":"fail"}, status=status.HTTP_400_BAD_REQUEST)
-class Contact_Detail(generics.GenericAPIView):
-    queryset= Contact.objects.all()
-    serializer_class=ContactSerializer
-
-    def get_contact(self, pk):
-        try:
-            return Contact.objects.get(pk=pk)
-        except:
-            return None
-    def get(self, pk, request):
-        contact = self.get_contact(pk=pk)
-        if contact == None:
-            return Response({"status": "fail", "message": f"Contact with id: {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
-        serializer = self.serializer_class(contact)
-        return Response({"status": "success", "data": {"contact": serializer.data}}, status=status.HTTP_200_OK)
-    def patch(self, request, pk, *args, **kwargs):
-        contact = self.get_contact(pk=pk)
-        if contact == None:
-            return Response({"status": "fail", "message": f"Contact with id: {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
-        serializer = self.serializer_class(contact, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"status": "success", "data": {"contact": serializer.data}}, status=status.HTTP_200_OK)
-        return Response({"status": "error", "message": serializer.errors}, status=status.HTTP_404_NOT_FOUND)
-    def delete(self, request, pk):
-        if not Contact.objects.filter(pk=pk).exists():
-            return Response({"status":"fail"}, status=status.HTTP_404_NOT_FOUND)
-        contact = Contact.objects.get(pk=pk)
-        if contact.is_active == True:
-            contact.is_active= False
-            contact.save()
-            return Response({"status": "success", "message":"Contacto desactivado"}, status=status.HTTP_200_OK)
-        else:
-            contact.is_active= True
-            contact.save()
-            return Response({"status":"success", "message":"Contacto activado"}, status=status.HTTP_200_OK)
-        
