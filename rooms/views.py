@@ -91,7 +91,12 @@ class List_Properties_with_Rooms(generics.GenericAPIView):
 class Sub_Environment_Api(generics.GenericAPIView):
     queryset = Sub_Environment.objects.all()
     serializer_class = Sub_EnvironmentSerializer
-
+    permission_classes = [IsAuthenticated, HasViewSub_EnvironmentPermission, HasAddSub_EnvironmentPermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewSub_EnvironmentPermission()]
+        if self.request.method == 'POST':
+            return [HasAddSub_EnvironmentPermission()]
     def get(self, request):
         serializer_class = Sub_EnvironmentSerializer
         page_num = int(request.GET.get('page',0))
@@ -120,7 +125,10 @@ class Sub_Environment_Api(generics.GenericAPIView):
 class Sub_Environment_Detail(generics.GenericAPIView):
     queryset = Sub_Environment.objects.all()
     serializer_class = Sub_EnvironmentSerializer
-
+    permission_classes = [IsAuthenticated, HasChangeSub_EnvironmentPermission]
+    def get_permissions(self):
+        if self.request.method == 'PATCH':
+            return [HasChangeSub_EnvironmentPermission()]
     def get_sub_environment(self, pk):
         try:
             return Sub_Environment.objects.get(pk=pk)
