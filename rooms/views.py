@@ -29,14 +29,31 @@ class PropertyRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
 class RoomListCreateView(generics.ListCreateAPIView):
     queryset = Room.objects.all()
     serializer_class = RoomSerializer
+    permission_classes = [IsAuthenticated, HasAddRoomPermission, HasViewRoomPermission]
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [IsAuthenticated(), HasAddRoomPermission()]
+        elif self.request.method == 'GET':
+            return [IsAuthenticated(), HasViewRoomPermission()]
+        return super().get_permissions()
 
 class RoomRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Room.objects.all()
     serializer_class = RoomSerializer
+    permission_classes = [IsAuthenticated, HasChangeRoomPermission, HasDeleteRoomPermission]
+    def get_permissions(self):
+        if self.request.method == 'PUT':
+            print("entro aca")
+            return [IsAuthenticated(), HasChangeRoomPermission()]
+        elif self.request.method == 'DELETE':
+            return [IsAuthenticated(), HasDeleteRoomPermission()]
+        return super().get_permissions()
 class List_Properties_with_Rooms(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated, HasViewPropertyPermission]
+    permission_classes = [IsAuthenticated, HasViewPropertyPermission, HasViewRoomPermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewPropertyPermission(), HasViewRoomPermission()]
     def get(self, request):
-        # print(permission_classes)
         properties = Property.objects.all()
         response_data = []
         for property in properties:
