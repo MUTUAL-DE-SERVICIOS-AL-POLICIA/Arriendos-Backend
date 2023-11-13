@@ -36,3 +36,9 @@ class HasChangeRateRequirementPermission(permissions.BasePermission):
     def has_permission(self, request, view):
         has_permission = request.user.has_perm('requirements.change_raterequirement')
         return has_permission
+
+class HasAddRequirementDeliveredRequirementPermission(permissions.BasePermission):
+    message = "No tienes permisos para crear registros de requisitos entregados"
+    def has_permission(self, request, view):
+        has_permission = request.user.has_perm('requirements.add_requirement_delivered')
+        return has_permission
