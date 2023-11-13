@@ -20,3 +20,19 @@ class HasDeleteRequirementPermission(permissions.BasePermission):
     def has_permission(self, request, view):
         has_permission = request.user.has_perm('requirements.delete_requirement')
         return has_permission
+
+class HasViewRateRequirementPermission(permissions.BasePermission):
+    message = "No tienes permisos para ver las tarifas con sus requisitos"
+    def has_permission(self, request, view):
+        has_permission = request.user.has_perm('requirements.view_raterequirement')
+        return has_permission
+class HasAddRateRequirementPermission(permissions.BasePermission):
+    message = "No tienes permisos para crear tarifas con sus requisitos"
+    def has_permission(self, request, view):
+        has_permission = request.user.has_perm('requirements.add_raterequirement')
+        return has_permission
+class HasChangeRateRequirementPermission(permissions.BasePermission):
+    message = "No tienes permisos para editar las tarifas con sus requisitos"
+    def has_permission(self, request, view):
+        has_permission = request.user.has_perm('requirements.change_raterequirement')
+        return has_permission
