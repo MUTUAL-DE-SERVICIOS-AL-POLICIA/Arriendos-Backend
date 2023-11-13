@@ -4,11 +4,27 @@ from rest_framework import status, generics
 from financials.models import Payment, Warranty_Movement, Event_Damage
 from financials.serializer import Payment_Serializer, Warranty_Movement_Serializer, Event_Damage_Serializer
 from leases.models import Rental, Selected_Product
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from Arriendos_Backend.util import required_fields
 from .function import Make_Damage_Warranty_Form, Make_Warranty_Form, Make_Return_Warranty_Form
 # Create your views here.
+request_body_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'rental': openapi.Schema(type=openapi.TYPE_INTEGER),
+        'mount': openapi.Schema(type=openapi.TYPE_INTEGER),
+        'voucher_number': openapi.Schema(type=openapi.TYPE_STRING),
+        'detail': openapi.Schema(type=openapi.TYPE_STRING)
+    }
+)
+rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Register_payment(generics.ListAPIView):
     serializer_class = Payment_Serializer
+    @swagger_auto_schema(
+    operation_description="Lista de pagos por alquiler",
+    manual_parameters=[rental],
+    )
     def get(self,request):
         rental_id = request.query_params.get('rental')
         if not rental_id:
@@ -33,6 +49,11 @@ class Register_payment(generics.ListAPIView):
                 "payments":[]
             }
             return Response(response_data, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+    operation_description="Registro de pagos",
+    request_body=request_body_schema
+    )
     def post(self,request):
             rental_id = request.data["rental"]
             detail = request.data["detail"]
@@ -84,6 +105,10 @@ class Register_payment(generics.ListAPIView):
                     return Response(response_data, status=status.HTTP_201_CREATED)
             except Rental.DoesNotExist:
                 return Response({"error": "El alquiler no existe."}, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(
+    operation_description="Borrar registro de pago",
+    )
     def delete(self,request,rental_id):
         try:
             exist_payment= Payment.objects.filter(rental_id=rental_id).exists()
@@ -95,8 +120,22 @@ class Register_payment(generics.ListAPIView):
                 return Response({"error": "No existen pagos para ese alquiler"}, status=status.HTTP_400_BAD_REQUEST)
         except Payment.DoesNotExist:
             return Response({"error": "El pago no existe."}, status=status.HTTP_400_BAD_REQUEST)
+
+request_body_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'rental': openapi.Schema(type=openapi.TYPE_INTEGER),
+        'mount': openapi.Schema(type=openapi.TYPE_INTEGER),
+        'voucher_number': openapi.Schema(type=openapi.TYPE_STRING),
+        'detail': openapi.Schema(type=openapi.TYPE_STRING)
+    }
+)
 class Register_total_payment(generics.ListAPIView):
     serializer_class = Payment_Serializer
+    @swagger_auto_schema(
+    operation_description="Registro del pago total del arriendo",
+    request_body=request_body_schema
+    )
     def post(self,request):
         rental_id = request.data["rental"]
         detail = request.data["detail"]
@@ -147,8 +186,23 @@ class Register_total_payment(generics.ListAPIView):
                 return Response(response_data, status=status.HTTP_201_CREATED)
         except Rental.DoesNotExist:
                 return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
+rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
+request_body_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'rental': openapi.Schema(type=openapi.TYPE_INTEGER),
+        'income': openapi.Schema(type=openapi.TYPE_INTEGER),
+        'voucher_number': openapi.Schema(type=openapi.TYPE_STRING),
+        'detail': openapi.Schema(type=openapi.TYPE_STRING)
+    }
+)
 class Register_warranty(generics.ListAPIView):
     serializer_class = Warranty_Movement_Serializer
+
+    @swagger_auto_schema(
+    operation_description="Registrar garantía",
+    request_body=request_body_schema
+    )
     def post(self, request):
         validated_fields = ["rental","income", "detail","voucher_number"]
         error_message = required_fields(request, validated_fields)
@@ -195,6 +249,10 @@ class Register_warranty(generics.ListAPIView):
             return Response({"message": "La garantía se ha registrado exitosamente"}, status=status.HTTP_201_CREATED)
         except Rental.DoesNotExist:
             return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
+    @swagger_auto_schema(
+    operation_description="Listado de garantías por alquiler",
+    manual_parameters=[rental],
+    )
     def get(self,request):
         rental_id = request.query_params.get('rental')
         if not rental_id:
@@ -222,6 +280,9 @@ class Register_warranty(generics.ListAPIView):
             }
             list_warranties.append(response_data)
         return Response(list_warranties, status=status.HTTP_200_OK)
+    @swagger_auto_schema(
+    operation_description="Eliminar el ultimo registro de garantía",
+    )
     def delete(self,request,rental_id):
         try:
             Rental.objects.get(pk=rental_id)
@@ -238,14 +299,36 @@ class Register_warranty(generics.ListAPIView):
         except Rental.DoesNotExist:
             return Response({"error": "El Arriendo no existe."}, status=status.HTTP_400_BAD_REQUEST)
 
+rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
+
 class Warranty_Return_Request(generics.GenericAPIView):
+
+    @swagger_auto_schema(
+    operation_description="Solicitud de devolución de garantía",
+    manual_parameters=[rental],
+    )
     def get(self, request, *args, **kwargs):
         rental = request.GET.get('rental', None)
         if rental is None:
             return Response({"error": "No se ha enviado rental"}, status=status.HTTP_404_NOT_FOUND)
         return Make_Warranty_Form(request, rental)
+
+request_body_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'detail': openapi.Schema(type=openapi.TYPE_STRING),
+        'rental': openapi.Schema(type=openapi.TYPE_INTEGER),
+        'discount': openapi.Schema(type=openapi.TYPE_INTEGER),
+        'product': openapi.Schema(type=openapi.TYPE_INTEGER)
+    }
+)
 class Discount_warranty(generics.ListAPIView):
     serializer_class = Warranty_Movement_Serializer
+
+    @swagger_auto_schema(
+    operation_description="API para registro de descuentos por daños",
+    request_body=request_body_schema
+    )
     def post(self, request):
         validated_fields = ["rental","product", "detail","discount"]
         error_message = required_fields(request, validated_fields)
@@ -297,8 +380,20 @@ class Discount_warranty(generics.ListAPIView):
                 return Response({"error":"no tiene garantias registrada"}, status=status.HTTP_400_BAD_REQUEST)
         except Rental.DoesNotExist:
             return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
+
+request_body_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'rental': openapi.Schema(type=openapi.TYPE_INTEGER),
+    }
+)
 class Warranty_Returned(generics.ListAPIView):
     serializer_class = Warranty_Movement_Serializer
+
+    @swagger_auto_schema(
+    operation_description="API de devolución de garantía",
+    request_body=request_body_schema
+    )
     def post(self, request):
         validated_fields = ["rental"]
         error_message = required_fields(request, validated_fields)
@@ -329,7 +424,13 @@ class Warranty_Returned(generics.ListAPIView):
         except Rental.DoesNotExist:
             return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
 
+rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Return_Warranty_Form(generics.GenericAPIView):
+
+    @swagger_auto_schema(
+    operation_description="Formulario de conformidad de devolución de garantía",
+    manual_parameters=[rental],
+    )
     def get(self, request, *args, **kwargs):
         rental = int(request.GET.get('rental', None))
         if rental is None:

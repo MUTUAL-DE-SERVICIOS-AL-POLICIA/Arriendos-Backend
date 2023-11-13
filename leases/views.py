@@ -13,13 +13,21 @@ from datetime import datetime
 import pytz
 from rest_framework import status, generics
 from django.utils import timezone
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from Arriendos_Backend.util import required_fields
 from .function import Make_Delivery_Form, Make_Overtime_Form
 
 class StateRentalListCreateView(generics.ListCreateAPIView):
     queryset = State.objects.all()
     serializer_class = StateSerializer
+
+rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Get_Rental(generics.ListCreateAPIView):
+    @swagger_auto_schema(
+    operation_description="API para obtener la información de cada arriendo",
+    manual_parameters=[rental],
+    )
     def get(sel, request):
         rental_id = request.GET.get('rental', None)
         rental=Rental.objects.get(pk=rental_id)
@@ -57,6 +65,10 @@ class Get_Rental(generics.ListCreateAPIView):
             products.append(product_data)
         return Response({"customer":customer, "products":products})
 class List_state(generics.GenericAPIView):
+    @swagger_auto_schema(
+    operation_description="Listado de los estados de los arriendos",
+    manual_parameters=[rental],
+    )
     def get (self, request):
         list= State.objects.all().order_by('id')
         states=[]
@@ -69,10 +81,15 @@ class List_state(generics.GenericAPIView):
                 states.append(item)
         return Response(states)
 
+room = openapi.Parameter('room', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Selected_Product_Calendar_Api(generics.GenericAPIView):
     queryset = Selected_Product.objects.all()
     serializer_class = Selected_ProductSerializer
 
+    @swagger_auto_schema(
+    operation_description="API de los productos seleccionados para el calendario y por ambiente",
+    manual_parameters=[room],
+    )
     def get(self, request, *args, **kwargs):
         room = request.GET.get('room', None)
         if room is None:
@@ -133,6 +150,13 @@ class Selected_Product_Calendar_Api(generics.GenericAPIView):
                     date_products.append(product_data)
             return Response(date_products)
 
+request_body_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'start_time': openapi.Schema(type=openapi.TYPE_STRING),
+        'end_time': openapi.Schema(type=openapi.TYPE_STRING),
+    }
+)
 class Selected_Product_Detail(generics.GenericAPIView):
     queryset = Selected_Product.objects.all()
     serializer_class = Selected_ProductSerializer
@@ -146,10 +170,14 @@ class Selected_Product_Detail(generics.GenericAPIView):
     def get(self, pk):
         selected_product = self.get_selected_product(pk=pk)
         if selected_product == None:
-            return Response({"status":"fail", "message":"no se ha encontrado el producto seleccionado"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error":"no se ha encontrado el producto seleccionado"}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.serializer_class(selected_product)
-        return Response({"status":"success", "data": {"selected_product":serializer.data}}, status=status.HTTP_200_OK)
+        return Response({"data": {"selected_product":serializer.data}}, status=status.HTTP_200_OK)
 
+    @swagger_auto_schema(
+    operation_description="Cambiar fecha de producto seleccionado",
+    request_body=request_body_schema
+    )
     def patch(self, request, pk):
         selected_product = self.get_selected_product(pk=pk)
         start_time = request.data["start_time"]
@@ -174,14 +202,52 @@ class Selected_Product_Detail(generics.GenericAPIView):
         selected_product.save()
         return Response({"message":"Reserva editada con éxito"}, status=status.HTTP_201_CREATED)
 
+contact_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'id': openapi.Schema(type=openapi.TYPE_INTEGER),
+        'name': openapi.Schema(type=openapi.TYPE_STRING),
+        'ci_nit': openapi.Schema(type=openapi.TYPE_STRING),
+        'phone': openapi.Schema(type=openapi.TYPE_STRING),
+        'degree': openapi.Schema(type=openapi.TYPE_STRING),
+    }
+)
+
+selected_product_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'product': openapi.Schema(type=openapi.TYPE_INTEGER),
+        'event_type': openapi.Schema(type=openapi.TYPE_STRING),
+        'start_time': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
+        'end_time': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_DATETIME),
+        'detail': openapi.Schema(type=openapi.TYPE_STRING),
+    }
+)
+
+request_body_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'customer': openapi.Schema(type=openapi.TYPE_INTEGER),
+        'plan': openapi.Schema(type=openapi.TYPE_INTEGER),
+        'selected_products': openapi.Schema(
+            type=openapi.TYPE_ARRAY,
+            items=selected_product_schema
+        ),
+    }
+)
+
 class Pre_Reserve_Api(generics.GenericAPIView):
 
+    @swagger_auto_schema(
+    operation_description="Pre reserva de arriendos, si es plan se envian mas de un producto seleccionado",
+    request_body=request_body_schema
+    )
     def post(self, request):
         customer = request.data["customer"]
         try:
             Customer.objects.get(pk=customer)
         except:
-            return Response({"message": "Cliente no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Cliente no encontrado"}, status=status.HTTP_404_NOT_FOUND)
         selected_products = request.data["selected_products"]
         for selected_product in selected_products:
             event_type = selected_product.get("event_type", None)
@@ -189,9 +255,9 @@ class Pre_Reserve_Api(generics.GenericAPIView):
                 try:
                     event = Event_Type.objects.filter(name=event_type)
                 except:
-                    return Response({"message":f"El tipo de evento no es válido"}, status=status.HTTP_404_NOT_FOUND)
+                    return Response({"error":f"El tipo de evento no es válido"}, status=status.HTTP_404_NOT_FOUND)
             else:
-                return Response({"message": "El tipo de evento no es válido"}, status=status.HTTP_404_NOT_FOUND)
+                return Response({"error": "El tipo de evento no es válido"}, status=status.HTTP_404_NOT_FOUND)
         first_year = timezone.datetime.strptime(selected_products[0]['start_time'], '%Y-%m-%dT%H:%M:%S.%fZ').year
         for selected_product in selected_products:
                 product = selected_product.get("product")
@@ -200,9 +266,9 @@ class Pre_Reserve_Api(generics.GenericAPIView):
                     product = Product.objects.get(pk=product)
                     start_time = datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%fZ')
                     if (start_time.year > first_year):
-                        return Response({"message":"Las fechas no estan en la misma gestión"}, status=status.HTTP_404_NOT_FOUND)
+                        return Response({"error":"Las fechas no estan en la misma gestión"}, status=status.HTTP_404_NOT_FOUND)
                 except:
-                    return Response({"message":"el producto no es válido o la fecha no es correcta"}, status=status.HTTP_404_NOT_FOUND)
+                    return Response({"error":"el producto no es válido o la fecha no es correcta"}, status=status.HTTP_404_NOT_FOUND)
         initial_total = 0
         for selected_product in selected_products:
             product_id = selected_product.get("product")
@@ -244,7 +310,13 @@ class Pre_Reserve_Api(generics.GenericAPIView):
 class Event_Api(generics.ListAPIView):
     queryset = Event_Type.objects.all()
     serializer_class = Event_TypeSerializer
+
+rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Get_state(generics.ListAPIView):
+    @swagger_auto_schema(
+    operation_description="API del estado de arriendo y siguiente estado",
+    manual_parameters=[rental],
+    )
     def get(self, request):
         rental_id = request.query_params.get('rental')
         if not rental_id:
@@ -274,6 +346,13 @@ class Get_state(generics.ListAPIView):
         }
         return Response(response_data, status=status.HTTP_200_OK)
 
+request_body_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'rental': openapi.Schema(type=openapi.TYPE_INTEGER),
+        'state': openapi.Schema(type=openapi.TYPE_INTEGER)
+    }
+)
 class Change_state(generics.ListAPIView):
     def prereserved(self, rental_id,state):
         if self.validated_state(rental_id, state):
@@ -342,13 +421,16 @@ class Change_state(generics.ListAPIView):
         list_states= Rental.objects.get(pk=rental_id).state.next_state
         for state_object in list_states:
             if state==state_object:
-                print(state_object)
                 return True
         return False
     def save_state(self,rental_id, state):
         rental= Rental.objects.get(pk=rental_id)
         rental.state = state
         rental.save()
+    @swagger_auto_schema(
+    operation_description="Cambiar estado del arriendo",
+    request_body=request_body_schema
+    )
     def post(self, request):
         validated_fields = ["rental", "state"]
         error_message = required_fields(request, validated_fields)
@@ -371,7 +453,20 @@ class Change_state(generics.ListAPIView):
             return response
         except Rental.DoesNotExist:
             return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
+
+request_body_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'rental': openapi.Schema(type=openapi.TYPE_INTEGER),
+        'product': openapi.Schema(type=openapi.TYPE_INTEGER)
+    }
+)
 class Delivery_Form(generics.GenericAPIView):
+
+    @swagger_auto_schema(
+    operation_description="API  de formulario de entrega y recepción de ambientes, con rental y producto seleccionado",
+    request_body=request_body_schema
+    )
     def post(self, request, *args, **kwargs):
         rental = int(request.data["rental"])
         selected_product = int(request.data["product"])
@@ -381,8 +476,25 @@ class Delivery_Form(generics.GenericAPIView):
             return Response({"error": "No se ha enviado selected_product"}, status=status.HTTP_404_NOT_FOUND)
         return Make_Delivery_Form(request, rental, selected_product)
 
-class Register_additional_hour_applied(generics.ListAPIView):
+selected_product = openapi.Parameter('selected_product', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
+
+request_body_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'selected_product': openapi.Schema(type=openapi.TYPE_INTEGER),
+        'number': openapi.Schema(type=openapi.TYPE_INTEGER),
+        'description': openapi.Schema(type=openapi.TYPE_STRING),
+        'voucher_number': openapi.Schema(type=openapi.TYPE_STRING),
+        'price': openapi.Schema(type=openapi.TYPE_INTEGER)
+    }
+)
+class Register_additional_hour_applied(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = Additional_Hour_Applied
+
+    @swagger_auto_schema(
+    operation_description="Registrar hora adicional al producto seleccionado",
+    request_body=request_body_schema
+    )
     def post(self, request):
         selected_product_id = request.data.get('selected_product')
         rental = Selected_Product.objects.get(pk=selected_product_id)
@@ -402,9 +514,14 @@ class Register_additional_hour_applied(generics.ListAPIView):
         data_serialized = Additional_hour_AppliedSerializer(data=data)
         if data_serialized.is_valid():
             data_serialized.save()
-            return Make_Overtime_Form(request, rental, selected_product_id, number, price, total)
+            return Make_Overtime_Form(request, rental, selected_product_id, number, price, total, description)
         else:
             return Response({"error":"no se pudo registar la hora extra"}, status=status.HTTP_400_BAD_REQUEST)
+
+    @swagger_auto_schema(
+    operation_description="Horas adicionales aplicadas",
+    manual_parameters=[selected_product],
+    )
     def get (self, request):
         selected_product_id = request.query_params.get('selected_product')
         additional_hour_applieds = Additional_Hour_Applied.objects.filter(selected_product=selected_product_id)
@@ -419,6 +536,10 @@ class Register_additional_hour_applied(generics.ListAPIView):
             }
             list_additional_hour_applied.append(additional_hour_applied_data)
         return Response(list_additional_hour_applied, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+    operation_description="Eliminar registro de horas extra de producto seleccionado",
+    )
     def delete(self,request,selected_product_id):
         try:
             Selected_Product.objects.get(pk=selected_product_id)
@@ -431,8 +552,14 @@ class Register_additional_hour_applied(generics.ListAPIView):
                 return Response({"error": "No existen horas adicionales registradas para ese producto seleccionado"}, status=status.HTTP_400_BAD_REQUEST)
         except Selected_Product.DoesNotExist:
             return Response({"error": "El producto seleccionado no existe."}, status=status.HTTP_400_BAD_REQUEST)
+rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class List_additional_hour_applied(generics.ListAPIView):
     serializer_class = Additional_Hour_Applied
+
+    @swagger_auto_schema(
+    operation_description="Listado de horas adicionales aplicadas",
+    manual_parameters=[rental],
+    )
     def get (self, request):
         rental_id = request.query_params.get('rental')
         list_selected_product = Selected_Product.objects.filter(rental_id=rental_id)
