@@ -13,11 +13,18 @@ from Arriendos_Backend.util import required_fields
 from .function import Make_Rental_Form
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+from .permissions import *
+from rest_framework.permissions import IsAuthenticated
 
 class Requirement_Api(generics.GenericAPIView):
     serializer_class = RequirementSerializer
     queryset = Requirement.objects.all()
-
+    permission_classes = [IsAuthenticated, HasViewRequirementPermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewRequirementPermission()]
+        if self.request.method == 'POST':
+            return [HasAddRequirementPermission()]
     @swagger_auto_schema(
     operation_description="Lista de requisitos",
     )
@@ -50,7 +57,12 @@ class Requirement_Api(generics.GenericAPIView):
 class Requirement_Detail(generics.GenericAPIView):
     queryset = Requirement.objects.all()
     serializer_class = RequirementSerializer
-
+    permission_classes = [IsAuthenticated, HasChangeRequirementPermission, HasDeleteRequirementPermission]
+    def get_permissions(self):
+        if self.request.method == 'PATCH':
+            return [HasChangeRequirementPermission()]
+        if self.request.method == 'DELETE':
+            return [HasDeleteRequirementPermission()]
     def get_requirement(self, pk, *args, **kw):
         try:
             return Requirement.objects.get(pk=pk)
@@ -80,12 +92,13 @@ class Requirement_Detail(generics.GenericAPIView):
             requirement.is_active= True
             requirement.save()
             return Response({"message":"Requisito activado"}, status=status.HTTP_200_OK)
-    
-
 class RateWithRelatedDataView(generics.ListAPIView):
     queryset = Rate.objects.all()
     serializer_class = RateWithRelatedDataSerializer
-
+    permission_classes = [IsAuthenticated, HasViewRateRequirementPermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewRateRequirementPermission()]
     def get(self, request):
         page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit',10))
@@ -120,7 +133,12 @@ request_body_schema = openapi.Schema(
 class RateRequirement_Api(generics.GenericAPIView):
     serializer_class = RateRequirementSerializer
     queryset = RateRequirement.objects.all()
-
+    permission_classes = [IsAuthenticated, HasViewRateRequirementPermission, HasAddRateRequirementPermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewRateRequirementPermission()]
+        if self.request.method == 'POST':
+            return [HasAddRateRequirementPermission()]
     def get(self, request, *args, **kwargs):
         page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit',10))
@@ -182,7 +200,12 @@ request_body_schema = openapi.Schema(
 class RateRequirement_Detail(generics.GenericAPIView):
     queryset = RateRequirement.objects.all()
     serializer_class = RateRequirementSerializer
-
+    permission_classes = [IsAuthenticated, HasViewRateRequirementPermission, HasChangeRateRequirementPermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewRateRequirementPermission()]
+        if self.request.method == 'PATCH':
+            return [HasChangeRateRequirementPermission()]
     def get_raterequirement(self, pk, *args, **kw):
         try:
             return RateRequirement.objects.get(pk=pk)
@@ -234,10 +257,14 @@ class RateRequirement_Detail(generics.GenericAPIView):
         return Response({"message":"Tarifa actualizada con éxito"}, status=status.HTTP_200_OK)
 
 class Requirements_customer(generics.GenericAPIView):
-     @swagger_auto_schema(
+    permission_classes = [IsAuthenticated, HasViewRequirementPermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewRequirementPermission()]
+    @swagger_auto_schema(
      operation_description="Requisitos requeridos y opcionales",
      )
-     def get(self, request):
+    def get(self, request):
         rental_id = request.GET.get('rental', None)
         try:
             selected_product = Selected_Product.objects.filter(rental_id=rental_id).first()
@@ -266,6 +293,10 @@ class Requirements_customer(generics.GenericAPIView):
         except Rental.DoesNotExist:
             return Response({"error": "No se encontró el arriendo"}, status=status.HTTP_404_NOT_FOUND)
 class Register_delivered_requirement(generics.ListAPIView):
+        permission_classes = [IsAuthenticated, HasAddRequirementDeliveredRequirementPermission]
+        def get_permissions(self):
+            if self.request.method == 'POST':
+                return [HasAddRequirementDeliveredRequirementPermission()]
         def post(self, request):
             validated_fields = ["rental"]
             error_message = required_fields(request, validated_fields)
