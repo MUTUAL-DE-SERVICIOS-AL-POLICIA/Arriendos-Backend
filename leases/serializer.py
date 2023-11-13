@@ -27,6 +27,7 @@ class ProductSerializer(serializers.ModelSerializer):
     room = RoomsSerializer()
     rate = RateSerializer()
     hour_range = HourRangeSerializer()
+    ref_name = 'ProductLeases'
 
     class Meta:
         model = Product
