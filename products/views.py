@@ -9,16 +9,19 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 import math
 from requirements.models import RateRequirement
-
+from .permissions import *
+from rest_framework.permissions import IsAuthenticated
 
 class Rate_Api(generics.GenericAPIView):
     serializer_class = RateSerializer
     queryset = Rate.objects.all()
-
+    permission_classes = [IsAuthenticated, HasViewRatePermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewRatePermission()]
     @swagger_auto_schema(
     operation_description="Lista de Tarifas",
     )
-
     def get(self, request, *args, **kwargs):
         page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit', 10))
@@ -47,14 +50,21 @@ request_body_schema = openapi.Schema(
         ),
         'rate':openapi.Schema(type=openapi.TYPE_INTEGER),
         'room':openapi.Schema(type=openapi.TYPE_INTEGER),
-        'hour_rage': openapi.Schema(type=openapi.TYPE_INTEGER),
+        'hour_range': openapi.Schema(type=openapi.TYPE_INTEGER),
         'mount': openapi.Schema(type=openapi.TYPE_INTEGER)
     }
 )
 class Product_Api(generics.GenericAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-
+    permission_classes = [IsAuthenticated, HasViewProductPermission, HasAddroductPermission, HasChangeProductPermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewProductPermission()]
+        if self.request.method == 'POST':
+            return [HasAddroductPermission()]
+        if self.request.method == 'PATCH':
+            return [HasChangeProductPermission()]
     def get_product(self, pk):
         try:
             return Product.objects.get(pk=pk)
@@ -151,29 +161,70 @@ class Product_Api(generics.GenericAPIView):
 class HourRange_List_Create_View(generics.ListCreateAPIView):
     queryset = HourRange.objects.all()
     serializer_class = HourRangeSerializer
+    permission_classes = [IsAuthenticated, HasAddHourRangePermission, HasViewHourRangePermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewHourRangePermission()]
+        if self.request.method == 'POST':
+            return [HasAddHourRangePermission()]
 
 class HourRange_Retrieve_Update_Destroy_View(generics.RetrieveUpdateDestroyAPIView):
     queryset = HourRange.objects.all()
     serializer_class = HourRangeSerializer
+    permission_classes = [IsAuthenticated, HasChangeHourRangePermission, HasDeleteHourRangePermission]
+    def get_permissions(self):
+        if self.request.method == 'PATCH':
+            return [HasChangeHourRangePermission()]
+        if self.request.method == 'DELETE':
+            return [HasDeleteHourRangePermission()]
 
 class Price_List_Create_View(generics.ListCreateAPIView):
     queryset = Price.objects.all()
     serializer_class = PriceSerializer
+    permission_classes = [IsAuthenticated, HasAddPricePermission, HasViewPricePermission]
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [HasAddPricePermission()]
+        if self.request.method == 'GET':
+            return [HasViewPricePermission()]
 
 class Price_Retrieve_Update_Destroy_View(generics.RetrieveUpdateDestroyAPIView):
     queryset=Price.objects.all()
     serializer_class = PriceSerializer
+    permission_classes = [IsAuthenticated, HasChangePricePermission, HasDeletePricePermission]
+    def get_permissions(self):
+        if self.request.method == 'PATCH':
+            return [HasChangePricePermission()]
+        if self.request.method == 'DELETE':
+            return [HasDeletePricePermission()]
 class Additional_Hour_List_Create_View(generics.ListCreateAPIView):
     queryset = Price_Additional_Hour.objects.all()
     serializer_class = PriceAdditionalHourSerializer
+    permission_classes = [IsAuthenticated, HasAddAdditionalHourPermission, HasViewAdditionalHourPermission]
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [HasAddAdditionalHourPermission()]
+        if self.request.method == 'GET':
+            return [HasViewAdditionalHourPermission()]
 
 class Additional_Hour_Retrieve_Update_Destroy_View(generics.RetrieveUpdateDestroyAPIView):
     queryset = Price_Additional_Hour.objects.all()
     serializer_class = PriceAdditionalHourSerializer
+    permission_classes = [IsAuthenticated, HasChangeAdditionalHourPermission, HasDeleteAdditionalHourPermission]
+    def get_permissions(self):
+        if self.request.method == 'PATCH':
+            return [HasChangeAdditionalHourPermission()]
+        if self.request.method == 'DELETE':
+            return [HasDeleteAdditionalHourPermission()]
 
 selected_product = openapi.Parameter('selected_product', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING)
 
 class Get_price_additional_hour(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, HasViewAdditionalHourPermission]
+    def get_permissions(self):
+        print(self.request.user.get_all_permissions())
+        if self.request.method == 'GET':
+            return [HasViewAdditionalHourPermission()]
     @swagger_auto_schema(
     operation_description="Precio de hora adicional del producto seleccionado",
     manual_parameters=[selected_product],
@@ -200,6 +251,10 @@ request_body_schema = openapi.Schema(
     }
 )
 class Posible_product(APIView):
+    permission_classes = [IsAuthenticated, HasViewProductPermission]
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [HasViewProductPermission()]
     @swagger_auto_schema(
     request_body=request_body_schema,
     )
