@@ -9,16 +9,19 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 import math
 from requirements.models import RateRequirement
-
+from .permissions import *
+from rest_framework.permissions import IsAuthenticated
 
 class Rate_Api(generics.GenericAPIView):
     serializer_class = RateSerializer
     queryset = Rate.objects.all()
-
+    permission_classes = [IsAuthenticated, HasViewRatePermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewRatePermission()]
     @swagger_auto_schema(
     operation_description="Lista de Tarifas",
     )
-
     def get(self, request, *args, **kwargs):
         page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit', 10))
@@ -47,7 +50,7 @@ request_body_schema = openapi.Schema(
         ),
         'rate':openapi.Schema(type=openapi.TYPE_INTEGER),
         'room':openapi.Schema(type=openapi.TYPE_INTEGER),
-        'hour_rage': openapi.Schema(type=openapi.TYPE_INTEGER),
+        'hour_range': openapi.Schema(type=openapi.TYPE_INTEGER),
         'mount': openapi.Schema(type=openapi.TYPE_INTEGER)
     }
 )
