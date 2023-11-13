@@ -22,3 +22,24 @@ class HasChangeProductPermission(permissions.BasePermission):
     def has_permission(self, request, view):
         has_permission = request.user.has_perm('products.change_product')
         return has_permission
+
+class HasAddHourRangePermission(permissions.BasePermission):
+    message = "No tienes permisos para crear rangos de hora"
+    def has_permission(self, request, view):
+        has_permission = request.user.has_perm('products.add_hourrange')
+        return has_permission
+class HasViewHourRangePermission(permissions.BasePermission):
+    message = "No tienes permisos para ver los rangos de hora"
+    def has_permission(self, request, view):
+        has_permission = request.user.has_perm('products.view_hourrange')
+        return has_permission
+class HasChangeHourRangePermission(permissions.BasePermission):
+    message = "No tienes permisos para editar rangos de hora"
+    def has_permission(self, request, view):
+        has_permission = request.user.has_perm('products.change_hourrange')
+        return has_permission
+class HasDeleteHourRangePermission(permissions.BasePermission):
+    message = "No tienes permisos para borrar los rangos de hora"
+    def has_permission(self, request, view):
+        has_permission = request.user.has_perm('products.delete_hourrange')
+        return has_permission
