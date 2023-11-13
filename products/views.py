@@ -161,18 +161,43 @@ class Product_Api(generics.GenericAPIView):
 class HourRange_List_Create_View(generics.ListCreateAPIView):
     queryset = HourRange.objects.all()
     serializer_class = HourRangeSerializer
+    permission_classes = [IsAuthenticated, HasAddHourRangePermission, HasViewHourRangePermission]
+    def get_permissions(self):
+        print(self.request.user.get_all_permissions())
+        if self.request.method == 'GET':
+            return [HasViewHourRangePermission()]
+        if self.request.method == 'POST':
+            return [HasAddHourRangePermission()]
 
 class HourRange_Retrieve_Update_Destroy_View(generics.RetrieveUpdateDestroyAPIView):
     queryset = HourRange.objects.all()
     serializer_class = HourRangeSerializer
+    permission_classes = [IsAuthenticated, HasChangeHourRangePermission, HasDeleteHourRangePermission]
+    def get_permissions(self):
+        if self.request.method == 'PATCH':
+            return [HasChangeHourRangePermission()]
+        if self.request.method == 'DELETE':
+            return [HasDeleteHourRangePermission()]
 
 class Price_List_Create_View(generics.ListCreateAPIView):
     queryset = Price.objects.all()
     serializer_class = PriceSerializer
+    permission_classes = [IsAuthenticated, HasAddPricePermission, HasViewPricePermission]
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [HasAddPricePermission()]
+        if self.request.method == 'GET':
+            return [HasViewPricePermission()]
 
 class Price_Retrieve_Update_Destroy_View(generics.RetrieveUpdateDestroyAPIView):
     queryset=Price.objects.all()
     serializer_class = PriceSerializer
+    permission_classes = [IsAuthenticated, HasChangePricePermission, HasDeletePricePermission]
+    def get_permissions(self):
+        if self.request.method == 'PATCH':
+            return [HasChangePricePermission()]
+        if self.request.method == 'DELETE':
+            return [HasDeletePricePermission()]
 class Additional_Hour_List_Create_View(generics.ListCreateAPIView):
     queryset = Price_Additional_Hour.objects.all()
     serializer_class = PriceAdditionalHourSerializer
