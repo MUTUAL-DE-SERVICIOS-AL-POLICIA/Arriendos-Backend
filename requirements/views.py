@@ -92,12 +92,13 @@ class Requirement_Detail(generics.GenericAPIView):
             requirement.is_active= True
             requirement.save()
             return Response({"message":"Requisito activado"}, status=status.HTTP_200_OK)
-    
-
 class RateWithRelatedDataView(generics.ListAPIView):
     queryset = Rate.objects.all()
     serializer_class = RateWithRelatedDataSerializer
-
+    permission_classes = [IsAuthenticated, HasViewRateRequirementPermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewRateRequirementPermission()]
     def get(self, request):
         page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit',10))
@@ -132,7 +133,12 @@ request_body_schema = openapi.Schema(
 class RateRequirement_Api(generics.GenericAPIView):
     serializer_class = RateRequirementSerializer
     queryset = RateRequirement.objects.all()
-
+    permission_classes = [IsAuthenticated, HasViewRateRequirementPermission, HasAddRateRequirementPermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewRateRequirementPermission()]
+        if self.request.method == 'POST':
+            return [HasAddRateRequirementPermission()]
     def get(self, request, *args, **kwargs):
         page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit',10))
@@ -194,7 +200,12 @@ request_body_schema = openapi.Schema(
 class RateRequirement_Detail(generics.GenericAPIView):
     queryset = RateRequirement.objects.all()
     serializer_class = RateRequirementSerializer
-
+    permission_classes = [IsAuthenticated, HasViewRateRequirementPermission, HasChangeRateRequirementPermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewRateRequirementPermission()]
+        if self.request.method == 'PATCH':
+            return [HasChangeRateRequirementPermission()]
     def get_raterequirement(self, pk, *args, **kw):
         try:
             return RateRequirement.objects.get(pk=pk)
