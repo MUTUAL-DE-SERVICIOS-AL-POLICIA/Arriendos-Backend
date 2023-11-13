@@ -220,6 +220,11 @@ class Additional_Hour_Retrieve_Update_Destroy_View(generics.RetrieveUpdateDestro
 selected_product = openapi.Parameter('selected_product', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING)
 
 class Get_price_additional_hour(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, HasViewAdditionalHourPermission]
+    def get_permissions(self):
+        print(self.request.user.get_all_permissions())
+        if self.request.method == 'GET':
+            return [HasViewAdditionalHourPermission()]
     @swagger_auto_schema(
     operation_description="Precio de hora adicional del producto seleccionado",
     manual_parameters=[selected_product],
