@@ -257,10 +257,14 @@ class RateRequirement_Detail(generics.GenericAPIView):
         return Response({"message":"Tarifa actualizada con éxito"}, status=status.HTTP_200_OK)
 
 class Requirements_customer(generics.GenericAPIView):
-     @swagger_auto_schema(
+    permission_classes = [IsAuthenticated, HasViewRequirementPermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewRequirementPermission()]
+    @swagger_auto_schema(
      operation_description="Requisitos requeridos y opcionales",
      )
-     def get(self, request):
+    def get(self, request):
         rental_id = request.GET.get('rental', None)
         try:
             selected_product = Selected_Product.objects.filter(rental_id=rental_id).first()
@@ -289,6 +293,10 @@ class Requirements_customer(generics.GenericAPIView):
         except Rental.DoesNotExist:
             return Response({"error": "No se encontró el arriendo"}, status=status.HTTP_404_NOT_FOUND)
 class Register_delivered_requirement(generics.ListAPIView):
+        permission_classes = [IsAuthenticated, HasAddRequirementDeliveredRequirementPermission]
+        def get_permissions(self):
+            if self.request.method == 'POST':
+                return [HasAddRequirementDeliveredRequirementPermission()]
         def post(self, request):
             validated_fields = ["rental"]
             error_message = required_fields(request, validated_fields)
