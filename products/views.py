@@ -57,7 +57,14 @@ request_body_schema = openapi.Schema(
 class Product_Api(generics.GenericAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-
+    permission_classes = [IsAuthenticated, HasViewProductPermission, HasAddroductPermission, HasChangeProductPermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewProductPermission()]
+        if self.request.method == 'POST':
+            return [HasAddroductPermission()]
+        if self.request.method == 'PATCH':
+            return [HasChangeProductPermission()]
     def get_product(self, pk):
         try:
             return Product.objects.get(pk=pk)
