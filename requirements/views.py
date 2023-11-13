@@ -1,35 +1,33 @@
 from django.shortcuts import render
-from rest_framework import viewsets
 from rest_framework import status, generics
 from rest_framework.response import Response
-from django.http import HttpResponse, JsonResponse
-from rest_framework.decorators import api_view
 from .models import RateRequirement, Requirement,Requirement_Delivered
-from .serializer import RateRequirementSerializer, RequirementSerializer, RateWithRelatedDataSerializer,RateRequirementDetailSerializer
+from .serializer import RateRequirementSerializer, RequirementSerializer, RateWithRelatedDataSerializer
 from products.models import Rate
 from customers.models import Customer_type
 from django.db import models
 import math
 from datetime import datetime
-from django.db.models import OuterRef, Subquery
 from leases.models import Rental, Selected_Product
 from Arriendos_Backend.util import required_fields
 from .function import Make_Rental_Form
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 
 class Requirement_Api(generics.GenericAPIView):
     serializer_class = RequirementSerializer
     queryset = Requirement.objects.all()
 
+    @swagger_auto_schema(
+    operation_description="Lista de requisitos",
+    )
     def get(self, request, *args, **kw):
         page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit', 10))
         start_num = (page_num) * limit_num
         end_num = limit_num * (page_num + 1)
-        search_param = request.GET.get('search')
         requirements = Requirement.objects.filter(is_active = True).order_by('id')
         total_requirements = requirements.count()
-        if search_param:
-            requirements = requirements.filter(title__icontains=search_param)
         serializer = self.serializer_class(requirements[start_num:end_num], many=True)
         return Response({
             "status": "success",
@@ -38,15 +36,17 @@ class Requirement_Api(generics.GenericAPIView):
             "last_page": math.ceil(total_requirements/ limit_num),
            'requirements': serializer.data,
         })
-    
+    @swagger_auto_schema(
+    operation_description="Crear requisitos",
+    )
     def post(self, request, *args, **kw):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response({"status": "success", "data": {"requirement": serializer.data}}, status=status.HTTP_201_CREATED)
+            return Response({"data": {"requirement": serializer.data}}, status=status.HTTP_201_CREATED)
         else:
-            return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
 class Requirement_Detail(generics.GenericAPIView):
     queryset = Requirement.objects.all()
     serializer_class = RequirementSerializer
@@ -56,28 +56,21 @@ class Requirement_Detail(generics.GenericAPIView):
             return Requirement.objects.get(pk=pk)
         except:
             return None
-        
-    def get(self, request, pk, *args, **kw):
-        requirement = self.get_requirement(pk=pk)
-        if requirement == None:
-            return Response({"status": "fail", "message": f"Requirement with id: {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
-        serializer = self.serializer_class(requirement)
-        return Response({"status": "success", "data": {"requirement": serializer.data}}, status=status.HTTP_200_OK)
-    
+
     def patch(self, request, pk, *args, **kw):
         requirement = self.get_requirement(pk)
         if requirement == None:
-            return Response({"status": "fail", "message": f"Requirement with id: {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "El requisito no existe"}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.serializer_class(requirement, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response({"status": "success", "data": {"requirement": serializer.data}}, status=status.HTTP_200_OK)
+            return Response({"data": {"requirement": serializer.data}}, status=status.HTTP_200_OK)
         else:
-            return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     
-    def delete(self, request, pk): 
+    def delete(self, request, pk):
         if not Requirement.objects.filter(pk=pk).exists():
-            return Response({"status":"fail"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error":"El requisito no existe"}, status=status.HTTP_404_NOT_FOUND)
         requirement = Requirement.objects.get(pk=pk)
         if requirement.is_active == True:
             requirement.is_active= False
@@ -98,11 +91,8 @@ class RateWithRelatedDataView(generics.ListAPIView):
         limit_num = int(request.GET.get('limit',10))
         start_num = (page_num) * limit_num
         end_num = limit_num * (page_num + 1)
-        search_param = request.GET.get('search')
         rates = Rate.objects.all().order_by('id')
         total_rates = rates.count()
-        if search_param:
-            rates = Rate.filter(title_icotains=search_param)
         serializer = self.serializer_class(rates[start_num:end_num], many=True)
         return Response({
             "status":"success",
@@ -112,6 +102,20 @@ class RateWithRelatedDataView(generics.ListAPIView):
             "rates": serializer.data
         })
 
+request_body_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'rate': openapi.Schema(type=openapi.TYPE_STRING),
+        'requirement': openapi.Schema(
+            type=openapi.TYPE_ARRAY,
+            items=openapi.Schema(type=openapi.TYPE_INTEGER)
+        ),
+        'customer_type': openapi.Schema(
+            type=openapi.TYPE_ARRAY,
+            items=openapi.Schema(type=openapi.TYPE_INTEGER)
+        ),
+    }
+)
 
 class RateRequirement_Api(generics.GenericAPIView):
     serializer_class = RateRequirementSerializer
@@ -135,6 +139,12 @@ class RateRequirement_Api(generics.GenericAPIView):
             "last_page": math.ceil(total_raterequirements/ limit_num),
             "raterequirements": serializer.data
         })
+
+    @swagger_auto_schema(
+    operation_description="Crear tarifa con tipo de cliente y requisitos",
+    request_body=request_body_schema
+    )
+
     def post(self, request, *args, **kwargs):
         rate=request.data.get("rate")
         customer_types = request.data.get("customer_type")
@@ -152,7 +162,23 @@ class RateRequirement_Api(generics.GenericAPIView):
                 if Requirement.objects.filter(pk=requirement).exists():
                     requirement = Requirement.objects.get(pk=requirement)
                     RateRequirement.objects.create(requirement = requirement, rate = rate, customer_type = customer_type)
-        return Response({"status":"Tarifa creada con éxito"}, status=status.HTTP_201_CREATED)
+        return Response({"message":"Tarifa creada con éxito"}, status=status.HTTP_201_CREATED)
+
+request_body_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'name': openapi.Schema(type=openapi.TYPE_STRING),
+        'requirement': openapi.Schema(
+            type=openapi.TYPE_ARRAY,
+            items=openapi.Schema(type=openapi.TYPE_INTEGER)
+        ),
+        'customer_type': openapi.Schema(
+            type=openapi.TYPE_ARRAY,
+            items=openapi.Schema(type=openapi.TYPE_INTEGER)
+        ),
+    }
+)
+
 class RateRequirement_Detail(generics.GenericAPIView):
     queryset = RateRequirement.objects.all()
     serializer_class = RateRequirementSerializer
@@ -162,13 +188,19 @@ class RateRequirement_Detail(generics.GenericAPIView):
             return RateRequirement.objects.get(pk=pk)
         except:
             return None
-        
+
     def get(self, request, pk, *args, **kw):
         raterequirement = self.get_raterequirement(pk=pk)
         if raterequirement == None:
-            return Response({"status": "fail", "message": f"Rate requirement with id: {pk} not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "No existe el requisito asignado a la tarifa"}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.serializer_class(raterequirement)
-        return Response({"status": "success", "data": {"raterequirement": serializer.data}}, status=status.HTTP_200_OK)
+        return Response({"data": {"raterequirement": serializer.data}}, status=status.HTTP_200_OK)
+
+    @swagger_auto_schema(
+    operation_description="Editar tarifa con tipo de cliente y requisitos",
+    request_body=request_body_schema
+    )
+
     def patch(self, request, pk, *args, **kw):
         name=request.data.get("name")
         customer_types = request.data.get("customer_type")
@@ -199,9 +231,12 @@ class RateRequirement_Detail(generics.GenericAPIView):
             else:
                 for rate_requirement in rate_requirements:
                     new_customer = RateRequirement.objects.create(requirement_id=rate_requirement, customer_type_id=customer_type, rate_id=pk)
-        return Response({"status": "success", "message":"Tarifa actualizada con éxito"}, status=status.HTTP_200_OK)
+        return Response({"message":"Tarifa actualizada con éxito"}, status=status.HTTP_200_OK)
 
 class Requirements_customer(generics.GenericAPIView):
+     @swagger_auto_schema(
+     operation_description="Requisitos requeridos y opcionales",
+     )
      def get(self, request):
         rental_id = request.GET.get('rental', None)
         try:
