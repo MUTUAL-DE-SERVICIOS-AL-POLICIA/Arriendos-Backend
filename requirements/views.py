@@ -13,11 +13,18 @@ from Arriendos_Backend.util import required_fields
 from .function import Make_Rental_Form
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+from .permissions import *
+from rest_framework.permissions import IsAuthenticated
 
 class Requirement_Api(generics.GenericAPIView):
     serializer_class = RequirementSerializer
     queryset = Requirement.objects.all()
-
+    permission_classes = [IsAuthenticated, HasViewRequirementPermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewRequirementPermission()]
+        if self.request.method == 'POST':
+            return [HasAddRequirementPermission()]
     @swagger_auto_schema(
     operation_description="Lista de requisitos",
     )
@@ -50,7 +57,12 @@ class Requirement_Api(generics.GenericAPIView):
 class Requirement_Detail(generics.GenericAPIView):
     queryset = Requirement.objects.all()
     serializer_class = RequirementSerializer
-
+    permission_classes = [IsAuthenticated, HasChangeRequirementPermission, HasDeleteRequirementPermission]
+    def get_permissions(self):
+        if self.request.method == 'PATCH':
+            return [HasChangeRequirementPermission()]
+        if self.request.method == 'DELETE':
+            return [HasDeleteRequirementPermission()]
     def get_requirement(self, pk, *args, **kw):
         try:
             return Requirement.objects.get(pk=pk)
