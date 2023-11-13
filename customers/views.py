@@ -1,6 +1,5 @@
 from django.shortcuts import render
 from rest_framework.response import Response
-from django.http import HttpResponse, JsonResponse
 from .serializer import CustomerSerializer, Customer_typeSerializer, CustomersSerializer
 from .models import Customer, Customer_type, Contact
 import math
@@ -8,12 +7,18 @@ from rest_framework import status, generics
 from django.db.models import Q
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-# Create your views here.
+from .permissions import *
+from rest_framework.permissions import IsAuthenticated
 
 class Customer_Type_Api(generics.GenericAPIView):
     serializer_class = Customer_typeSerializer
     queryset = Customer_type.objects.all()
-
+    permission_classes = [IsAuthenticated, HasViewCustomerTypePermission,HasAddCustomerTypePermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewCustomerTypePermission()]
+        if self.request.method == 'POST':
+            return [HasAddCustomerTypePermission()]
     def get(self, request, *args, **kwargs):
         #inciamos en 0 por defecto
         page_num = int(request.GET.get('page', 0))
@@ -44,7 +49,12 @@ class Customer_Type_Api(generics.GenericAPIView):
 class Customer_Type_Detail(generics.GenericAPIView):
     queryset = Customer_type.objects.all()
     serializer_class = Customer_typeSerializer
-
+    permission_classes = [IsAuthenticated,HasViewCustomerTypePermission,HasChangeCustomerTypePermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewCustomerTypePermission()]
+        if self.request.method == 'PATCH':
+            return [HasChangeCustomerTypePermission()]
     def get_customer_type(self, pk, *args, **kwargs):
         try:
             return Customer_type.objects.get(pk=pk)
@@ -106,7 +116,12 @@ request_body_schema = openapi.Schema(
 class Customer_Api(generics.GenericAPIView):
     serializer_class = CustomersSerializer
     queryset = Customer.objects.all()
-
+    permission_classes = [IsAuthenticated, HasViewCustomerPermission,HasAddCustomerPermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewCustomerPermission()]
+        if self.request.method == 'POST':
+            return [HasAddCustomerPermission()]
     @swagger_auto_schema(
     operation_description="Search es opcional para buscar el cliente",
     manual_parameters=[search],
@@ -190,7 +205,7 @@ class Customer_Api(generics.GenericAPIView):
                 customer = Customer.objects.create(customer_type_id=customer_type_id)
                 Contact.objects.create(degree=degree, name=name_customer, ci_nit=ci_nit, phone=phone, customer_id=customer.id)
                 return Response({"message": "Cliente registrado con exito" }, status=status.HTTP_201_CREATED)
-        return HttpResponse({"error":"El tipo de cliente no es válido"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error":"El tipo de cliente no es válido"}, status=status.HTTP_404_NOT_FOUND)
 
 
 
@@ -232,6 +247,10 @@ request_body_schema = openapi.Schema(
 class Customer_Detail(generics.GenericAPIView):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
+    permission_classes = [IsAuthenticated,HasChangeCustomerPermission]
+    def get_permissions(self):
+        if self.request.method == 'PATCH':
+            return [HasChangeCustomerPermission()]
     def get_customer(self, pk, **kwargs):
         try:
             return Customer.objects.get(pk=pk)
