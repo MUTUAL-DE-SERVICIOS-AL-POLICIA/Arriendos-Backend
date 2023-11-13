@@ -251,6 +251,10 @@ request_body_schema = openapi.Schema(
     }
 )
 class Posible_product(APIView):
+    permission_classes = [IsAuthenticated, HasViewProductPermission]
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [HasViewProductPermission()]
     @swagger_auto_schema(
     request_body=request_body_schema,
     )
