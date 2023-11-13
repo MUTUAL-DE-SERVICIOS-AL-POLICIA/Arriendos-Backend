@@ -8,7 +8,9 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from Arriendos_Backend.util import required_fields
 from .function import Make_Damage_Warranty_Form, Make_Warranty_Form, Make_Return_Warranty_Form
-# Create your views here.
+from .permissions import *
+from rest_framework.permissions import IsAuthenticated
+
 request_body_schema = openapi.Schema(
     type=openapi.TYPE_OBJECT,
     properties={
@@ -21,6 +23,14 @@ request_body_schema = openapi.Schema(
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Register_payment(generics.ListAPIView):
     serializer_class = Payment_Serializer
+    permission_classes = [IsAuthenticated, HasAddPaymenttPermission, HasViewPaymenttPermission,HasDeletePaymenttPermission]
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [HasAddPaymenttPermission()]
+        if self.request.method == 'GET':
+            return [HasViewPaymenttPermission()]
+        if self.request.method == 'DELETE':
+            return [HasDeletePaymenttPermission()]
     @swagger_auto_schema(
     operation_description="Lista de pagos por alquiler",
     manual_parameters=[rental],
