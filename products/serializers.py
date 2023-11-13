@@ -15,6 +15,7 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = '__all__'
+        ref_name = 'Product'
     @classmethod
     def get_active_price(self, product):
         active_price = product.price_set.filter(is_active=True).first()

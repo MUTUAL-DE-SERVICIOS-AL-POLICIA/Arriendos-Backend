@@ -5,11 +5,19 @@ from customers.models import Customer_type
 from .serializers import RateSerializer, HourRangeSerializer, ProductsSerializer, ProductSerializer, PriceSerializer, PriceAdditionalHourSerializer
 from leases.models import Selected_Product
 from rest_framework.response import Response
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 import math
 from requirements.models import RateRequirement
+
+
 class Rate_Api(generics.GenericAPIView):
     serializer_class = RateSerializer
     queryset = Rate.objects.all()
+
+    @swagger_auto_schema(
+    operation_description="Lista de Tarifas",
+    )
 
     def get(self, request, *args, **kwargs):
         page_num = int(request.GET.get('page', 0))
@@ -29,26 +37,20 @@ class Rate_Api(generics.GenericAPIView):
             "last_page": math.ceil(total_rates/ limit_num),
             "rates": serializer.data
         })
-class Rate_Detail(generics.GenericAPIView):
-    queryset = Rate.objects.all()
-    serializer_class = RateSerializer
 
-    def get_rate(self, pk, *args, **kwargs):
-        try:
-            return Rate.objects.get(pk=pk)
-        except:
-            return None
-    def get(self, request, pk, *args, **kwargs):
-        rate = self.get_rate(pk=pk)
-        if rate == None:
-            return Response({"status":"fail", "message": f"Rate with id: {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
-        serializer = self.serializer_class(rate, data = request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"status":"success", "data": {"rate": serializer.data}}, status=status.HTTP_201_CREATED)
-        return Response({"status":"fail", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-
+request_body_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'day': openapi.Schema(
+            type=openapi.TYPE_ARRAY,
+            items=openapi.Schema(type=openapi.TYPE_STRING)
+        ),
+        'rate':openapi.Schema(type=openapi.TYPE_INTEGER),
+        'room':openapi.Schema(type=openapi.TYPE_INTEGER),
+        'hour_rage': openapi.Schema(type=openapi.TYPE_INTEGER),
+        'mount': openapi.Schema(type=openapi.TYPE_INTEGER)
+    }
+)
 class Product_Api(generics.GenericAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
@@ -58,6 +60,9 @@ class Product_Api(generics.GenericAPIView):
             return Product.objects.get(pk=pk)
         except:
             return None
+    @swagger_auto_schema(
+    operation_description="Lista de productos y precio",
+    )
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         serializer = ProductsSerializer(queryset, many=True)
@@ -83,6 +88,10 @@ class Product_Api(generics.GenericAPIView):
         "last_page": math.ceil(total_products/ limit_num),
         "products": paged_products
         })
+    @swagger_auto_schema(
+    operation_description="Crear productos",
+    request_body=request_body_schema
+    )
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
@@ -102,6 +111,10 @@ class Product_Api(generics.GenericAPIView):
                 return Response({"status": "fail", "message": PriceSerialized.errors}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    @swagger_auto_schema(
+    operation_description="Actualizar producto y precio",
+    request_body=request_body_schema
+    )
     def patch(self,request, pk ):
         product = self.get_product(pk=pk)
         if product == None:
@@ -134,30 +147,7 @@ class Product_Api(generics.GenericAPIView):
                 serializer.save()
                 return Response({"status": "success", "data": {"product": serializer.data}}, status=status.HTTP_200_OK)
             return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-class Product_Detail(generics.GenericAPIView):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
 
-    def get_product(self, pk):
-        try:
-            return Product.objects.get(pk=pk)
-        except:
-            return None
-    def get(self, request, pk, *args, **kwargs):
-        product = self.get_product(pk=pk)
-        if product == None:
-            return Response({"status": "fail", "message": "Product with id: {pk} not found"}, status=status.HTTP_400_BAD_REQUEST)
-        serializer = self.serializer_class(product)
-        return Response({"status": "success", "data": {"product": serializer.data}}, status=status.HTTP_200_OK)
-    def patch(self, request, pk):
-        product = self.get_product(pk=pk)
-        if product == None:
-            return Response({"status": "success", "message": f"Product with id {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
-        serializer = self.serializer_class(product, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"status": "success", "data": {"product": serializer.data}}, status=status.HTTP_200_OK)
-        return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 class HourRange_List_Create_View(generics.ListCreateAPIView):
     queryset = HourRange.objects.all()
     serializer_class = HourRangeSerializer
@@ -180,7 +170,14 @@ class Additional_Hour_List_Create_View(generics.ListCreateAPIView):
 class Additional_Hour_Retrieve_Update_Destroy_View(generics.RetrieveUpdateDestroyAPIView):
     queryset = Price_Additional_Hour.objects.all()
     serializer_class = PriceAdditionalHourSerializer
+
+selected_product = openapi.Parameter('selected_product', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING)
+
 class Get_price_additional_hour(generics.ListAPIView):
+    @swagger_auto_schema(
+    operation_description="Precio de hora adicional del producto seleccionado",
+    manual_parameters=[selected_product],
+    )
     def get(self,request):
         selected_product_id = request.query_params.get('selected_product')
         try:
@@ -193,8 +190,19 @@ class Get_price_additional_hour(generics.ListAPIView):
                 return Response({"price":price}, status=status.HTTP_200_OK)
             return Response({"error": "No existe hora extra para ese producto"}, status=status.HTTP_404_NOT_FOUND)
         except Selected_Product.DoesNotExist:
-            return Response({"no existe el producto seleccionado"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "No existe el producto seleccionado"}, status=status.HTTP_404_NOT_FOUND)
+
+request_body_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'customer_type': openapi.Schema(type=openapi.TYPE_INTEGER),
+        'room_id': openapi.Schema(type=openapi.TYPE_INTEGER)
+    }
+)
 class Posible_product(APIView):
+    @swagger_auto_schema(
+    request_body=request_body_schema,
+    )
     def post(self, request):
         customer_type_id = request.data.get('customer_type')
         room_id=request.data.get('room_id')
