@@ -163,7 +163,6 @@ class HourRange_List_Create_View(generics.ListCreateAPIView):
     serializer_class = HourRangeSerializer
     permission_classes = [IsAuthenticated, HasAddHourRangePermission, HasViewHourRangePermission]
     def get_permissions(self):
-        print(self.request.user.get_all_permissions())
         if self.request.method == 'GET':
             return [HasViewHourRangePermission()]
         if self.request.method == 'POST':
@@ -201,10 +200,22 @@ class Price_Retrieve_Update_Destroy_View(generics.RetrieveUpdateDestroyAPIView):
 class Additional_Hour_List_Create_View(generics.ListCreateAPIView):
     queryset = Price_Additional_Hour.objects.all()
     serializer_class = PriceAdditionalHourSerializer
+    permission_classes = [IsAuthenticated, HasAddAdditionalHourPermission, HasViewAdditionalHourPermission]
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [HasAddAdditionalHourPermission()]
+        if self.request.method == 'GET':
+            return [HasViewAdditionalHourPermission()]
 
 class Additional_Hour_Retrieve_Update_Destroy_View(generics.RetrieveUpdateDestroyAPIView):
     queryset = Price_Additional_Hour.objects.all()
     serializer_class = PriceAdditionalHourSerializer
+    permission_classes = [IsAuthenticated, HasChangeAdditionalHourPermission, HasDeleteAdditionalHourPermission]
+    def get_permissions(self):
+        if self.request.method == 'PATCH':
+            return [HasChangeAdditionalHourPermission()]
+        if self.request.method == 'DELETE':
+            return [HasDeleteAdditionalHourPermission()]
 
 selected_product = openapi.Parameter('selected_product', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING)
 

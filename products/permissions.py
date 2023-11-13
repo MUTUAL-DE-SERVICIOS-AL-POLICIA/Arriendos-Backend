@@ -64,3 +64,24 @@ class HasDeletePricePermission(permissions.BasePermission):
     def has_permission(self, request, view):
         has_permission = request.user.has_perm('products.delete_price')
         return has_permission
+
+class HasAddAdditionalHourPermission(permissions.BasePermission):
+    message = "No tienes permisos para crear precios de horas adicionales"
+    def has_permission(self, request, view):
+        has_permission = request.user.has_perm('products.add_price_additional_hour')
+        return has_permission
+class HasViewAdditionalHourPermission(permissions.BasePermission):
+    message = "No tienes permisos para ver las precios de horas adicionales"
+    def has_permission(self, request, view):
+        has_permission = request.user.has_perm('products.view_price_additional_hour')
+        return has_permission
+class HasChangeAdditionalHourPermission(permissions.BasePermission):
+    message = "No tienes permisos para editar precios de horas adicionales"
+    def has_permission(self, request, view):
+        has_permission = request.user.has_perm('products.change_price_additional_hour')
+        return has_permission
+class HasDeleteAdditionalHourPermission(permissions.BasePermission):
+    message = "No tienes permisos para borrar precios de horas adicionales"
+    def has_permission(self, request, view):
+        has_permission = request.user.has_perm('products.delete_price_additional_hour')
+        return has_permission
