@@ -22,3 +22,14 @@ class HasChangeSelectedProductPermission(permissions.BasePermission):
     def has_permission(self, request, view):
         has_permission = request.user.has_perm('leases.change_selected_product')
         return has_permission
+
+class HasViewRentalPermission(permissions.BasePermission):
+    message = "No tienes permisos para ver los arriendos"
+    def has_permission(self, request, view):
+        has_permission = request.user.has_perm('leases.view_rental')
+        return has_permission
+class HasAddRentalPermission(permissions.BasePermission):
+    message = "No tienes permisos para crear arriendos"
+    def has_permission(self, request, view):
+        has_permission = request.user.has_perm('leases.add_rental')
+        return has_permission
