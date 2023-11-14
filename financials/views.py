@@ -23,6 +23,7 @@ request_body_schema = openapi.Schema(
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Register_payment(generics.ListAPIView):
     serializer_class = Payment_Serializer
+
     permission_classes = [IsAuthenticated, HasAddPaymentPermission, HasViewPaymentPermission,HasDeletePaymentPermission]
     def get_permissions(self):
         if self.request.method == 'POST':
