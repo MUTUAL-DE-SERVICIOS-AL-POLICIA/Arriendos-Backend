@@ -212,7 +212,14 @@ request_body_schema = openapi.Schema(
 )
 class Register_warranty(generics.ListAPIView):
     serializer_class = Warranty_Movement_Serializer
-
+    permission_classes = [IsAuthenticated, HasAddWarrantyMovementPermission, HasViewWarrantyMovementPermission,HasDeleteWarrantyMovementPermission]
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [HasAddWarrantyMovementPermission()]
+        if self.request.method == 'GET':
+            return [HasViewWarrantyMovementPermission()]
+        if self.request.method == 'DELETE':
+            return [HasDeleteWarrantyMovementPermission()]
     @swagger_auto_schema(
     operation_description="Registrar garantía",
     request_body=request_body_schema
@@ -316,7 +323,10 @@ class Register_warranty(generics.ListAPIView):
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 
 class Warranty_Return_Request(generics.GenericAPIView):
-
+    permission_classes = [IsAuthenticated, HasAddWarrantyMovementPermission]
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [HasAddWarrantyMovementPermission()]
     @swagger_auto_schema(
     operation_description="Solicitud de devolución de garantía",
     manual_parameters=[rental],
@@ -338,7 +348,10 @@ request_body_schema = openapi.Schema(
 )
 class Discount_warranty(generics.ListAPIView):
     serializer_class = Warranty_Movement_Serializer
-
+    permission_classes = [IsAuthenticated, HasAddWarrantyMovementPermission]
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [HasAddWarrantyMovementPermission()]
     @swagger_auto_schema(
     operation_description="API para registro de descuentos por daños",
     request_body=request_body_schema
@@ -403,7 +416,10 @@ request_body_schema = openapi.Schema(
 )
 class Warranty_Returned(generics.ListAPIView):
     serializer_class = Warranty_Movement_Serializer
-
+    permission_classes = [IsAuthenticated, HasAddWarrantyMovementPermission]
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [HasAddWarrantyMovementPermission()]
     @swagger_auto_schema(
     operation_description="API de devolución de garantía",
     request_body=request_body_schema
