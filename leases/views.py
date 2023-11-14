@@ -334,6 +334,10 @@ class Event_Api(generics.ListAPIView):
 
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Get_state(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, HasViewRentalPermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewRentalPermission() ]
     @swagger_auto_schema(
     operation_description="API del estado de arriendo y siguiente estado",
     manual_parameters=[rental],
