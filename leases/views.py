@@ -1,6 +1,5 @@
 from django.shortcuts import render
 from rest_framework.response import Response
-from django.http import HttpResponse
 from .serializer import Event_TypeSerializer, Selected_ProductSerializer, StateSerializer, Additional_hour_AppliedSerializer
 from .models import State, Rental, Event_Type, Selected_Product, Additional_Hour_Applied
 from customers.models import Customer,Contact
@@ -17,10 +16,18 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from Arriendos_Backend.util import required_fields
 from .function import Make_Delivery_Form, Make_Overtime_Form
+from .permissions import *
+from rest_framework.permissions import IsAuthenticated
 
 class StateRentalListCreateView(generics.ListCreateAPIView):
     queryset = State.objects.all()
     serializer_class = StateSerializer
+    permission_classes = [IsAuthenticated, HasViewRentalStatePermission, HasAddRentalStatePermission]
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [HasAddRentalStatePermission()]
+        if self.request.method == 'GET':
+            return [HasViewRentalStatePermission()]
 
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Get_Rental(generics.ListCreateAPIView):
@@ -65,6 +72,10 @@ class Get_Rental(generics.ListCreateAPIView):
             products.append(product_data)
         return Response({"customer":customer, "products":products})
 class List_state(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated, HasViewRentalStatePermission, HasAddRentalStatePermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewRentalStatePermission()]
     @swagger_auto_schema(
     operation_description="Listado de los estados de los arriendos",
     manual_parameters=[rental],
@@ -85,7 +96,10 @@ room = openapi.Parameter('room', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER
 class Selected_Product_Calendar_Api(generics.GenericAPIView):
     queryset = Selected_Product.objects.all()
     serializer_class = Selected_ProductSerializer
-
+    permission_classes = [IsAuthenticated, HasViewSelectedProductPermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewSelectedProductPermission()]
     @swagger_auto_schema(
     operation_description="API de los productos seleccionados para el calendario y por ambiente",
     manual_parameters=[room],
@@ -160,7 +174,11 @@ request_body_schema = openapi.Schema(
 class Selected_Product_Detail(generics.GenericAPIView):
     queryset = Selected_Product.objects.all()
     serializer_class = Selected_ProductSerializer
-
+    permission_classes = [IsAuthenticated, HasViewSelectedProductPermission]
+    def get_permissions(self):
+        print(self.request.user.get_all_permissions())
+        if self.request.method == 'PATCH':
+            return [HasChangeSelectedProductPermission()]
     def get_selected_product(self, pk):
         try:
             return Selected_Product.objects.get(pk=pk)
@@ -237,7 +255,10 @@ request_body_schema = openapi.Schema(
 )
 
 class Pre_Reserve_Api(generics.GenericAPIView):
-
+    permission_classes = [IsAuthenticated, HasAddRentalPermission]
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [HasAddRentalPermission() ]
     @swagger_auto_schema(
     operation_description="Pre reserva de arriendos, si es plan se envian mas de un producto seleccionado",
     request_body=request_body_schema
@@ -313,6 +334,10 @@ class Event_Api(generics.ListAPIView):
 
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Get_state(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, HasViewRentalPermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewRentalPermission() ]
     @swagger_auto_schema(
     operation_description="API del estado de arriendo y siguiente estado",
     manual_parameters=[rental],
@@ -354,6 +379,10 @@ request_body_schema = openapi.Schema(
     }
 )
 class Change_state(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, HasChangeRentalPermission]
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [HasChangeRentalPermission() ]
     def prereserved(self, rental_id,state):
         if self.validated_state(rental_id, state):
             state_obj = State.objects.get(pk=state)
@@ -489,6 +518,14 @@ request_body_schema = openapi.Schema(
     }
 )
 class Register_additional_hour_applied(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated, HasAddAdditionalHourAppliedPermission,HasViewAdditionalHourAppliedPermission,HasDeleteAdditionalHourAppliedPermission]
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [HasAddAdditionalHourAppliedPermission() ]
+        if self.request.method == 'GET':
+            return [HasViewAdditionalHourAppliedPermission() ]
+        if self.request.method == 'DELETE':
+            return [HasDeleteAdditionalHourAppliedPermission() ]
     serializer_class = Additional_Hour_Applied
 
     @swagger_auto_schema(
@@ -555,6 +592,10 @@ class Register_additional_hour_applied(generics.RetrieveUpdateDestroyAPIView):
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class List_additional_hour_applied(generics.ListAPIView):
     serializer_class = Additional_Hour_Applied
+    permission_classes = [IsAuthenticated,HasViewAdditionalHourAppliedPermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewAdditionalHourAppliedPermission() ]
 
     @swagger_auto_schema(
     operation_description="Listado de horas adicionales aplicadas",
