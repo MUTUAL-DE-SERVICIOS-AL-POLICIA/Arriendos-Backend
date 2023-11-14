@@ -54,7 +54,7 @@ def Make_Delivery_Form(request, rental_id, product):
         )])
     return response
 
-def Make_Overtime_Form(request, rental_id, product, hours, rate, total):
+def Make_Overtime_Form(request, rental_id, product, hours, rate, total, description):
     rate_data = rate
     total_data = total
     hours_data = hours
@@ -98,7 +98,8 @@ def Make_Overtime_Form(request, rental_id, product, hours, rate, total):
         'total':total_data,
         'selected_products':selected_products,
         'contacts': contacts,
-        'contract_number': contract_number
+        'contract_number': contract_number,
+        'description': description,
         })
 
     HTML(string=html_string).write_pdf(response, stylesheets=[CSS(
