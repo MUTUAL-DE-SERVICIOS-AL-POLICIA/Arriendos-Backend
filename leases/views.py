@@ -1,6 +1,5 @@
 from django.shortcuts import render
 from rest_framework.response import Response
-from django.http import HttpResponse
 from .serializer import Event_TypeSerializer, Selected_ProductSerializer, StateSerializer, Additional_hour_AppliedSerializer
 from .models import State, Rental, Event_Type, Selected_Product, Additional_Hour_Applied
 from customers.models import Customer,Contact
@@ -17,10 +16,18 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from Arriendos_Backend.util import required_fields
 from .function import Make_Delivery_Form, Make_Overtime_Form
+from .permissions import *
+from rest_framework.permissions import IsAuthenticated
 
 class StateRentalListCreateView(generics.ListCreateAPIView):
     queryset = State.objects.all()
     serializer_class = StateSerializer
+    permission_classes = [IsAuthenticated, HasViewRentalStatePermission, HasAddRentalStatePermission]
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [HasAddRentalStatePermission()]
+        if self.request.method == 'GET':
+            return [HasViewRentalStatePermission()]
 
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Get_Rental(generics.ListCreateAPIView):
@@ -65,6 +72,10 @@ class Get_Rental(generics.ListCreateAPIView):
             products.append(product_data)
         return Response({"customer":customer, "products":products})
 class List_state(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated, HasViewRentalStatePermission, HasAddRentalStatePermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewRentalStatePermission()]
     @swagger_auto_schema(
     operation_description="Listado de los estados de los arriendos",
     manual_parameters=[rental],
