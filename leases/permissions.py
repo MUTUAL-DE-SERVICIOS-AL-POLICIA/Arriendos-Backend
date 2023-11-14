@@ -33,3 +33,8 @@ class HasAddRentalPermission(permissions.BasePermission):
     def has_permission(self, request, view):
         has_permission = request.user.has_perm('leases.add_rental')
         return has_permission
+class HasChangeRentalPermission(permissions.BasePermission):
+    message = "No tienes permisos para editar los arriendos"
+    def has_permission(self, request, view):
+        has_permission = request.user.has_perm('leases.change_rental')
+        return has_permission

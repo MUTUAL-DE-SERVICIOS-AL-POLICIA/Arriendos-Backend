@@ -379,6 +379,10 @@ request_body_schema = openapi.Schema(
     }
 )
 class Change_state(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, HasChangeRentalPermission]
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [HasChangeRentalPermission() ]
     def prereserved(self, rental_id,state):
         if self.validated_state(rental_id, state):
             state_obj = State.objects.get(pk=state)
