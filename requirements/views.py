@@ -99,6 +99,9 @@ class RateWithRelatedDataView(generics.ListAPIView):
     def get_permissions(self):
         if self.request.method == 'GET':
             return [HasViewRateRequirementPermission()]
+    @swagger_auto_schema(
+    operation_description="Lista de requisitos y tarifas",
+    )
     def get(self, request):
         page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit',10))
@@ -135,34 +138,13 @@ class RateRequirement_Api(generics.GenericAPIView):
     queryset = RateRequirement.objects.all()
     permission_classes = [IsAuthenticated, HasViewRateRequirementPermission, HasAddRateRequirementPermission]
     def get_permissions(self):
-        if self.request.method == 'GET':
-            return [HasViewRateRequirementPermission()]
         if self.request.method == 'POST':
             return [HasAddRateRequirementPermission()]
-    def get(self, request, *args, **kwargs):
-        page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit',10))
-        start_num = (page_num) * limit_num
-        end_num = limit_num * (page_num + 1)
-        search_param = request.GET.get('search')
-        raterequirements = RateRequirement.objects.all()
-        total_raterequirements = raterequirements.count()
-        if search_param:
-            raterequirements = raterequirements.filter(requirement_icontains=search_param)
-        serializer = self.serializer_class(raterequirements[start_num:end_num], many=True)
-        return Response ({
-            "status": "success",
-            "total": total_raterequirements,
-            "page": page_num,
-            "last_page": math.ceil(total_raterequirements/ limit_num),
-            "raterequirements": serializer.data
-        })
 
     @swagger_auto_schema(
     operation_description="Crear tarifa con tipo de cliente y requisitos",
     request_body=request_body_schema
     )
-
     def post(self, request, *args, **kwargs):
         rate=request.data.get("rate")
         customer_types = request.data.get("customer_type")
@@ -256,6 +238,7 @@ class RateRequirement_Detail(generics.GenericAPIView):
                     new_customer = RateRequirement.objects.create(requirement_id=rate_requirement, customer_type_id=customer_type, rate_id=pk)
         return Response({"message":"Tarifa actualizada con éxito"}, status=status.HTTP_200_OK)
 
+rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Requirements_customer(generics.GenericAPIView):
     permission_classes = [IsAuthenticated, HasViewRequirementPermission]
     def get_permissions(self):
@@ -263,6 +246,7 @@ class Requirements_customer(generics.GenericAPIView):
             return [HasViewRequirementPermission()]
     @swagger_auto_schema(
      operation_description="Requisitos requeridos y opcionales",
+     manual_parameters=[rental],
      )
     def get(self, request):
         rental_id = request.GET.get('rental', None)
@@ -292,11 +276,26 @@ class Requirements_customer(generics.GenericAPIView):
             return Response({"data": {"required_requirements": required_requirements_list,"optional_requirements":other_requirements_list}}, status=status.HTTP_200_OK)
         except Rental.DoesNotExist:
             return Response({"error": "No se encontró el arriendo"}, status=status.HTTP_404_NOT_FOUND)
+
+request_body_schema = openapi.Schema(
+    type=openapi.TYPE_OBJECT,
+    properties={
+        'rental': openapi.Schema(type=openapi.TYPE_INTEGER),
+        'list_requirements': openapi.Schema(
+            type=openapi.TYPE_ARRAY,
+            items=openapi.Schema(type=openapi.TYPE_INTEGER)
+        ),
+    }
+)
 class Register_delivered_requirement(generics.ListAPIView):
         permission_classes = [IsAuthenticated, HasAddRequirementDeliveredRequirementPermission]
         def get_permissions(self):
             if self.request.method == 'POST':
                 return [HasAddRequirementDeliveredRequirementPermission()]
+        @swagger_auto_schema(
+        operation_description="Registro de requisitos entregados",
+        request_body=request_body_schema
+        )
         def post(self, request):
             validated_fields = ["rental"]
             error_message = required_fields(request, validated_fields)
