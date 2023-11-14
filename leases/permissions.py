@@ -38,3 +38,19 @@ class HasChangeRentalPermission(permissions.BasePermission):
     def has_permission(self, request, view):
         has_permission = request.user.has_perm('leases.change_rental')
         return has_permission
+
+class HasViewAdditionalHourAppliedPermission(permissions.BasePermission):
+    message = "No tienes permisos para ver las horas adicionales"
+    def has_permission(self, request, view):
+        has_permission = request.user.has_perm('leases.view_additional_hour_applied')
+        return has_permission
+class HasAddAdditionalHourAppliedPermission(permissions.BasePermission):
+    message = "No tienes permisos para crear horas adicionales"
+    def has_permission(self, request, view):
+        has_permission = request.user.has_perm('leases.add_additional_hour_applied')
+        return has_permission
+class HasDeleteAdditionalHourAppliedPermission(permissions.BasePermission):
+    message = "No tienes permisos para eliminar horas adicionales"
+    def has_permission(self, request, view):
+        has_permission = request.user.has_perm('leases.delete_additional_hour_applied')
+        return has_permission

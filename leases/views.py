@@ -518,6 +518,14 @@ request_body_schema = openapi.Schema(
     }
 )
 class Register_additional_hour_applied(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated, HasAddAdditionalHourAppliedPermission,HasViewAdditionalHourAppliedPermission,HasDeleteAdditionalHourAppliedPermission]
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [HasAddAdditionalHourAppliedPermission() ]
+        if self.request.method == 'GET':
+            return [HasViewAdditionalHourAppliedPermission() ]
+        if self.request.method == 'DELETE':
+            return [HasDeleteAdditionalHourAppliedPermission() ]
     serializer_class = Additional_Hour_Applied
 
     @swagger_auto_schema(
@@ -584,6 +592,10 @@ class Register_additional_hour_applied(generics.RetrieveUpdateDestroyAPIView):
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class List_additional_hour_applied(generics.ListAPIView):
     serializer_class = Additional_Hour_Applied
+    permission_classes = [IsAuthenticated,HasViewAdditionalHourAppliedPermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewAdditionalHourAppliedPermission() ]
 
     @swagger_auto_schema(
     operation_description="Listado de horas adicionales aplicadas",
