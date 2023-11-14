@@ -255,7 +255,10 @@ request_body_schema = openapi.Schema(
 )
 
 class Pre_Reserve_Api(generics.GenericAPIView):
-
+    permission_classes = [IsAuthenticated, HasAddRentalPermission]
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [HasAddRentalPermission() ]
     @swagger_auto_schema(
     operation_description="Pre reserva de arriendos, si es plan se envian mas de un producto seleccionado",
     request_body=request_body_schema
