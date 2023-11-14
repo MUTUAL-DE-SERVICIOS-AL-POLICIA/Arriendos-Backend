@@ -96,7 +96,10 @@ room = openapi.Parameter('room', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER
 class Selected_Product_Calendar_Api(generics.GenericAPIView):
     queryset = Selected_Product.objects.all()
     serializer_class = Selected_ProductSerializer
-
+    permission_classes = [IsAuthenticated, HasViewSelectedProductPermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewSelectedProductPermission()]
     @swagger_auto_schema(
     operation_description="API de los productos seleccionados para el calendario y por ambiente",
     manual_parameters=[room],
@@ -171,7 +174,11 @@ request_body_schema = openapi.Schema(
 class Selected_Product_Detail(generics.GenericAPIView):
     queryset = Selected_Product.objects.all()
     serializer_class = Selected_ProductSerializer
-
+    permission_classes = [IsAuthenticated, HasViewSelectedProductPermission]
+    def get_permissions(self):
+        print(self.request.user.get_all_permissions())
+        if self.request.method == 'PATCH':
+            return [HasChangeSelectedProductPermission()]
     def get_selected_product(self, pk):
         try:
             return Selected_Product.objects.get(pk=pk)
