@@ -23,14 +23,14 @@ request_body_schema = openapi.Schema(
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Register_payment(generics.ListAPIView):
     serializer_class = Payment_Serializer
-    permission_classes = [IsAuthenticated, HasAddPaymenttPermission, HasViewPaymenttPermission,HasDeletePaymenttPermission]
+    permission_classes = [IsAuthenticated, HasAddPaymentPermission, HasViewPaymentPermission,HasDeletePaymentPermission]
     def get_permissions(self):
         if self.request.method == 'POST':
-            return [HasAddPaymenttPermission()]
+            return [HasAddPaymentPermission()]
         if self.request.method == 'GET':
-            return [HasViewPaymenttPermission()]
+            return [HasViewPaymentPermission()]
         if self.request.method == 'DELETE':
-            return [HasDeletePaymenttPermission()]
+            return [HasDeletePaymentPermission()]
     @swagger_auto_schema(
     operation_description="Lista de pagos por alquiler",
     manual_parameters=[rental],
@@ -142,6 +142,10 @@ request_body_schema = openapi.Schema(
 )
 class Register_total_payment(generics.ListAPIView):
     serializer_class = Payment_Serializer
+    permission_classes = [IsAuthenticated, HasAddPaymentPermission]
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [HasAddPaymentPermission()]
     @swagger_auto_schema(
     operation_description="Registro del pago total del arriendo",
     request_body=request_body_schema
