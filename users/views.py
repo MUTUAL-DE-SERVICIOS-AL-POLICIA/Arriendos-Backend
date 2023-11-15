@@ -15,6 +15,7 @@ from rest_framework import status, generics
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from django.conf import settings
+from threadlocals.threadlocals import set_thread_variable
 import math
 
 request_body_schema = openapi.Schema(
@@ -56,6 +57,7 @@ class User_Ldap(APIView):
     request_body=request_body_schema
     )
     def post(self, request):
+        set_thread_variable('thread_user', request.user)
         username = request.data.get('username')
         email = request.data.get('email')
         first_name = request.data.get('first_name')
@@ -86,6 +88,7 @@ class User_Delete(generics.GenericAPIView):
     operation_description="Desactivar usuarios",
     )
     def delete(self, request, pk):
+        set_thread_variable('thread_user', request.user)
         if not User.objects.filter(pk=pk).exists():
             return Response({"status":"fail"}, status=status.HTTP_404_NOT_FOUND)
         user = User.objects.get(pk=pk)
