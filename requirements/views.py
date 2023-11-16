@@ -15,6 +15,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from .permissions import *
 from rest_framework.permissions import IsAuthenticated
+from threadlocals.threadlocals import set_thread_variable
 
 class Requirement_Api(generics.GenericAPIView):
     serializer_class = RequirementSerializer
@@ -47,6 +48,7 @@ class Requirement_Api(generics.GenericAPIView):
     operation_description="Crear requisitos",
     )
     def post(self, request, *args, **kw):
+        set_thread_variable('thread_user', request.user)
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -70,6 +72,7 @@ class Requirement_Detail(generics.GenericAPIView):
             return None
 
     def patch(self, request, pk, *args, **kw):
+        set_thread_variable('thread_user', request.user)
         requirement = self.get_requirement(pk)
         if requirement == None:
             return Response({"error": "El requisito no existe"}, status=status.HTTP_404_NOT_FOUND)
@@ -81,6 +84,7 @@ class Requirement_Detail(generics.GenericAPIView):
             return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     
     def delete(self, request, pk):
+        set_thread_variable('thread_user', request.user)
         if not Requirement.objects.filter(pk=pk).exists():
             return Response({"error":"El requisito no existe"}, status=status.HTTP_404_NOT_FOUND)
         requirement = Requirement.objects.get(pk=pk)
@@ -146,6 +150,7 @@ class RateRequirement_Api(generics.GenericAPIView):
     request_body=request_body_schema
     )
     def post(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
         rate=request.data.get("rate")
         customer_types = request.data.get("customer_type")
         requirements = request.data.get("requirement")
@@ -207,6 +212,7 @@ class RateRequirement_Detail(generics.GenericAPIView):
     )
 
     def patch(self, request, pk, *args, **kw):
+        set_thread_variable('thread_user', request.user)
         name=request.data.get("name")
         customer_types = request.data.get("customer_type")
         rate_requirements = request.data.get("requirement")
@@ -296,7 +302,9 @@ class Register_delivered_requirement(generics.ListAPIView):
         operation_description="Registro de requisitos entregados",
         request_body=request_body_schema
         )
-        def post(self, request):
+
+        def post(self, request, *args, **kwargs):
+            set_thread_variable('thread_user', request.user)
             validated_fields = ["rental"]
             error_message = required_fields(request, validated_fields)
             if error_message:
