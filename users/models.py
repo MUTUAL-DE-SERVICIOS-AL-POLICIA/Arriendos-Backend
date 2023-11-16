@@ -11,7 +11,7 @@ class Assign(models.Model):
 
 class Record (models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    action = models.CharField(max_length=255)
-    model = models.CharField(max_length=255)
-    detail = models.CharField(max_length=255)
+    action = models.TextField()
+    model = models.TextField()
+    detail = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
