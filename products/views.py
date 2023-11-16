@@ -7,6 +7,7 @@ from leases.models import Selected_Product
 from rest_framework.response import Response
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+from threadlocals.threadlocals import set_thread_variable
 import math
 from requirements.models import RateRequirement
 from .permissions import *
@@ -103,6 +104,7 @@ class Product_Api(generics.GenericAPIView):
     request_body=request_body_schema
     )
     def post(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             Product_saved=serializer.save()
@@ -126,6 +128,7 @@ class Product_Api(generics.GenericAPIView):
     request_body=request_body_schema
     )
     def patch(self,request, pk ):
+        set_thread_variable('thread_user', request.user)
         product = self.get_product(pk=pk)
         if product == None:
             return Response({"status": "success", "message": f"Product with id {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -163,6 +166,7 @@ class HourRange_List_Create_View(generics.ListCreateAPIView):
     serializer_class = HourRangeSerializer
     permission_classes = [IsAuthenticated, HasAddHourRangePermission, HasViewHourRangePermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'GET':
             return [HasViewHourRangePermission()]
         if self.request.method == 'POST':
@@ -173,6 +177,7 @@ class HourRange_Retrieve_Update_Destroy_View(generics.RetrieveUpdateDestroyAPIVi
     serializer_class = HourRangeSerializer
     permission_classes = [IsAuthenticated, HasChangeHourRangePermission, HasDeleteHourRangePermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'PATCH':
             return [HasChangeHourRangePermission()]
         if self.request.method == 'DELETE':
@@ -183,6 +188,7 @@ class Price_List_Create_View(generics.ListCreateAPIView):
     serializer_class = PriceSerializer
     permission_classes = [IsAuthenticated, HasAddPricePermission, HasViewPricePermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'POST':
             return [HasAddPricePermission()]
         if self.request.method == 'GET':
@@ -193,6 +199,7 @@ class Price_Retrieve_Update_Destroy_View(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PriceSerializer
     permission_classes = [IsAuthenticated, HasChangePricePermission, HasDeletePricePermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'PATCH':
             return [HasChangePricePermission()]
         if self.request.method == 'DELETE':
@@ -202,6 +209,7 @@ class Additional_Hour_List_Create_View(generics.ListCreateAPIView):
     serializer_class = PriceAdditionalHourSerializer
     permission_classes = [IsAuthenticated, HasAddAdditionalHourPermission, HasViewAdditionalHourPermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'POST':
             return [HasAddAdditionalHourPermission()]
         if self.request.method == 'GET':
@@ -212,6 +220,7 @@ class Additional_Hour_Retrieve_Update_Destroy_View(generics.RetrieveUpdateDestro
     serializer_class = PriceAdditionalHourSerializer
     permission_classes = [IsAuthenticated, HasChangeAdditionalHourPermission, HasDeleteAdditionalHourPermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'PATCH':
             return [HasChangeAdditionalHourPermission()]
         if self.request.method == 'DELETE':
@@ -222,7 +231,6 @@ selected_product = openapi.Parameter('selected_product', in_=openapi.IN_QUERY, t
 class Get_price_additional_hour(generics.ListAPIView):
     permission_classes = [IsAuthenticated, HasViewAdditionalHourPermission]
     def get_permissions(self):
-        print(self.request.user.get_all_permissions())
         if self.request.method == 'GET':
             return [HasViewAdditionalHourPermission()]
     @swagger_auto_schema(
@@ -259,6 +267,7 @@ class Posible_product(APIView):
     request_body=request_body_schema,
     )
     def post(self, request):
+        set_thread_variable('thread_user', request.user)
         customer_type_id = request.data.get('customer_type')
         room_id=request.data.get('room_id')
         try:
