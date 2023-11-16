@@ -1,22 +1,46 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
-from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
 from .models import Record
 from threadlocals.threadlocals import get_thread_variable
 @receiver(post_save, sender=User)
-def log_user_activity(sender, instance, created, **kwargs):
+def log_create_user(sender, instance, created, **kwargs):
     model="User"
     user = get_thread_variable('thread_user')
     if created:
-        detail=f"El usuario {user} creo un  {instance}"
+        detail=f"El usuario: {user} creó el registro {instance}"
         action="create"
-    else:
-        detail=f"El usuario {user} desactivo al  {instance}"
-        action="update"
+        Record.objects.create(
+            user=user,
+            action=action,
+            model=model,
+            detail=detail
+        )
+@receiver(pre_save, sender=User)
+def log_edit_user(sender, instance, **kwargs):
+    action="update"
+    model="User"
+    if instance.pk is not None:
+        old_instance = User.objects.get(pk=instance.pk)
+        for field in User._meta.fields:
+            old_value = getattr(old_instance, field.name)
+            new_value = getattr(instance, field.name)
+            user = get_thread_variable('thread_user')
+            if old_value != new_value:
+                Record.objects.create(
+                    user=user,
+                    action=action,
+                    model=model,
+                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value}'
+                )
+@receiver(post_delete, sender=User)
+def log_delete_user(sender, instance, **kwargs):
+    model="User"
+    user = get_thread_variable('thread_user')
+    action="delete"
     Record.objects.create(
         user=user,
         action=action,
         model=model,
-        detail=detail
+        detail=f"El usuario: {user} eliminó el registro {instance}"
     )
