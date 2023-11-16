@@ -7,11 +7,13 @@ from .permissions import *
 from rest_framework.permissions import IsAuthenticated
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+from threadlocals.threadlocals import set_thread_variable
 class PropertyListCreateView(generics.ListCreateAPIView):
     queryset = Property.objects.all()
     serializer_class = PropertySerializer
     permission_classes = [IsAuthenticated, HasAddPropertyPermission, HasViewPropertyPermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'POST':
             return [IsAuthenticated(), HasAddPropertyPermission()]
         elif self.request.method == 'GET':
@@ -23,7 +25,8 @@ class PropertyRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PropertySerializer
     permission_classes = [IsAuthenticated, HasChangePropertyPermission, HasDeletePropertyPermission]
     def get_permissions(self):
-        if self.request.method == 'PUT':
+        set_thread_variable('thread_user', self.request.user)
+        if self.request.method == 'PATCH':
             return [IsAuthenticated(), HasChangePropertyPermission()]
         elif self.request.method == 'DELETE':
             return [IsAuthenticated(), HasDeletePropertyPermission()]
@@ -33,6 +36,7 @@ class RoomListCreateView(generics.ListCreateAPIView):
     serializer_class = RoomSerializer
     permission_classes = [IsAuthenticated, HasAddRoomPermission, HasViewRoomPermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'POST':
             return [IsAuthenticated(), HasAddRoomPermission()]
         elif self.request.method == 'GET':
@@ -44,7 +48,8 @@ class RoomRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = RoomSerializer
     permission_classes = [IsAuthenticated, HasChangeRoomPermission, HasDeleteRoomPermission]
     def get_permissions(self):
-        if self.request.method == 'PUT':
+        set_thread_variable('thread_user', self.request.user)
+        if self.request.method == 'PATCH':
             return [IsAuthenticated(), HasChangeRoomPermission()]
         elif self.request.method == 'DELETE':
             return [IsAuthenticated(), HasDeleteRoomPermission()]
@@ -97,6 +102,7 @@ class Sub_Environment_Api(generics.GenericAPIView):
     serializer_class = Sub_EnvironmentSerializer
     permission_classes = [IsAuthenticated, HasViewSub_EnvironmentPermission, HasAddSub_EnvironmentPermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'GET':
             return [HasViewSub_EnvironmentPermission()]
         if self.request.method == 'POST':
@@ -136,6 +142,7 @@ class Sub_Environment_Detail(generics.GenericAPIView):
     serializer_class = Sub_EnvironmentSerializer
     permission_classes = [IsAuthenticated, HasChangeSub_EnvironmentPermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'PATCH':
             return [HasChangeSub_EnvironmentPermission()]
     def get_sub_environment(self, pk):
