@@ -102,6 +102,7 @@ class Sub_Environment_Api(generics.GenericAPIView):
     serializer_class = Sub_EnvironmentSerializer
     permission_classes = [IsAuthenticated, HasViewSub_EnvironmentPermission, HasAddSub_EnvironmentPermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'GET':
             return [HasViewSub_EnvironmentPermission()]
         if self.request.method == 'POST':
@@ -141,6 +142,7 @@ class Sub_Environment_Detail(generics.GenericAPIView):
     serializer_class = Sub_EnvironmentSerializer
     permission_classes = [IsAuthenticated, HasChangeSub_EnvironmentPermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'PATCH':
             return [HasChangeSub_EnvironmentPermission()]
     def get_sub_environment(self, pk):
