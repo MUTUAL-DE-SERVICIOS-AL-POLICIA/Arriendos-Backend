@@ -31,7 +31,7 @@ def log_edit_user(sender, instance, **kwargs):
                     user=user,
                     action=action,
                     model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value}'
+                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
                 )
 @receiver(post_delete, sender=User)
 def log_delete_user(sender, instance, **kwargs):
