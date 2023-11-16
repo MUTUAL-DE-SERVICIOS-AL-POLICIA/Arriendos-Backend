@@ -13,6 +13,7 @@ class PropertyListCreateView(generics.ListCreateAPIView):
     serializer_class = PropertySerializer
     permission_classes = [IsAuthenticated, HasAddPropertyPermission, HasViewPropertyPermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'POST':
             return [IsAuthenticated(), HasAddPropertyPermission()]
         elif self.request.method == 'GET':
@@ -24,6 +25,7 @@ class PropertyRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PropertySerializer
     permission_classes = [IsAuthenticated, HasChangePropertyPermission, HasDeletePropertyPermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'PATCH':
             return [IsAuthenticated(), HasChangePropertyPermission()]
         elif self.request.method == 'DELETE':
