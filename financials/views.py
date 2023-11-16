@@ -10,6 +10,7 @@ from Arriendos_Backend.util import required_fields
 from .function import Make_Damage_Warranty_Form, Make_Warranty_Form, Make_Return_Warranty_Form
 from .permissions import *
 from rest_framework.permissions import IsAuthenticated
+from threadlocals.threadlocals import set_thread_variable
 
 request_body_schema = openapi.Schema(
     type=openapi.TYPE_OBJECT,
@@ -23,9 +24,9 @@ request_body_schema = openapi.Schema(
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Register_payment(generics.ListAPIView):
     serializer_class = Payment_Serializer
-
     permission_classes = [IsAuthenticated, HasAddPaymentPermission, HasViewPaymentPermission,HasDeletePaymentPermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'POST':
             return [HasAddPaymentPermission()]
         if self.request.method == 'GET':
@@ -145,6 +146,7 @@ class Register_total_payment(generics.ListAPIView):
     serializer_class = Payment_Serializer
     permission_classes = [IsAuthenticated, HasAddPaymentPermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'POST':
             return [HasAddPaymentPermission()]
     @swagger_auto_schema(
@@ -215,6 +217,7 @@ class Register_warranty(generics.ListAPIView):
     serializer_class = Warranty_Movement_Serializer
     permission_classes = [IsAuthenticated, HasAddWarrantyMovementPermission, HasViewWarrantyMovementPermission,HasDeleteWarrantyMovementPermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'POST':
             return [HasAddWarrantyMovementPermission()]
         if self.request.method == 'GET':
@@ -347,6 +350,7 @@ class Discount_warranty(generics.ListAPIView):
     serializer_class = Warranty_Movement_Serializer
     permission_classes = [IsAuthenticated, HasAddWarrantyMovementPermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'POST':
             return [HasAddWarrantyMovementPermission()]
     @swagger_auto_schema(
@@ -415,6 +419,7 @@ class Warranty_Returned(generics.ListAPIView):
     serializer_class = Warranty_Movement_Serializer
     permission_classes = [IsAuthenticated, HasAddWarrantyMovementPermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'POST':
             return [HasAddWarrantyMovementPermission()]
     @swagger_auto_schema(
