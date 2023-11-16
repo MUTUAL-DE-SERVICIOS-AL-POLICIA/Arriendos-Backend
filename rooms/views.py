@@ -49,7 +49,7 @@ class RoomRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, HasChangeRoomPermission, HasDeleteRoomPermission]
     def get_permissions(self):
         set_thread_variable('thread_user', self.request.user)
-        if self.request.method == 'PUT':
+        if self.request.method == 'PATCH':
             return [IsAuthenticated(), HasChangeRoomPermission()]
         elif self.request.method == 'DELETE':
             return [IsAuthenticated(), HasDeleteRoomPermission()]
