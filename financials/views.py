@@ -324,10 +324,6 @@ class Register_warranty(generics.ListAPIView):
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 
 class Warranty_Return_Request(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated, HasAddWarrantyMovementPermission]
-    def get_permissions(self):
-        if self.request.method == 'POST':
-            return [HasAddWarrantyMovementPermission()]
     @swagger_auto_schema(
     operation_description="Solicitud de devolución de garantía",
     manual_parameters=[rental],
@@ -436,6 +432,8 @@ class Warranty_Returned(generics.ListAPIView):
             warranty= Warranty_Movement.objects.filter(rental_id=rental.id)
             if (warranty.exists()):
                 warranty_balance=warranty.latest('id').balance
+                if warranty_balance == 0:
+                    return Response({"error":f"no se puede devolver la garatía, porque el monto de la garantía es: {warranty_balance}"}, status=status.HTTP_400_BAD_REQUEST)
                 total=  0
                 returned=warranty_balance
                 warranty_data = {
