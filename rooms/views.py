@@ -7,6 +7,7 @@ from .permissions import *
 from rest_framework.permissions import IsAuthenticated
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+from threadlocals.threadlocals import set_thread_variable
 class PropertyListCreateView(generics.ListCreateAPIView):
     queryset = Property.objects.all()
     serializer_class = PropertySerializer
@@ -23,7 +24,7 @@ class PropertyRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PropertySerializer
     permission_classes = [IsAuthenticated, HasChangePropertyPermission, HasDeletePropertyPermission]
     def get_permissions(self):
-        if self.request.method == 'PUT':
+        if self.request.method == 'PATCH':
             return [IsAuthenticated(), HasChangePropertyPermission()]
         elif self.request.method == 'DELETE':
             return [IsAuthenticated(), HasDeletePropertyPermission()]
@@ -33,6 +34,7 @@ class RoomListCreateView(generics.ListCreateAPIView):
     serializer_class = RoomSerializer
     permission_classes = [IsAuthenticated, HasAddRoomPermission, HasViewRoomPermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'POST':
             return [IsAuthenticated(), HasAddRoomPermission()]
         elif self.request.method == 'GET':
@@ -44,6 +46,7 @@ class RoomRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = RoomSerializer
     permission_classes = [IsAuthenticated, HasChangeRoomPermission, HasDeleteRoomPermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'PUT':
             return [IsAuthenticated(), HasChangeRoomPermission()]
         elif self.request.method == 'DELETE':
