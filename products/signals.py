@@ -4,7 +4,7 @@ from users.models import Record
 from .models import Rate, HourRange, Product, Price, Price_Additional_Hour
 from threadlocals.threadlocals import get_thread_variable
 @receiver(post_save, sender=Rate)
-def log_create_user(sender, instance, created, **kwargs):
+def log_create_rate(sender, instance, created, **kwargs):
     model="Rate"
     user = get_thread_variable('thread_user')
     if created:
@@ -17,7 +17,7 @@ def log_create_user(sender, instance, created, **kwargs):
             detail=detail
         )
 @receiver(pre_save, sender=Rate)
-def log_edit_user(sender, instance, **kwargs):
+def log_edit_rate(sender, instance, **kwargs):
     action="update"
     model="Rate"
     if instance.pk is not None:
@@ -34,7 +34,7 @@ def log_edit_user(sender, instance, **kwargs):
                     detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
                 )
 @receiver(post_delete, sender=Rate)
-def log_delete_user(sender, instance, **kwargs):
+def log_delete_rate(sender, instance, **kwargs):
     model="Rate"
     user = get_thread_variable('thread_user')
     action="delete"
@@ -45,7 +45,7 @@ def log_delete_user(sender, instance, **kwargs):
         detail=f"El usuario: {user} eliminó el registro {instance}"
     )
 @receiver(post_save, sender=HourRange)
-def log_create_user(sender, instance, created, **kwargs):
+def log_create_hour_range(sender, instance, created, **kwargs):
     model="HourRange"
     user = get_thread_variable('thread_user')
     if created:
@@ -58,7 +58,7 @@ def log_create_user(sender, instance, created, **kwargs):
             detail=detail
         )
 @receiver(pre_save, sender=HourRange)
-def log_edit_user(sender, instance, **kwargs):
+def log_edit_hour_range(sender, instance, **kwargs):
     action="update"
     model="HourRange"
     if instance.pk is not None:
@@ -75,7 +75,7 @@ def log_edit_user(sender, instance, **kwargs):
                     detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
                 )
 @receiver(post_delete, sender=HourRange)
-def log_delete_user(sender, instance, **kwargs):
+def log_delete_hour_range(sender, instance, **kwargs):
     model="HourRange"
     user = get_thread_variable('thread_user')
     action="delete"
@@ -86,7 +86,7 @@ def log_delete_user(sender, instance, **kwargs):
         detail=f"El usuario: {user} eliminó el registro {instance}"
     )
 @receiver(post_save, sender=Product)
-def log_create_user(sender, instance, created, **kwargs):
+def log_create_product(sender, instance, created, **kwargs):
     model="Product"
     user = get_thread_variable('thread_user')
     if created:
@@ -99,7 +99,7 @@ def log_create_user(sender, instance, created, **kwargs):
             detail=detail
         )
 @receiver(pre_save, sender=Product)
-def log_edit_user(sender, instance, **kwargs):
+def log_edit_product(sender, instance, **kwargs):
     action="update"
     model="Product"
     if instance.pk is not None:
@@ -116,7 +116,7 @@ def log_edit_user(sender, instance, **kwargs):
                     detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
                 )
 @receiver(post_delete, sender=Product)
-def log_delete_user(sender, instance, **kwargs):
+def log_delete_product(sender, instance, **kwargs):
     model="Product"
     user = get_thread_variable('thread_user')
     action="delete"
@@ -127,7 +127,7 @@ def log_delete_user(sender, instance, **kwargs):
         detail=f"El usuario: {user} eliminó el registro {instance}"
     )
 @receiver(post_save, sender=Price)
-def log_create_user(sender, instance, created, **kwargs):
+def log_create_price(sender, instance, created, **kwargs):
     model="Price"
     user = get_thread_variable('thread_user')
     if created:
@@ -140,7 +140,7 @@ def log_create_user(sender, instance, created, **kwargs):
             detail=detail
         )
 @receiver(pre_save, sender=Price)
-def log_edit_user(sender, instance, **kwargs):
+def log_edit_price(sender, instance, **kwargs):
     action="update"
     model="Price"
     if instance.pk is not None:
@@ -157,7 +157,7 @@ def log_edit_user(sender, instance, **kwargs):
                     detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
                 )
 @receiver(post_delete, sender=Price)
-def log_delete_user(sender, instance, **kwargs):
+def log_delete_price(sender, instance, **kwargs):
     model="Price"
     user = get_thread_variable('thread_user')
     action="delete"
@@ -168,7 +168,7 @@ def log_delete_user(sender, instance, **kwargs):
         detail=f"El usuario: {user} eliminó el registro {instance}"
     )
 @receiver(post_save, sender=Price_Additional_Hour)
-def log_create_user(sender, instance, created, **kwargs):
+def log_create_price_additional_hour(sender, instance, created, **kwargs):
     model="Price_Additional_Hour"
     user = get_thread_variable('thread_user')
     if created:
@@ -181,7 +181,7 @@ def log_create_user(sender, instance, created, **kwargs):
             detail=detail
         )
 @receiver(pre_save, sender=Price_Additional_Hour)
-def log_edit_user(sender, instance, **kwargs):
+def log_edit_price_additional_hour(sender, instance, **kwargs):
     action="update"
     model="Price_Additional_Hour"
     if instance.pk is not None:
@@ -198,7 +198,7 @@ def log_edit_user(sender, instance, **kwargs):
                     detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
                 )
 @receiver(post_delete, sender=Price_Additional_Hour)
-def log_delete_user(sender, instance, **kwargs):
+def log_delete_price_additional_hour(sender, instance, **kwargs):
     model="Price_Additional_Hour"
     user = get_thread_variable('thread_user')
     action="delete"
