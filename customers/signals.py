@@ -102,9 +102,9 @@ def log_create_contact(sender, instance, created, **kwargs):
             detail=detail
         )
 @receiver(pre_save, sender=Contact)
-def log_edit_customer(sender, instance, **kwargs):
+def log_edit_contact(sender, instance, **kwargs):
     action="update"
-    model="contact"
+    model="Contact"
     if instance.pk is not None:
         old_instance = Contact.objects.get(pk=instance.pk)
         for field in Contact._meta.fields:
