@@ -34,7 +34,7 @@ def log_edit_requirement(sender, instance, **kwargs):
                     detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
                 )
 @receiver(post_delete, sender=Requirement)
-def log_delete_user(sender, instance, **kwargs):
+def log_delete_requirement(sender, instance, **kwargs):
     model="Requirement"
     user = get_thread_variable('thread_user')
     action="delete"
@@ -45,7 +45,7 @@ def log_delete_user(sender, instance, **kwargs):
         detail=f"El usuario: {user} eliminó el registro {instance}"
     )
 @receiver(post_save, sender=Requirement_Delivered)
-def log_create_user(sender, instance, created, **kwargs):
+def log_create_requirement_delivered(sender, instance, created, **kwargs):
     model="Requirement_Delivered"
     user = get_thread_variable('thread_user')
     if created:
@@ -58,7 +58,7 @@ def log_create_user(sender, instance, created, **kwargs):
             detail=detail
         )
 @receiver(pre_save, sender=Requirement_Delivered)
-def log_edit_user(sender, instance, **kwargs):
+def log_edit_requirement_delivered(sender, instance, **kwargs):
     action="update"
     model="Requirement_Delivered"
     if instance.pk is not None:
@@ -75,7 +75,7 @@ def log_edit_user(sender, instance, **kwargs):
                     detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
                 )
 @receiver(post_delete, sender=Requirement_Delivered)
-def log_delete_user(sender, instance, **kwargs):
+def log_delete_requirement_delivered(sender, instance, **kwargs):
     model="Requirement_Delivered"
     user = get_thread_variable('thread_user')
     action="delete"
@@ -86,7 +86,7 @@ def log_delete_user(sender, instance, **kwargs):
         detail=f"El usuario: {user} eliminó el registro {instance}"
     )
 @receiver(post_save, sender=RateRequirement)
-def log_create_user(sender, instance, created, **kwargs):
+def log_create_rate_requirement(sender, instance, created, **kwargs):
     model="RateRequirement"
     user = get_thread_variable('thread_user')
     if created:
@@ -99,7 +99,7 @@ def log_create_user(sender, instance, created, **kwargs):
             detail=detail
         )
 @receiver(pre_save, sender=RateRequirement)
-def log_edit_user(sender, instance, **kwargs):
+def log_edit_rate_requirement(sender, instance, **kwargs):
     action="update"
     model="RateRequirement"
     if instance.pk is not None:
@@ -116,7 +116,7 @@ def log_edit_user(sender, instance, **kwargs):
                     detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
                 )
 @receiver(post_delete, sender=RateRequirement)
-def log_delete_user(sender, instance, **kwargs):
+def log_delete_rate_requirement(sender, instance, **kwargs):
     model="RateRequirement"
     user = get_thread_variable('thread_user')
     action="delete"
