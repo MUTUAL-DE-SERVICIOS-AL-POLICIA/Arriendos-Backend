@@ -9,12 +9,14 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from .permissions import *
 from rest_framework.permissions import IsAuthenticated
+from threadlocals.threadlocals import set_thread_variable
 
 class Customer_Type_Api(generics.GenericAPIView):
     serializer_class = Customer_typeSerializer
     queryset = Customer_type.objects.all()
     permission_classes = [IsAuthenticated, HasViewCustomerTypePermission,HasAddCustomerTypePermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'GET':
             return [HasViewCustomerTypePermission()]
         if self.request.method == 'POST':
@@ -51,6 +53,7 @@ class Customer_Type_Detail(generics.GenericAPIView):
     serializer_class = Customer_typeSerializer
     permission_classes = [IsAuthenticated,HasViewCustomerTypePermission,HasChangeCustomerTypePermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'GET':
             return [HasViewCustomerTypePermission()]
         if self.request.method == 'PATCH':
@@ -118,6 +121,7 @@ class Customer_Api(generics.GenericAPIView):
     queryset = Customer.objects.all()
     permission_classes = [IsAuthenticated, HasViewCustomerPermission,HasAddCustomerPermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'GET':
             return [HasViewCustomerPermission()]
         if self.request.method == 'POST':
@@ -249,6 +253,7 @@ class Customer_Detail(generics.GenericAPIView):
     serializer_class = CustomerSerializer
     permission_classes = [IsAuthenticated,HasChangeCustomerPermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'PATCH':
             return [HasChangeCustomerPermission()]
     def get_customer(self, pk, **kwargs):
