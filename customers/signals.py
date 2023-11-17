@@ -45,3 +45,45 @@ def log_delete_customer_type(sender, instance, **kwargs):
         model=model,
         detail=f"El usuario: {user} eliminó el registro {instance}"
     )
+
+@receiver(post_save, sender=Customer)
+def log_create_customer(sender, instance, created, **kwargs):
+    model="Customer"
+    user = get_thread_variable('thread_user')
+    if created:
+        detail=f"El usuario: {user} creó el registro {instance}"
+        action="create"
+        Record.objects.create(
+            user=user,
+            action=action,
+            model=model,
+            detail=detail
+        )
+@receiver(pre_save, sender=Customer)
+def log_edit_customer(sender, instance, **kwargs):
+    action="update"
+    model="Customer"
+    if instance.pk is not None:
+        old_instance = Customer.objects.get(pk=instance.pk)
+        for field in Customer._meta.fields:
+            old_value = getattr(old_instance, field.name)
+            new_value = getattr(instance, field.name)
+            user = get_thread_variable('thread_user')
+            if old_value != new_value:
+                Record.objects.create(
+                    user=user,
+                    action=action,
+                    model=model,
+                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
+                )
+@receiver(post_delete, sender=Customer)
+def log_delete_customer(sender, instance, **kwargs):
+    model="Customer"
+    user = get_thread_variable('thread_user')
+    action="delete"
+    Record.objects.create(
+        user=user,
+        action=action,
+        model=model,
+        detail=f"El usuario: {user} eliminó el registro {instance}"
+    )
