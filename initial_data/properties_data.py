@@ -4,7 +4,7 @@ import sys
 import os
 
 if len(sys.argv) < 4:
-    print("Debes proporcionar IP, puerto, URL y token como argumentos.")
+    print("Debes proporcionar IP y token como argumentos.")
     sys.exit(1)
 
 ip = sys.argv[1]
@@ -17,13 +17,13 @@ media_directory = os.path.join(script_directory, "..", "media")
 requests_data = [
     {
         "name": "GRAN HOTEL PARIS",
-        "address":"La Paz",
+        "address":"La Paz, Plaza Murillo Esq.Bolivar y Ballivian N°1179",
         "photo": ("GRAN_HOTEL_PARIS.jpeg", open(os.path.join(media_directory, "property_photos/GRAN_HOTEL_PARIS.jpeg"), "rb")),
     },
     {
         "name": "CLUB POLICIAL LOS OLIVOS",
         "photo": ("CLUB_POLICIAL_LOS_OLIVOS.jpg", open(os.path.join(media_directory, "property_photos/CLUB_POLICIAL_LOS_OLIVOS.jpg"), "rb")),
-        "address": "La Paz"
+        "address": "La Paz, Calle Los Cedros N° 180"
     }
 ]
 
