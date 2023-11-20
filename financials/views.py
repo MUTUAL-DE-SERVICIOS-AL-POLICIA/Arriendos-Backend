@@ -467,6 +467,13 @@ class Return_Warranty_Form(generics.GenericAPIView):
     )
     def get(self, request, *args, **kwargs):
         rental = int(request.GET.get('rental', None))
+        warranty= Warranty_Movement.objects.filter(rental_id=rental)
         if rental is None:
             return Response({"error": "No se ha enviado rental"}, status=status.HTTP_404_NOT_FOUND)
+        if Warranty_Movement.objects.filter(rental_id=rental).exists():
+            warranty_balance=warranty.latest('id').balance
+        else:
+            return Response({"error":"El alquiler no tiene garantías registradas"}, status=status.HTTP_404_NOT_FOUND)
+        if warranty_balance == 0:
+            return Response({"error":f"La garantía actual es: {warranty_balance}"}, status=status.HTTP_404_NOT_FOUND)
         return Make_Return_Warranty_Form(request, rental)
