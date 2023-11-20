@@ -4,7 +4,7 @@ import sys
 import os
 
 if len(sys.argv) < 4:
-    print("Debes proporcionar IP, puerto, URL y token como argumentos.")
+    print("Debes proporcionar IP, puerto, y token como argumentos.")
     sys.exit(1)
 
 ip = sys.argv[1]
@@ -48,14 +48,6 @@ requests_data = [
             "group":4
     },
     {
-            "name": "AMBIENTES INTERIORES Y EXTERIORES ",
-            "capacity": 300,
-            "warranty": 400,
-            "is_active": True,
-            "property": 2,
-            "group":5
-    },
-    {
             "name": "AMBIENTES INTERIORES",
             "capacity": 200,
             "warranty": 100,
@@ -70,7 +62,15 @@ requests_data = [
             "is_active": True,
             "property": 2,
             "group":5
-    }
+    },
+    {
+            "name": "AMBIENTES INTERIORES Y EXTERIORES ",
+            "capacity": 300,
+            "warranty": 400,
+            "is_active": True,
+            "property": 2,
+            "group":5
+    },
 ]
 
 for data in requests_data:
