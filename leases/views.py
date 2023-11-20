@@ -18,12 +18,14 @@ from Arriendos_Backend.util import required_fields
 from .function import Make_Delivery_Form, Make_Overtime_Form
 from .permissions import *
 from rest_framework.permissions import IsAuthenticated
+from threadlocals.threadlocals import set_thread_variable
 
 class StateRentalListCreateView(generics.ListCreateAPIView):
     queryset = State.objects.all()
     serializer_class = StateSerializer
     permission_classes = [IsAuthenticated, HasViewRentalStatePermission, HasAddRentalStatePermission]
     def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'POST':
             return [HasAddRentalStatePermission()]
         if self.request.method == 'GET':
@@ -176,7 +178,6 @@ class Selected_Product_Detail(generics.GenericAPIView):
     serializer_class = Selected_ProductSerializer
     permission_classes = [IsAuthenticated, HasViewSelectedProductPermission]
     def get_permissions(self):
-        print(self.request.user.get_all_permissions())
         if self.request.method == 'PATCH':
             return [HasChangeSelectedProductPermission()]
     def get_selected_product(self, pk):
@@ -197,6 +198,7 @@ class Selected_Product_Detail(generics.GenericAPIView):
     request_body=request_body_schema
     )
     def patch(self, request, pk):
+        set_thread_variable('thread_user', request.user)
         selected_product = self.get_selected_product(pk=pk)
         start_time = request.data["start_time"]
         end_time = request.data["end_time"]
@@ -264,6 +266,7 @@ class Pre_Reserve_Api(generics.GenericAPIView):
     request_body=request_body_schema
     )
     def post(self, request):
+        set_thread_variable('thread_user', request.user)
         customer = request.data["customer"]
         try:
             Customer.objects.get(pk=customer)
@@ -461,6 +464,7 @@ class Change_state(generics.ListAPIView):
     request_body=request_body_schema
     )
     def post(self, request):
+        set_thread_variable('thread_user', request.user)
         validated_fields = ["rental", "state"]
         error_message = required_fields(request, validated_fields)
         if error_message:
@@ -533,6 +537,7 @@ class Register_additional_hour_applied(generics.RetrieveUpdateDestroyAPIView):
     request_body=request_body_schema
     )
     def post(self, request):
+        set_thread_variable('thread_user', request.user)
         selected_product_id = request.data.get('selected_product')
         rental = Selected_Product.objects.get(pk=selected_product_id)
         rental = rental.rental_id
@@ -579,6 +584,7 @@ class Register_additional_hour_applied(generics.RetrieveUpdateDestroyAPIView):
     )
     def delete(self,request,selected_product_id):
         try:
+            set_thread_variable('thread_user', request.user)
             Selected_Product.objects.get(pk=selected_product_id)
             additional_hour_applieds= Additional_Hour_Applied.objects.filter(selected_product_id=selected_product_id).exists()
             if (additional_hour_applieds):
