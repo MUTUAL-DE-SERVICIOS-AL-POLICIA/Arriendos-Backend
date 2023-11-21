@@ -15,18 +15,23 @@ url = f"http://{ip}:{port}/api/customers/type/"
 request_data_customer_type= [
     {
         "name": "Público en General",
+        "is_institution":"False"
     },
     {
         "name": "Funcionario Policial Activo",
+        "is_institution":"False"
     },
     {
         "name": "Funcionario Policial Pasivo",
+        "is_institution":"False"
     },
     {
         "name": "Funcionario de la MUSERPOL - Miembros del Directorio",
+        "is_institution":"False"
     },
     {
         "name": "Funcionario Público",
+        "is_institution":"False"
     },
     {
         "name": "Institución Policial",
