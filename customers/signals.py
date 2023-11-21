@@ -15,7 +15,8 @@ def log_create_customer_type(sender, instance, created, **kwargs):
             user=user,
             action=action,
             model=model,
-            detail=detail
+            detail=detail,
+            instance_id =instance.id
         )
 @receiver(pre_save, sender=Customer_type)
 def log_edit_customer_type(sender, instance, **kwargs):
@@ -32,7 +33,8 @@ def log_edit_customer_type(sender, instance, **kwargs):
                     user=user,
                     action=action,
                     model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
+                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
+                    instance_id =instance.id
                 )
 @receiver(post_delete, sender=Customer_type)
 def log_delete_customer_type(sender, instance, **kwargs):
@@ -43,7 +45,8 @@ def log_delete_customer_type(sender, instance, **kwargs):
         user=user,
         action=action,
         model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}"
+        detail=f"El usuario: {user} eliminó el registro {instance}",
+        instance_id =instance.id
     )
 
 @receiver(post_save, sender=Customer)
@@ -57,7 +60,8 @@ def log_create_customer(sender, instance, created, **kwargs):
             user=user,
             action=action,
             model=model,
-            detail=detail
+            detail=detail,
+            instance_id =instance.id
         )
 @receiver(pre_save, sender=Customer)
 def log_edit_customer(sender, instance, **kwargs):
@@ -74,7 +78,8 @@ def log_edit_customer(sender, instance, **kwargs):
                     user=user,
                     action=action,
                     model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
+                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
+                    instance_id =instance.id
                 )
 @receiver(post_delete, sender=Customer)
 def log_delete_customer(sender, instance, **kwargs):
@@ -85,7 +90,8 @@ def log_delete_customer(sender, instance, **kwargs):
         user=user,
         action=action,
         model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}"
+        detail=f"El usuario: {user} eliminó el registro {instance}",
+        instance_id =instance.id
     )
 
 @receiver(post_save, sender=Contact)
@@ -99,7 +105,8 @@ def log_create_contact(sender, instance, created, **kwargs):
             user=user,
             action=action,
             model=model,
-            detail=detail
+            detail=detail,
+            instance_id =instance.id
         )
 @receiver(pre_save, sender=Contact)
 def log_edit_contact(sender, instance, **kwargs):
@@ -116,7 +123,8 @@ def log_edit_contact(sender, instance, **kwargs):
                     user=user,
                     action=action,
                     model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
+                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
+                    instance_id =instance.id
                 )
 @receiver(post_delete, sender=Contact)
 def log_delete_contact(sender, instance, **kwargs):
@@ -127,5 +135,6 @@ def log_delete_contact(sender, instance, **kwargs):
         user=user,
         action=action,
         model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}"
+        detail=f"El usuario: {user} eliminó el registro {instance}",
+        instance_id =instance.id
     )

@@ -14,7 +14,8 @@ def log_create_rate(sender, instance, created, **kwargs):
             user=user,
             action=action,
             model=model,
-            detail=detail
+            detail=detail,
+            instance_id =instance.id
         )
 @receiver(pre_save, sender=Rate)
 def log_edit_rate(sender, instance, **kwargs):
@@ -31,7 +32,8 @@ def log_edit_rate(sender, instance, **kwargs):
                     user=user,
                     action=action,
                     model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
+                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
+                    instance_id =instance.id
                 )
 @receiver(post_delete, sender=Rate)
 def log_delete_rate(sender, instance, **kwargs):
@@ -42,7 +44,8 @@ def log_delete_rate(sender, instance, **kwargs):
         user=user,
         action=action,
         model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}"
+        detail=f"El usuario: {user} eliminó el registro {instance}",
+        instance_id =instance.id
     )
 @receiver(post_save, sender=HourRange)
 def log_create_hour_range(sender, instance, created, **kwargs):
@@ -55,7 +58,8 @@ def log_create_hour_range(sender, instance, created, **kwargs):
             user=user,
             action=action,
             model=model,
-            detail=detail
+            detail=detail,
+            instance_id =instance.id
         )
 @receiver(pre_save, sender=HourRange)
 def log_edit_hour_range(sender, instance, **kwargs):
@@ -72,7 +76,8 @@ def log_edit_hour_range(sender, instance, **kwargs):
                     user=user,
                     action=action,
                     model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
+                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
+                    instance_id =instance.id
                 )
 @receiver(post_delete, sender=HourRange)
 def log_delete_hour_range(sender, instance, **kwargs):
@@ -83,7 +88,8 @@ def log_delete_hour_range(sender, instance, **kwargs):
         user=user,
         action=action,
         model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}"
+        detail=f"El usuario: {user} eliminó el registro {instance}",
+        instance_id =instance.id
     )
 @receiver(post_save, sender=Product)
 def log_create_product(sender, instance, created, **kwargs):
@@ -96,7 +102,8 @@ def log_create_product(sender, instance, created, **kwargs):
             user=user,
             action=action,
             model=model,
-            detail=detail
+            detail=detail,
+            instance_id =instance.id
         )
 @receiver(pre_save, sender=Product)
 def log_edit_product(sender, instance, **kwargs):
@@ -113,7 +120,8 @@ def log_edit_product(sender, instance, **kwargs):
                     user=user,
                     action=action,
                     model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
+                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
+                    instance_id =instance.id
                 )
 @receiver(post_delete, sender=Product)
 def log_delete_product(sender, instance, **kwargs):
@@ -124,7 +132,8 @@ def log_delete_product(sender, instance, **kwargs):
         user=user,
         action=action,
         model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}"
+        detail=f"El usuario: {user} eliminó el registro {instance}",
+        instance_id =instance.id
     )
 @receiver(post_save, sender=Price)
 def log_create_price(sender, instance, created, **kwargs):
@@ -137,7 +146,8 @@ def log_create_price(sender, instance, created, **kwargs):
             user=user,
             action=action,
             model=model,
-            detail=detail
+            detail=detail,
+            instance_id =instance.id
         )
 @receiver(pre_save, sender=Price)
 def log_edit_price(sender, instance, **kwargs):
@@ -154,7 +164,8 @@ def log_edit_price(sender, instance, **kwargs):
                     user=user,
                     action=action,
                     model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
+                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
+                    instance_id =instance.id
                 )
 @receiver(post_delete, sender=Price)
 def log_delete_price(sender, instance, **kwargs):
@@ -165,7 +176,8 @@ def log_delete_price(sender, instance, **kwargs):
         user=user,
         action=action,
         model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}"
+        detail=f"El usuario: {user} eliminó el registro {instance}",
+        instance_id =instance.id
     )
 @receiver(post_save, sender=Price_Additional_Hour)
 def log_create_price_additional_hour(sender, instance, created, **kwargs):
@@ -178,7 +190,8 @@ def log_create_price_additional_hour(sender, instance, created, **kwargs):
             user=user,
             action=action,
             model=model,
-            detail=detail
+            detail=detail,
+            instance_id =instance.id
         )
 @receiver(pre_save, sender=Price_Additional_Hour)
 def log_edit_price_additional_hour(sender, instance, **kwargs):
@@ -195,7 +208,8 @@ def log_edit_price_additional_hour(sender, instance, **kwargs):
                     user=user,
                     action=action,
                     model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
+                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
+                    instance_id =instance.id
                 )
 @receiver(post_delete, sender=Price_Additional_Hour)
 def log_delete_price_additional_hour(sender, instance, **kwargs):
@@ -206,5 +220,6 @@ def log_delete_price_additional_hour(sender, instance, **kwargs):
         user=user,
         action=action,
         model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}"
+        detail=f"El usuario: {user} eliminó el registro {instance}",
+        instance_id =instance.id
     )
