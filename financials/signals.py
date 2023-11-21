@@ -15,7 +15,8 @@ def log_create_payment(sender, instance, created, **kwargs):
             user=user,
             action=action,
             model=model,
-            detail=detail
+            detail=detail,
+            instance_id =instance.id
         )
 @receiver(pre_save, sender=Payment)
 def log_edit_payment(sender, instance, **kwargs):
@@ -32,7 +33,8 @@ def log_edit_payment(sender, instance, **kwargs):
                     user=user,
                     action=action,
                     model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
+                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
+                    instance_id =instance.id
                 )
 @receiver(post_delete, sender=Payment)
 def log_delete_payment(sender, instance, **kwargs):
@@ -43,7 +45,8 @@ def log_delete_payment(sender, instance, **kwargs):
         user=user,
         action=action,
         model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}"
+        detail=f"El usuario: {user} eliminó el registro {instance}",
+        instance_id =instance.id
     )
 
 @receiver(post_save, sender=Warranty_Movement)
@@ -57,7 +60,8 @@ def log_create_warranty_movement(sender, instance, created, **kwargs):
             user=user,
             action=action,
             model=model,
-            detail=detail
+            detail=detail,
+            instance_id =instance.id
         )
 @receiver(pre_save, sender=Warranty_Movement)
 def log_edit_warranty_movement(sender, instance, **kwargs):
@@ -74,7 +78,8 @@ def log_edit_warranty_movement(sender, instance, **kwargs):
                     user=user,
                     action=action,
                     model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
+                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
+                    instance_id =instance.id
                 )
 @receiver(post_delete, sender=Warranty_Movement)
 def log_delete_payment(sender, instance, **kwargs):
@@ -85,5 +90,6 @@ def log_delete_payment(sender, instance, **kwargs):
         user=user,
         action=action,
         model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}"
+        detail=f"El usuario: {user} eliminó el registro {instance}",
+        instance_id =instance.id
     )

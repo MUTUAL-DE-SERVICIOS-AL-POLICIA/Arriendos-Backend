@@ -14,7 +14,8 @@ def log_create_requirement(sender, instance, created, **kwargs):
             user=user,
             action=action,
             model=model,
-            detail=detail
+            detail=detail,
+            instance_id=instance.id
         )
 @receiver(pre_save, sender=Requirement)
 def log_edit_requirement(sender, instance, **kwargs):
@@ -31,7 +32,8 @@ def log_edit_requirement(sender, instance, **kwargs):
                     user=user,
                     action=action,
                     model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
+                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
+                    instance_id=instance.id
                 )
 @receiver(post_delete, sender=Requirement)
 def log_delete_requirement(sender, instance, **kwargs):
@@ -42,7 +44,8 @@ def log_delete_requirement(sender, instance, **kwargs):
         user=user,
         action=action,
         model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}"
+        detail=f"El usuario: {user} eliminó el registro {instance}",
+        instance_id=instance.id
     )
 @receiver(post_save, sender=Requirement_Delivered)
 def log_create_requirement_delivered(sender, instance, created, **kwargs):
@@ -55,7 +58,8 @@ def log_create_requirement_delivered(sender, instance, created, **kwargs):
             user=user,
             action=action,
             model=model,
-            detail=detail
+            detail=detail,
+            instance_id=instance.id
         )
 @receiver(pre_save, sender=Requirement_Delivered)
 def log_edit_requirement_delivered(sender, instance, **kwargs):
@@ -72,7 +76,8 @@ def log_edit_requirement_delivered(sender, instance, **kwargs):
                     user=user,
                     action=action,
                     model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
+                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
+                    instance_id=instance.id
                 )
 @receiver(post_delete, sender=Requirement_Delivered)
 def log_delete_requirement_delivered(sender, instance, **kwargs):
@@ -83,7 +88,8 @@ def log_delete_requirement_delivered(sender, instance, **kwargs):
         user=user,
         action=action,
         model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}"
+        detail=f"El usuario: {user} eliminó el registro {instance}",
+        instance_id=instance.id
     )
 @receiver(post_save, sender=RateRequirement)
 def log_create_rate_requirement(sender, instance, created, **kwargs):
@@ -96,7 +102,8 @@ def log_create_rate_requirement(sender, instance, created, **kwargs):
             user=user,
             action=action,
             model=model,
-            detail=detail
+            detail=detail,
+            instance_id=instance.id
         )
 @receiver(pre_save, sender=RateRequirement)
 def log_edit_rate_requirement(sender, instance, **kwargs):
@@ -113,7 +120,8 @@ def log_edit_rate_requirement(sender, instance, **kwargs):
                     user=user,
                     action=action,
                     model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
+                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
+                    instance_id=instance.id
                 )
 @receiver(post_delete, sender=RateRequirement)
 def log_delete_rate_requirement(sender, instance, **kwargs):
@@ -124,5 +132,6 @@ def log_delete_rate_requirement(sender, instance, **kwargs):
         user=user,
         action=action,
         model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}"
+        detail=f"El usuario: {user} eliminó el registro {instance}",
+        instance_id=instance.id
     )
