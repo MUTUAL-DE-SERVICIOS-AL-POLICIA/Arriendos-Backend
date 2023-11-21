@@ -14,4 +14,5 @@ class Record (models.Model):
     action = models.TextField()
     model = models.TextField()
     detail = models.TextField()
+    instance_id = models.IntegerField(null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
