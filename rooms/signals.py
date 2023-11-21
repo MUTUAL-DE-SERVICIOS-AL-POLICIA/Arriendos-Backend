@@ -15,7 +15,8 @@ def log_create_room(sender, instance, created, **kwargs):
             user=user,
             action=action,
             model=model,
-            detail=detail
+            detail=detail,
+            instance_id=instance.id
         )
 @receiver(pre_save, sender=Room)
 def log_edit_user(sender, instance, **kwargs):
@@ -32,7 +33,8 @@ def log_edit_user(sender, instance, **kwargs):
                     user=user,
                     action=action,
                     model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
+                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
+                    instance_id=instance.id
                 )
 @receiver(post_delete, sender=Room)
 def log_delete_room(sender, instance, **kwargs):
@@ -43,7 +45,8 @@ def log_delete_room(sender, instance, **kwargs):
         user=user,
         action=action,
         model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}"
+        detail=f"El usuario: {user} eliminó el registro {instance}",
+        instance_id=instance.id
     )
 
 @receiver(post_save, sender=Property)
@@ -57,7 +60,8 @@ def log_create_property(sender, instance, created, **kwargs):
             user=user,
             action=action,
             model=model,
-            detail=detail
+            detail=detail,
+            instance_id=instance.id
         )
 @receiver(pre_save, sender=Property)
 def log_edit_property(sender, instance, **kwargs):
@@ -74,7 +78,8 @@ def log_edit_property(sender, instance, **kwargs):
                     user=user,
                     action=action,
                     model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
+                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
+                    instance_id=instance.id
                 )
 @receiver(post_delete, sender=Property)
 def log_delete_property(sender, instance, **kwargs):
@@ -85,7 +90,8 @@ def log_delete_property(sender, instance, **kwargs):
         user=user,
         action=action,
         model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}"
+        detail=f"El usuario: {user} eliminó el registro {instance}",
+        instance_id=instance.id
     )
 
 @receiver(post_save, sender=Sub_Environment)
@@ -99,7 +105,8 @@ def log_create_sub_enviroment(sender, instance, created, **kwargs):
             user=user,
             action=action,
             model=model,
-            detail=detail
+            detail=detail,
+            instance_id=instance.id
         )
 @receiver(pre_save, sender=Sub_Environment)
 def log_edit_sub_enviroment(sender, instance, **kwargs):
@@ -116,7 +123,8 @@ def log_edit_sub_enviroment(sender, instance, **kwargs):
                     user=user,
                     action=action,
                     model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
+                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
+                    instance_id=instance.id
                 )
 @receiver(post_delete, sender=Sub_Environment)
 def log_delete_sub_enviroment(sender, instance, **kwargs):
@@ -127,5 +135,6 @@ def log_delete_sub_enviroment(sender, instance, **kwargs):
         user=user,
         action=action,
         model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}"
+        detail=f"El usuario: {user} eliminó el registro {instance}",
+        instance_id=instance.id
     )
