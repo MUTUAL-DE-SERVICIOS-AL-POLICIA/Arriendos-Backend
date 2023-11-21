@@ -61,7 +61,7 @@ requests_data = [
         "rate": 2,
         "room": 1,
         "hour_range": 1,
-        "mount": 3500
+        "mount": 2625
     },
     {
         "day": ["SÁBADO"],
@@ -1013,7 +1013,7 @@ requests_data = [
         "rate": 3,
         "room": 5,
         "hour_range": 1,
-        "mount": 2168
+        "mount": 2268
     },
     {
         "day": ["DOMINGO","LUNES","MARTES","MIÉRCOLES","JUEVES"],
