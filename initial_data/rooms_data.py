@@ -25,7 +25,7 @@ requests_data = [
     },
     {
             "name": "SALÓN GUZMÁN DE ROJAS",
-            "capacity": 250,
+            "capacity": 80,
             "warranty": 500,
             "is_active": True,
             "property": 1,
@@ -33,8 +33,8 @@ requests_data = [
     },
     {
             "name": "SALON GOBELINO",
-            "capacity": 100,
-            "warranty": 700,
+            "capacity": 30,
+            "warranty": 400,
             "is_active": True,
             "property": 1,
             "group":3
@@ -42,31 +42,31 @@ requests_data = [
     {
             "name": "AREA DE EXPOSICION",
             "capacity": 80,
-            "warranty": 200,
+            "warranty": 500,
             "is_active": True,
             "property": 1,
             "group":4
     },
     {
             "name": "AMBIENTES INTERIORES",
-            "capacity": 200,
-            "warranty": 100,
+            "capacity": 150,
+            "warranty": 1200,
             "is_active": True,
             "property": 2,
             "group":5
     },
     {
             "name": "AMBIENTES EXTERIORES",
-            "capacity": 300,
-            "warranty": 400,
+            "capacity": 80,
+            "warranty": 800,
             "is_active": True,
             "property": 2,
             "group":5
     },
     {
             "name": "AMBIENTES INTERIORES Y EXTERIORES ",
-            "capacity": 300,
-            "warranty": 400,
+            "capacity": 230,
+            "warranty": 2000,
             "is_active": True,
             "property": 2,
             "group":5
