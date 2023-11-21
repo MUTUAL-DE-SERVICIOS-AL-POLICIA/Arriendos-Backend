@@ -27,6 +27,11 @@ def Make_Warranty_Form(request, rental_id):
         nit = customer.get("ci_nit")
     
     selected_products = rental.get("selected_products")
+    departments = ''
+    for selected_product in selected_products:
+        departments = selected_product.get("product")
+        departments = departments.get("room")
+        departments = departments.get("property")
     now = timezone.now()
     formatted_date = DateFormat(now).format(get_format('DATE_FORMAT'))
 
@@ -52,6 +57,7 @@ def Make_Warranty_Form(request, rental_id):
         'nit': nit,
         'director': director,
         'selected_products':selected_products,
+        'departments': departments,
         'contacts': contacts,
         'contract_number': contract_number,
         'warranty': warranty.balance,
