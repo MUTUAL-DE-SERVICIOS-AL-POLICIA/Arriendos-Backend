@@ -70,6 +70,7 @@ class List_Properties_with_Rooms(generics.GenericAPIView):
                 'id': property.id,
                 'name': property.name,
                 'address': property.address,
+                'department': property.department,
                 'photo': request.build_absolute_uri(property.photo.url),
                 'rooms': []
             }
