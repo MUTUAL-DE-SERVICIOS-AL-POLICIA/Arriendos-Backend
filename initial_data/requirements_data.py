@@ -28,7 +28,19 @@ request_data_requirements = [
     },
     {
         "requirement_name":"RESOLUCIÓN O MEMORANDUM DESIG"
-    }
+    },
+    {
+        "requirement_name":"FOTOCOPIA MATRICULA DE COMERCIO-PERSONA JURÍDICA"
+    },
+    {
+        "requirement_name":"FOTOCOPIA DE PODER DEL REPRESENTANTE LEGAL-PERSONA JURÍDICA"
+    },
+    {
+        "requirement_name":"FOTOCOPIA DE CI. DE REPRESENTANTE LEGAL"
+    },
+    {
+        "requirement_name":"SOLICITUD DE ALQUILER"
+    },
 ]
 for data in request_data_requirements:
     headers = {'Authorization': f'Bearer {token}'}
