@@ -30,6 +30,9 @@ class StateRentalListCreateView(generics.ListCreateAPIView):
             return [HasAddRentalStatePermission()]
         if self.request.method == 'GET':
             return [HasViewRentalStatePermission()]
+    def perform_create(self, serializer):
+        next_state = self.request.data.get('next_state', [])
+        serializer.save(next_state=next_state)
 
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Get_Rental(generics.ListCreateAPIView):
