@@ -5,9 +5,9 @@ from .models import RateRequirement, Requirement,Requirement_Delivered
 from .serializer import RateRequirementSerializer, RequirementSerializer, RateWithRelatedDataSerializer
 from products.models import Rate
 from customers.models import Customer_type
-from django.db import models
 import math
 from datetime import datetime
+from django.db.models import Max, Func
 from leases.models import Rental, Selected_Product
 from Arriendos_Backend.util import required_fields
 from .function import Make_Rental_Form
@@ -293,6 +293,9 @@ request_body_schema = openapi.Schema(
         ),
     }
 )
+class ExtractNumber(Func):
+    function = 'CAST'
+    template = "%(function)s(SUBSTRING(%(expressions)s FROM '^[0-9]+') AS INTEGER)"
 class Register_delivered_requirement(generics.ListAPIView):
         permission_classes = [IsAuthenticated, HasAddRequirementDeliveredRequirementPermission]
         def get_permissions(self):
@@ -327,11 +330,15 @@ class Register_delivered_requirement(generics.ListAPIView):
 
                     now = datetime.now()
                     year = now.year
-                    max_contract_number = Rental.objects.filter(created_at__year=year).aggregate(models.Max('contract_number'))['contract_number__max']
+                    max_contract_number = Rental.objects.filter(
+                        contract_number__endswith=f'-{year}'
+                    ).annotate(
+                        contract_number_integer=ExtractNumber('contract_number')
+                    ).aggregate(
+                        max_contract_number=Max('contract_number_integer')
+                    )['max_contract_number']
                     if max_contract_number is None:
                         max_contract_number = 0
-                    else:
-                        max_contract_number = int(max_contract_number.split('-')[0])
                     contract_number = '{}-{}'.format(max_contract_number +1, year)
                     rental.contract_number = contract_number
                     rental.save()
