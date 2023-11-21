@@ -14,7 +14,8 @@ def log_create_user(sender, instance, created, **kwargs):
             user=user,
             action=action,
             model=model,
-            detail=detail
+            detail=detail,
+            instance_id =instance.id
         )
 @receiver(pre_save, sender=User)
 def log_edit_user(sender, instance, **kwargs):
@@ -28,11 +29,13 @@ def log_edit_user(sender, instance, **kwargs):
             user = get_thread_variable('thread_user')
             if old_value != new_value:
                 Record.objects.create(
-                    user=user,
+                    user=instance,
                     action=action,
                     model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}'
+                    detail=f'El usuario: {instance.username} inició sesión',
+                    instance_id = instance.id
                 )
+          
 @receiver(post_delete, sender=User)
 def log_delete_user(sender, instance, **kwargs):
     model="User"
@@ -42,5 +45,6 @@ def log_delete_user(sender, instance, **kwargs):
         user=user,
         action=action,
         model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}"
+        detail=f"El usuario: {user} eliminó el registro {instance}",
+        instance_id =instance.id
     )
