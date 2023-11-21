@@ -335,6 +335,11 @@ class Warranty_Return_Request(generics.GenericAPIView):
         rental = request.GET.get('rental', None)
         if rental is None:
             return Response({"error": "No se ha enviado rental"}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            warranty=Warranty_Movement.objects.filter(rental_id=rental).latest('id')
+            
+        except:
+            return Response({"error": "No hay garantías registradas del alquiler"}, status=status.HTTP_400_BAD_REQUEST)
         return Make_Warranty_Form(request, rental)
 
 request_body_schema = openapi.Schema(
