@@ -10,6 +10,9 @@ from drf_yasg.utils import swagger_auto_schema
 from .permissions import *
 from rest_framework.permissions import IsAuthenticated
 from threadlocals.threadlocals import set_thread_variable
+import requests
+from django.conf import settings
+import re
 
 class Customer_Type_Api(generics.GenericAPIView):
     serializer_class = Customer_typeSerializer
@@ -312,3 +315,51 @@ class Customer_Detail(generics.GenericAPIView):
             customer_data.degree = degree
             customer_data.save()
             return Response({"message":"Cliente actualizado"}, status=status.HTTP_200_OK)
+class identify_police(generics.GenericAPIView):
+    def get_token_access(self):
+        url = f'{settings.MICROSERVICE_API_URL}/auth/login'
+        username = settings.MICROSERVICE_API_USERNAME
+        password = settings.MICROSERVICE_API_PASSWORD
+        response = requests.post(url, data={'username': username, 'password': password})
+        if response.status_code == 200:
+            token = response.json().get('payload', {}).get('access_token')
+            return token
+        else:
+            response.raise_for_status()
+    def get(self,request, parametro):
+        token_de_autenticacion = self.get_token_access()
+        url = f'{settings.MICROSERVICE_API_URL}/affiliate/affiliate'
+        parametros = {
+            'identity_card_affiliate': parametro,
+            'registration_affiliate': '',
+            'name_degree': '',
+            'full_name_affiliate': '',
+            'name_affiliate_state': '',
+            'page': 1,
+            'per_page': 10,
+            'sortDesc[]': False
+        }
+        headers = {
+            'Authorization': f'Bearer {token_de_autenticacion}'
+        }
+        response = requests.get(url, params=parametros, headers=headers)
+        if response.status_code == 200:
+            response_data = response.json()
+            payload_data = response_data.get('payload', {}).get('affiliates', {}).get('data', [])
+            length = len(payload_data)
+            array=[]
+            if length >0:
+                for item in payload_data:
+                    name=f"{item.get('first_name_affiliate')or ''} {item.get('second_name_affiliate')or ''} {item.get('last_name_affiliate')or ''} {item.get('mothers_last_name_affiliate')or ''}"
+                    name=re.sub(' +',' ',name)
+                    data = {
+                        'id_affiliate':item.get('id_affiliate', 'No disponible'),
+                        'ci': item.get('identity_card_affiliate', 'No disponible'),
+                        'name': name,
+                        'degree': item.get('name_degree')
+                    }
+                    array.append(data)
+                return Response({"data":array},status=status.HTTP_200_OK)
+            return Response({'error':'no hay afiliado con ese ci'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            return Response({'error': 'Error en la solicitud al microservicio'}, status=500)
