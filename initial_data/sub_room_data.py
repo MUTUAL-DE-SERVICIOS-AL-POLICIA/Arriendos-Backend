@@ -10,7 +10,7 @@ if len(sys.argv) < 4:
 ip = sys.argv[1]
 port = sys.argv[2]
 token = sys.argv[3]
-url = f"http://{ip}:{port}/api/rooms/sub_environments/"
+url = f"http://{ip}:{port}/api/rooms/sub_rooms/"
 script_directory = os.path.dirname(os.path.realpath(__file__))
 media_directory = os.path.join(script_directory, "..", "media")
 
