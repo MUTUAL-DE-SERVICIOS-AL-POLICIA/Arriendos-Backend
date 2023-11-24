@@ -18,7 +18,7 @@ class Room(models.Model):
     group = models.CharField(max_length=100)
 
 
-class Sub_Environment(models.Model):
+class Sub_Room(models.Model):
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
     name = models.CharField(max_length=150)
     quantity = models.IntegerField(null=True)
