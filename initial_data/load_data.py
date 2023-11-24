@@ -24,7 +24,7 @@ try:
         subprocess.run(["python3", "rates_data.py", ip, port, token])
         subprocess.run(["python3", "properties_data.py", ip, port, token])
         subprocess.run(["python3", "rooms_data.py", ip, port, token])
-        subprocess.run(["python3", "sub_enviroment_data.py",ip, port, token])
+        subprocess.run(["python3", "sub_rooms.py",ip, port, token])
         subprocess.run(["python3", "hour_range_data.py",ip, port, token])
         subprocess.run(["python3", "additional_hour_price_data.py",ip, port, token])
         subprocess.run(["python3", "products_data.py",ip, port, token])
