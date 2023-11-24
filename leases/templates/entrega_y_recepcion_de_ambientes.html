@@ -131,12 +131,12 @@
             <th>ESTADO DE RECEPCIÓN</th>
             <th></th>
           </tr>
-          {% for sub_environment in selected_product.product.room.sub_environments %}
+          {% for sub_room in selected_product.product.room.sub_rooms %}
           <tr>
             <td>{{ forloop.counter}}</td>
-            <td>{{ sub_environment.name }}</td>
-            <td>{{ sub_environment.quantity }}</td>
-            <td>{{ sub_environment.state }}</td>
+            <td>{{ sub_room.name }}</td>
+            <td>{{ sub_room.quantity }}</td>
+            <td>{{ sub_room.state }}</td>
             <td></td>
             <td></td>
           </tr>

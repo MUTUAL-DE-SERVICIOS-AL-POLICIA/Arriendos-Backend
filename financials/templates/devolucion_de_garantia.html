@@ -129,9 +129,9 @@
           <tr style="border-left: solid; border-right: solid;">
             <th>AMBIENTES SOLICITADOS</th>
             <td colspan="2">
-                {% for sub_environment in selected_product.product.room.sub_environments %}
+                {% for sub_room in selected_product.product.room.sub_rooms %}
               <p>
-                    {{ sub_environment.quantity}} {{ sub_environment.name }}
+                    {{ sub_room.quantity}} {{ sub_room.name }}
               </p>
               {% endfor %}
               </td>

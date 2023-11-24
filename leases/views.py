@@ -117,7 +117,7 @@ class Selected_Product_Calendar_Api(generics.GenericAPIView):
             for date in all_dates:
                 selected_products = Selected_Product.objects.filter(start_time=date)
                 for product in selected_products:
-                    if product.rental.state_id < 6:
+                    if product.rental.state_id < 5:
                         customer = Customer.objects.get(pk=product.rental.customer_id)
                         customer_serializer = CustomersSerializer(customer)
                         serialized_customer_data = customer_serializer.data
@@ -145,7 +145,7 @@ class Selected_Product_Calendar_Api(generics.GenericAPIView):
             selected_products = Selected_Product.objects.filter(product__room_id=room)
             date_products = []
             for product in selected_products:
-                if product.rental.state_id < 6:
+                if product.rental.state_id < 5:
                     customer = Customer.objects.get(pk=product.rental.customer_id)
                     customer_serializer = CustomersSerializer(customer)
                     serialized_customer_data = customer_serializer.data
@@ -542,7 +542,10 @@ class Register_additional_hour_applied(generics.RetrieveUpdateDestroyAPIView):
     def post(self, request):
         set_thread_variable('thread_user', request.user)
         selected_product_id = request.data.get('selected_product')
-        rental = Selected_Product.objects.get(pk=selected_product_id)
+        try:
+            rental = Selected_Product.objects.get(pk=selected_product_id)
+        except:
+            return Response({"error":"El producto seleccionado no existe"}, status=status.HTTP_404_NOT_FOUND)
         rental = rental.rental_id
         number = request.data.get('number')
         description = request.data.get('description')
@@ -562,7 +565,6 @@ class Register_additional_hour_applied(generics.RetrieveUpdateDestroyAPIView):
             return Make_Overtime_Form(request, rental, selected_product_id, number, price, total, description)
         else:
             return Response({"error":"no se pudo registar la hora extra"}, status=status.HTTP_400_BAD_REQUEST)
-
     @swagger_auto_schema(
     operation_description="Horas adicionales aplicadas",
     manual_parameters=[selected_product],
