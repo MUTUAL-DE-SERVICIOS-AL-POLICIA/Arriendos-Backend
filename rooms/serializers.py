@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Property, Room, Sub_Environment
+from .models import Property, Room, Sub_Room
 
 class PropertySerializer(serializers.ModelSerializer):
     class Meta:
@@ -11,22 +11,22 @@ class RoomSerializer(serializers.ModelSerializer):
         model = Room
         fields = '__all__'
 
-class Sub_EnvironmentSerializer(serializers.ModelSerializer):
+class Sub_RoomSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Sub_Environment
+        model = Sub_Room
         fields = '__all__'
-class Sub_EnvironmentsSerializer(serializers.ModelSerializer):
+class Sub_RoomsSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Sub_Environment
+        model = Sub_Room
         fields = '__all__'
 class RoomsSerializer(serializers.ModelSerializer):
-    sub_environments = serializers.SerializerMethodField()
+    sub_rooms = serializers.SerializerMethodField()
     property = PropertySerializer()
     class Meta:
         model = Room
         fields = '__all__'
-    def get_sub_environments(self,obj):
-        sub_environments = Sub_Environment.objects.filter(room_id = obj)
-        sub_environments_serializer = Sub_EnvironmentSerializer(sub_environments, many=True)
-        return sub_environments_serializer.data
+    def get_sub_rooms(self,obj):
+        sub_rooms = Sub_Room.objects.filter(room_id = obj)
+        sub_rooms_serializer = Sub_RoomSerializer(sub_rooms, many=True)
+        return sub_rooms_serializer.data
