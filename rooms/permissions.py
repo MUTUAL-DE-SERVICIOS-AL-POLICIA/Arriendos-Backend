@@ -34,19 +34,19 @@ class HasChangeRoomPermission(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user.has_perm('rooms.change_room')
 class HasDeleteRoomPermission(permissions.BasePermission):
-    message = "No tienes permisos para borrar las ambientes"
+    message = "No tienes permisos para borrar los ambientes"
     def has_permission(self, request, view):
         return request.user.has_perm('rooms.delete_room')
 
-class HasViewSub_EnvironmentPermission(permissions.BasePermission):
+class HasViewSub_RoomPermission(permissions.BasePermission):
     message= "No tiene permisos para ver los sub_ambientes"
     def has_permission(self, request, view):
-        return request.user.has_perm('rooms.view_sub_environment')
-class HasAddSub_EnvironmentPermission(permissions.BasePermission):
+        return request.user.has_perm('rooms.view_sub_room')
+class HasAddSub_RoomPermission(permissions.BasePermission):
     message= "No tiene permisos para crear los sub_ambientes"
     def has_permission(self, request, view):
-        return request.user.has_perm('rooms.add_sub_environment')
-class HasChangeSub_EnvironmentPermission(permissions.BasePermission):
+        return request.user.has_perm('rooms.add_sub_room')
+class HasChangeSub_RoomPermission(permissions.BasePermission):
     message= "No tiene permisos para editar los sub_ambientes"
     def has_permission(self, request, view):
-        return request.user.has_perm('rooms.change_sub_environment')
+        return request.user.has_perm('rooms.change_sub_room')
