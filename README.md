@@ -49,5 +49,8 @@ python3 manage.py migrate
 PASO 11:Entra a initial_data
 cd initial_data
 
+PASO 12: Crear un superusuario con las credenciales del LDAP
+python3 manage.py createsuperuser
+
 PASO 12: corre el script load_data.py con:
 python3 load_data.py <ip del server> <puerto>
