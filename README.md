@@ -44,13 +44,24 @@ Esto instalará todas las bibliotecas y paquetes necesarios para ejecutar el pro
 PASO 9: Asegúrate de que has configurado la base de datos en tu máquina local. Esto incluye crear una base de datos y crear el archivo settings.py del proyecto.
 
 PASO 10: Aplica las migraciones con;
+```
 python3 manage.py migrate
+```
 
 PASO 11:Entra a initial_data
+```
 cd initial_data
-
-PASO 12: Crear un superusuario con las credenciales del LDAP
-python3 manage.py createsuperuser
-
+```
 PASO 12: corre el script load_data.py con:
+```
 python3 load_data.py <ip del server> <puerto>
+```
+# DESPLIEGUE CON DOCKER
+PASO 1: Construir la imagen con:
+```
+docker build -t arriendos:latest .
+```
+PASO 2: ejecutar el contenedor con:
+```
+docker run -d -p 9005:9005 arriendos:latest
+```
