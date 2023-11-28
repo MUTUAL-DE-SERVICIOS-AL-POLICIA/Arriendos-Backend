@@ -4,6 +4,7 @@
 *.pyc
 __pycache__/
 local_settings.py
+settings.py
 property_photos
 products/migrations/0001_initial.py
 db.sqlite3

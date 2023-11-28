@@ -7,7 +7,7 @@ class Customer_type(models.Model):
 
 class Customer(models.Model):
     customer_type = models.ForeignKey(Customer_type, related_name="customer_types", on_delete=models.CASCADE)
-    institution_name = models.CharField(null=True)
+    institution_name = models.CharField(max_length=255, null=True)
     nit = models.CharField(max_length=50, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
