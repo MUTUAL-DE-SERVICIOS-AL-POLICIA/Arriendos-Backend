@@ -29,6 +29,7 @@ try:
         subprocess.run(["python3", "additional_hour_price_data.py",ip, port, token])
         subprocess.run(["python3", "products_data.py",ip, port, token])
         subprocess.run(["python3", "state_data.py",ip, port, token])
+        subprocess.run(["python3", "plans_data.py",ip, port, token])
     else:
         error_message = response_json.get('error', 'Error desconocido')
         print(f"Error en la solicitud HTTP: {response.status_code}")
