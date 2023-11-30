@@ -196,7 +196,8 @@ class Customer_Api(generics.GenericAPIView):
                     ci_nit = contact.get("ci_nit", None)
                     phone = contact.get("phone", None)
                     degree = contact.get("degree", None)
-                    Contact.objects.create(degree=degree, name=name, ci_nit=ci_nit, phone=phone, customer_id=customer_institution.id, is_customer=False)
+                    nup = contact.get("nup", None)
+                    Contact.objects.create(degree=degree, name=name, ci_nit=ci_nit, nup=nup, phone=phone, customer_id=customer_institution.id, is_customer=False)
                 return Response({"message": "Institucion registrado con éxito"}, status=status.HTTP_201_CREATED)
             else:
                 #cliente
@@ -205,12 +206,13 @@ class Customer_Api(generics.GenericAPIView):
                 name_customer = customers.get("name",None)
                 phone = customers.get("phone", None)
                 ci_nit = customers.get("ci_nit", None)
+                nup = customers.get("nup", None)
                 if name_customer is None or ci_nit is None or phone is None:
                     return Response({"error":"los campos no son válidos"}, status=status.HTTP_400_BAD_REQUEST)
                 if Contact.objects.filter(ci_nit=ci_nit).exists():
                     return Response({"error": "El cliente ya existe"}, status=status.HTTP_400_BAD_REQUEST)
                 customer = Customer.objects.create(customer_type_id=customer_type_id)
-                Contact.objects.create(degree=degree, name=name_customer, ci_nit=ci_nit, phone=phone, customer_id=customer.id)
+                Contact.objects.create(degree=degree, name=name_customer, ci_nit=ci_nit, nup=nup, phone=phone, customer_id=customer.id)
                 return Response({"message": "Cliente registrado con exito" }, status=status.HTTP_201_CREATED)
         return Response({"error":"El tipo de cliente no es válido"}, status=status.HTTP_404_NOT_FOUND)
 
