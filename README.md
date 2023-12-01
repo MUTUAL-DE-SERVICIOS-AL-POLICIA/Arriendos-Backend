@@ -63,5 +63,5 @@ docker build -t arriendos:latest .
 ```
 PASO 2: ejecutar el contenedor con:
 ```
-docker run -d -p 9005:9005 arriendos:latest
+ docker run -d -p 9005:9005 -v <ruta del proyecto>:<ruta en el contendor> arriendos
 ```
