@@ -317,7 +317,7 @@ class Customer_Detail(generics.GenericAPIView):
             customer_data.degree = degree
             customer_data.save()
             return Response({"message":"Cliente actualizado"}, status=status.HTTP_200_OK)
-class identify_police(generics.GenericAPIView):
+class identify_affiliate(generics.GenericAPIView):
     def get_token_access(self):
         url = f'{settings.MICROSERVICE_API_URL}/auth/login'
         username = settings.MICROSERVICE_API_USERNAME
@@ -328,11 +328,11 @@ class identify_police(generics.GenericAPIView):
             return token
         else:
             response.raise_for_status()
-    def get(self,request, parametro):
+    def get_police(self, id_card):
         token_de_autenticacion = self.get_token_access()
-        url = f'{settings.MICROSERVICE_API_URL}/affiliate/affiliate'
-        parametros = {
-            'identity_card_affiliate': parametro,
+        url_police = f'{settings.MICROSERVICE_API_URL}/affiliate/affiliate'
+        params_police = {
+            'identity_card_affiliate': id_card,
             'registration_affiliate': '',
             'name_degree': '',
             'full_name_affiliate': '',
@@ -344,7 +344,7 @@ class identify_police(generics.GenericAPIView):
         headers = {
             'Authorization': f'Bearer {token_de_autenticacion}'
         }
-        response = requests.get(url, params=parametros, headers=headers)
+        response = requests.get(url_police, params=params_police, headers=headers)
         if response.status_code == 200:
             response_data = response.json()
             payload_data = response_data.get('payload', {}).get('affiliates', {}).get('data', [])
@@ -352,16 +352,68 @@ class identify_police(generics.GenericAPIView):
             array=[]
             if length >0:
                 for item in payload_data:
-                    name=f"{item.get('first_name_affiliate')or ''} {item.get('second_name_affiliate')or ''} {item.get('last_name_affiliate')or ''} {item.get('mothers_last_name_affiliate')or ''}"
-                    name=re.sub(' +',' ',name)
-                    data = {
-                        'id_affiliate':item.get('id_affiliate', 'No disponible'),
-                        'ci': item.get('identity_card_affiliate', 'No disponible'),
-                        'name': name,
-                        'degree': item.get('name_degree')
-                    }
-                    array.append(data)
-                return Response({"data":array},status=status.HTTP_200_OK)
-            return Response({'error':'no hay afiliado con ese ci'}, status=status.HTTP_404_NOT_FOUND)
+                    id_card_affiliate=item.get('identity_card_affiliate')
+                    if id_card_affiliate == id_card:
+                        name=f"{item.get('first_name_affiliate')or ''} {item.get('second_name_affiliate')or ''} {item.get('last_name_affiliate')or ''} {item.get('mothers_last_name_affiliate')or ''}"
+                        name=re.sub(' +',' ',name)
+                        data = {
+                            'id_affiliate':item.get('id_affiliate', 'No disponible'),
+                            'ci': item.get('identity_card_affiliate', 'No disponible'),
+                            'name': name,
+                            'degree': item.get('name_degree')
+                        }
+                        array.append(data)
+                        return({"data":array, "is_police":True})
+            return ({'error':'no hay afiliado con ese ci,', "is_police":False})
         else:
-            return Response({'error': 'Error en la solicitud al microservicio'}, status=500)
+            return ({'error': 'Error en la solicitud al microservicio'})
+    def get_spouse(self, id_card):
+        token_de_autenticacion = self.get_token_access()
+        url_spouse = f'{settings.MICROSERVICE_API_URL}/affiliate/spouse'
+        params_spouse = {
+            'identity_card_spouses': id_card,
+            'registration_affiliate': '',
+            'name_degree': '',
+            'full_name_affiliate': '',
+            'name_affiliate_state': '',
+            'page': 1,
+            'per_page': 10,
+            'sortDesc[]': False
+        }
+        headers = {
+            'Authorization': f'Bearer {token_de_autenticacion}'
+        }
+        response = requests.get(url_spouse, params=params_spouse, headers=headers)
+        if response.status_code == 200:
+            response_data = response.json()
+            payload_data = response_data.get('payload', {}).get('spouses', {}).get('data', [])
+            length = len(payload_data)
+            array=[]
+            if length >0:
+                for item in payload_data:
+                    id_card_affiliate=item.get('identity_card')
+                    if id_card_affiliate == id_card:
+                        name=f"{item.get('first_name')or ''} {item.get('second_name')or ''} {item.get('last_name')or ''} {item.get('mothers_last_name')or ''}"
+                        name=re.sub(' +',' ',name)
+                        data = {
+                            'affiliate_id':item.get('affiliate_id'),
+                            'ci': id_card,
+                            'name': name,
+                            'degree': item.get('name_degree')
+                        }
+                        array.append(data)
+                        return({"data":array,"is_spouse":True})
+            return ({'error':'no hay afiliado con ese ci',"is_spouse":False})
+        else:
+            return ({'error': 'Error en la solicitud al microservicio'})
+    def get(self,request, id_card):
+
+        police_response=self.get_police(id_card)
+        spouse_response=self.get_spouse(id_card)
+        if police_response["is_police"] is True:
+            return Response(police_response["data"])
+        else:
+            if spouse_response["is_spouse"] is True:
+                return Response(spouse_response["data"])
+            else:
+                return Response({"message":"no existe el afiliado"})
