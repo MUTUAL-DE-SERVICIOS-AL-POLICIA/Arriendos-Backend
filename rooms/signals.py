@@ -68,8 +68,8 @@ def log_edit_property(sender, instance, **kwargs):
     action="update"
     model="Property"
     if instance.pk is not None:
-        old_instance = Room.objects.get(pk=instance.pk)
-        for field in Room._meta.fields:
+        old_instance = Property.objects.get(pk=instance.pk)
+        for field in Property._meta.fields:
             old_value = getattr(old_instance, field.name)
             new_value = getattr(instance, field.name)
             user = get_thread_variable('thread_user')
