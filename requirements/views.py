@@ -259,7 +259,8 @@ class Requirements_customer(generics.GenericAPIView):
         try:
             selected_product = Selected_Product.objects.filter(rental_id=rental_id).first()
             rate_id = selected_product.product.rate.id
-            required_requirements = RateRequirement.objects.filter(rate_id=rate_id)
+            customer_type = RateRequirement.objects.filter(rate_id=rate_id).first().customer_type
+            required_requirements = RateRequirement.objects.filter(customer_type=customer_type)
             required_requirements_list =  []
             for required_requirement in required_requirements:
                 required_requirement_data ={
