@@ -261,6 +261,8 @@ class Customer_Detail(generics.GenericAPIView):
         set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'PATCH':
             return [HasChangeCustomerPermission()]
+        if self.request.method == 'DELETE':
+            return [HasDeleteCustomerPermission()]
     def get_customer(self, pk, **kwargs):
         try:
             return Customer.objects.get(pk=pk)
@@ -317,6 +319,13 @@ class Customer_Detail(generics.GenericAPIView):
             customer_data.degree = degree
             customer_data.save()
             return Response({"message":"Cliente actualizado"}, status=status.HTTP_200_OK)
+    def delete(self, request, pk, **kwargs):
+        try:
+            customer = Customer.objects.get(pk=pk)
+            customer.delete()
+        except Customer.DoesNotExist:
+            return Response({"error": "El cliente no existe."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'message': 'Cliente eliminado exitosamente'})
 class identify_affiliate(generics.GenericAPIView):
     def get_token_access(self):
         url = f'{settings.MICROSERVICE_API_URL}/auth/login'
