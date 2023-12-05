@@ -15,7 +15,11 @@ class HasChangeCustomerPermission(permissions.BasePermission):
     def has_permission(self, request, view):
         has_permission = request.user.has_perm('customers.change_customer')
         return has_permission
-
+class HasDeleteCustomerPermission(permissions.BasePermission):
+    message = "No tienes permisos para borrar clientes"
+    def has_permission(self, request, view):
+        has_permission = request.user.has_perm('customers.delete_customer')
+        return has_permission
 class HasViewCustomerTypePermission(permissions.BasePermission):
     message = "No tienes permisos para ver tipo clientes"
     def has_permission(self, request, view):
