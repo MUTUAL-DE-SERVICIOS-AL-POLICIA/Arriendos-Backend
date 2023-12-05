@@ -326,7 +326,6 @@ class Customer_Detail(generics.GenericAPIView):
         except Customer.DoesNotExist:
             return Response({"error": "El cliente no existe."}, status=status.HTTP_400_BAD_REQUEST)
         return Response({'message': 'Cliente eliminado exitosamente'})
-        # return Response('borrado')
 class identify_affiliate(generics.GenericAPIView):
     def get_token_access(self):
         url = f'{settings.MICROSERVICE_API_URL}/auth/login'
