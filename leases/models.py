@@ -14,6 +14,8 @@ class Rental(models.Model):
     plan = models.ForeignKey(Plan, null=True, on_delete=models.CASCADE)
     initial_total = models.FloatField(null=True)
     contract_number = models.CharField(max_length=10,null=True)
+    warranty_return_request = models.DateTimeField(null=True)
+    warranty_returned = models.DateTimeField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
