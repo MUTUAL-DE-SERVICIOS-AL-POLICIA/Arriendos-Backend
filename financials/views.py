@@ -4,6 +4,7 @@ from rest_framework import status, generics
 from financials.models import Payment, Warranty_Movement, Event_Damage
 from financials.serializer import Payment_Serializer, Warranty_Movement_Serializer, Event_Damage_Serializer
 from leases.models import Rental, Selected_Product
+from django.utils import timezone
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from Arriendos_Backend.util import required_fields
@@ -340,6 +341,10 @@ class Warranty_Return_Request(generics.GenericAPIView):
             
         except:
             return Response({"error": "No hay garantías registradas del alquiler"}, status=status.HTTP_400_BAD_REQUEST)
+        now = timezone.localtime(timezone.now())
+        rental_date=Rental.objects.get(pk=rental)
+        rental_date.warranty_return_request = now
+        rental_date.save()
         return Make_Warranty_Form(request, rental)
 
 request_body_schema = openapi.Schema(
@@ -457,6 +462,10 @@ class Warranty_Returned(generics.ListAPIView):
                 serializer = self.serializer_class(data=warranty_data)
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
+                now = timezone.localtime(timezone.now())
+                rental_date=Rental.objects.get(pk=rental_id)
+                rental_date.warranty_returned = now
+                rental_date.save()
                 return Response({"message": "Se retorno la garantía exitosamente"}, status=status.HTTP_201_CREATED)
             else:
                 return Response({"error":"no tiene garantias registrada"}, status=status.HTTP_400_BAD_REQUEST)
