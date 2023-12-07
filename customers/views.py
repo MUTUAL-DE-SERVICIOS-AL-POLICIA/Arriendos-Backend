@@ -147,7 +147,7 @@ class Customer_Api(generics.GenericAPIView):
                 Q(contact__ci_nit__icontains=search_param) |
                 Q(institution_name__icontains=search_param) |
                 Q(nit__icontains=search_param)
-            )
+            ).distinct()
             serializer = serializer_class(customers[start_num:end_num], many=True)
             return Response({
             "status": "success",
