@@ -5,6 +5,8 @@ from rooms.serializers import RoomSerializer, RoomsSerializer
 from products.models import Product, HourRange
 from products.serializers import HourRangeSerializer
 from customers.serializer import CustomersSerializer
+from financials.models import Payment, Warranty_Movement
+from financials.serializer import Payment_Serializer, Warranty_Movement_Serializer
 import pytz
 
 class StateSerializer(serializers.ModelSerializer):
@@ -82,10 +84,11 @@ class Selected_ProductsSerializer(serializers.ModelSerializer):
      end_time = CustomDateTimeField(format="%d de %B de %Y %H:%M %p")
      start_time_only_hour = serializers.SerializerMethodField()
      end_time_only_hour = serializers.SerializerMethodField()
+     additional_hour_applieds = serializers.SerializerMethodField()
 
      class Meta:
         model = Selected_Product
-        fields =  ('id', 'detail', 'event_type', 'start_time', 'end_time', 'product', 'rental', 'product_price', 'start_time_only_hour', 'end_time_only_hour')
+        fields =  ('id', 'detail', 'event_type', 'start_time', 'end_time', 'product', 'rental', 'product_price', 'start_time_only_hour', 'end_time_only_hour', 'additional_hour_applieds')
 
      def get_start_time_only_hour(self, obj):
         return CustomDateTimeField().get_hour_only(obj.start_time)
@@ -93,11 +96,16 @@ class Selected_ProductsSerializer(serializers.ModelSerializer):
      def get_end_time_only_hour(self, obj):
         return CustomDateTimeField().get_hour_only(obj.end_time)
 
+     def get_additional_hour_applieds(self, obj):
+        additional_hour_applieds = Additional_Hour_Applied.objects.filter(selected_product_id=obj).order_by('id')
+        serializer = Additional_hour_AppliedSerializer(additional_hour_applieds, many=True)
+        return serializer.data
 class RentalsSerializer(serializers.ModelSerializer):
     customer = CustomersSerializer()
     state = StateSerializer()
     selected_products = serializers.SerializerMethodField()
-
+    payments = serializers.SerializerMethodField()
+    warranty_movements = serializers.SerializerMethodField()
     class Meta:
         model = Rental
         fields = '__all__'
@@ -105,6 +113,14 @@ class RentalsSerializer(serializers.ModelSerializer):
         selected_products = Selected_Product.objects.filter(rental_id = obj)
         selected_product_serializer = Selected_ProductsSerializer(selected_products, many=True)
         return selected_product_serializer.data
+    def get_payments(self, obj):
+        payments = Payment.objects.filter(rental_id = obj)
+        payment_serializer = Payment_Serializer(payments, many=True)
+        return payment_serializer.data
+    def get_warranty_movements(self, obj):
+        warranty_movements = Warranty_Movement.objects.filter(rental_id = obj)
+        warranty_movement_serializer = Warranty_Movement_Serializer(warranty_movements, many=True)
+        return warranty_movement_serializer.data
 class Additional_hour_AppliedSerializer(serializers.ModelSerializer):
     class Meta:
         model = Additional_Hour_Applied
