@@ -295,14 +295,16 @@ class Customer_Detail(generics.GenericAPIView):
                 ci_nit = contact.get("ci_nit", None)
                 phone = contact.get("phone")
                 degree = contact.get("degree", None)
+                nup = contact.get("nup", None)
                 if contact_id is None:
-                    Contact.objects.create(degree=degree, name=name, ci_nit=ci_nit, phone=phone, customer_id=institution.id, is_customer=False)
+                    Contact.objects.create(degree=degree, name=name, ci_nit=ci_nit, phone=phone, customer_id=institution.id, nup=nup, is_customer=False)
                 else:
                     contact_data = Contact.objects.get(pk=contact_id)
                     contact_data.name = name
                     contact_data.ci_nit = ci_nit
                     contact_data.phone = phone
                     contact_data.degree = degree
+                    contact_data.nup = nup
                     contact_data.is_active = True
                     contact_data.save()
             return Response({"message": "Institución actualizada"}, status=status.HTTP_200_OK)
@@ -312,11 +314,13 @@ class Customer_Detail(generics.GenericAPIView):
             name = customers.get("name")
             phone = customers.get("phone", None)
             ci_nit = customers.get("ci_nit")
+            nup = customers.get("nup", None)
             customer_data = Contact.objects.get(customer_id =customer.id)
             customer_data.name = name
             customer_data.ci_nit = ci_nit
             customer_data.phone = phone
             customer_data.degree = degree
+            customer_data.nup = nup
             customer_data.save()
             return Response({"message":"Cliente actualizado"}, status=status.HTTP_200_OK)
     def delete(self, request, pk, **kwargs):
