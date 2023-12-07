@@ -27,7 +27,7 @@ class Customer_Type_Api(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         total_customers = customers.count()
         page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', total_customers))
+        limit_num = int(request.GET.get('limit',self.queryset.count()))
         start_num = (page_num) * limit_num
         end_num = limit_num * (page_num + 1)
         search_param = request.GET.get('search')
@@ -133,10 +133,9 @@ class Customer_Api(generics.GenericAPIView):
     manual_parameters=[search],
     )
     def get(self, request, *args, **kwargs):
-        total_customers = customers.count()
         serializer_class = CustomersSerializer
         page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', total_customers))
+        limit_num = int(request.GET.get('limit', self.queryset.count()))
         start_num = (page_num) * limit_num
         end_num = limit_num * (page_num + 1)
         search_param = request.GET.get('search')
