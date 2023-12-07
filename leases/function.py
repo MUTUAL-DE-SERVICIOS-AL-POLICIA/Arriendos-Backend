@@ -6,9 +6,6 @@ from weasyprint import HTML, CSS
 from django.template.loader import render_to_string
 from django.db.models import Q
 import os
-from django.http import HttpResponse
-from openpyxl import Workbook
-from django.http import HttpResponse
 from openpyxl import Workbook
 from django.template.loader import render_to_string
 from openpyxl.styles import Border, Side
