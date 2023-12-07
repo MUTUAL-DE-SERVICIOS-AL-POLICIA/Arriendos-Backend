@@ -24,13 +24,13 @@ class Rate_Api(generics.GenericAPIView):
     operation_description="Lista de Tarifas",
     )
     def get(self, request, *args, **kwargs):
+        total_rates = rates.count()
         page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', 10))
+        limit_num = int(request.GET.get('limit', total_rates))
         start_num = (page_num) * limit_num
         end_num = limit_num * (page_num + 1)
         search_param = request.GET.get('search')
         rates = Rate.objects.all()
-        total_rates = rates.count()
         if search_param:
             rates = rates.filter(title__icontains=search_param)
         serializer = self.serializer_class(rates[start_num:end_num], many=True)
@@ -76,12 +76,12 @@ class Product_Api(generics.GenericAPIView):
     )
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
+        total_products = queryset.count()
         serializer = ProductsSerializer(queryset, many=True)
         page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', 1))
+        limit_num = int(request.GET.get('limit', total_products))
         start_num = page_num * limit_num
         end_num = limit_num * (page_num + 1)
-        total_products = queryset.count()
         products_with_active_prices = []
         for product in queryset:
             active_price_data = ProductSerializer.get_active_price(product)
