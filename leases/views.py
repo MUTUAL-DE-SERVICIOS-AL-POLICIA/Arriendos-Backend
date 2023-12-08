@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework.response import Response
-from .serializer import Event_TypeSerializer, Selected_ProductSerializer, StateSerializer, Additional_hour_AppliedSerializer
+from .serializer import Event_TypeSerializer, Selected_ProductSerializer, StateSerializer, Additional_hour_AppliedSerializer, RentalsSerializer
 from .models import State, Rental, Event_Type, Selected_Product, Additional_Hour_Applied
 from customers.models import Customer,Contact
 from customers.serializer import CustomersSerializer
@@ -15,10 +15,12 @@ from django.utils import timezone
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from Arriendos_Backend.util import required_fields
-from .function import Make_Delivery_Form, Make_Overtime_Form
+from .function import Make_Delivery_Form, Make_Overtime_Form, Make_Rental_Report
+
 from .permissions import *
 from rest_framework.permissions import IsAuthenticated
 from threadlocals.threadlocals import set_thread_variable
+from django.db.models import Q
 
 class StateRentalListCreateView(generics.ListCreateAPIView):
     queryset = State.objects.all()
@@ -64,13 +66,15 @@ class Get_Rental(generics.ListCreateAPIView):
             product=selected_product.product
             room = product.room
             property=room.property
+            start_time = timezone.localtime(selected_product.start_time)
+            end_time = timezone.localtime(selected_product.end_time)
             product_data={
                 "id": selected_product.id,
                 "property":property.name,
                 "room":room.name,
                 "hour_range":product.hour_range.time,
-                "start_time":selected_product.start_time,
-                "end_time":selected_product.end_time,
+                'start_time': start_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                'end_time': end_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
                 "detail":selected_product.detail,
                 "event":selected_product.event_type.name
             }
@@ -639,3 +643,19 @@ class List_additional_hour_applied(generics.ListAPIView):
             return Response(list_additional_hour_applied, status=status.HTTP_200_OK)
         except Selected_Product.DoesNotExist:
             return Response({"error": "No existe el arriendo"}, status=status.HTTP_404_NOT_FOUND)
+
+class Report_Api(generics.GenericAPIView):
+    queryset= Rental.objects.all()
+    serializer_class = RentalsSerializer
+    def post(self, request, *args, **kwargs):
+        start_date = request.data.get("start_date", None)
+        end_date = request.data.get("end_date", None)
+        state = request.data.get("state", None)
+        if state is None:
+            return Response({"error":"Seleccione un estado para generar el reporte"}, status=status.HTTP_400_BAD_REQUEST)
+        if start_date is not None and end_date is not None:
+            start_date = datetime.strptime(start_date, '%Y-%m-%dT%H:%M:%S.%fZ')
+            start_date = pytz.timezone('America/La_Paz').localize(start_date)
+            end_date = datetime.strptime(end_date, '%Y-%m-%dT%H:%M:%S.%fZ')
+            end_date = pytz.timezone('America/La_Paz').localize(end_date)
+        return Make_Rental_Report(request, start_date, end_date, state)
