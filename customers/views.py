@@ -25,13 +25,13 @@ class Customer_Type_Api(generics.GenericAPIView):
         if self.request.method == 'POST':
             return [HasAddCustomerTypePermission()]
     def get(self, request, *args, **kwargs):
-        total_customers = customers.count()
         page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit',self.queryset.count()))
+        limit_num = int(request.GET.get('limit', self.queryset.count()))
         start_num = (page_num) * limit_num
         end_num = limit_num * (page_num + 1)
         search_param = request.GET.get('search')
         customers = Customer_type.objects.all().order_by('id')
+        total_customers = customers.count()
         if search_param:
             customers = customers.filter(title__icontains=search_param)
         serializer = self.serializer_class(customers[start_num:end_num], many=True)
@@ -147,6 +147,7 @@ class Customer_Api(generics.GenericAPIView):
                 Q(institution_name__icontains=search_param) |
                 Q(nit__icontains=search_param)
             ).distinct()
+            total_customers = customers.count()
             serializer = serializer_class(customers[start_num:end_num], many=True)
             return Response({
             "status": "success",
