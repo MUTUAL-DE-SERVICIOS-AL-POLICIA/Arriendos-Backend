@@ -12,3 +12,4 @@ weasyprint==60.1
 drf-yasg==1.21.7
 django-threadlocals==0.10
 requests==2.31.0
+openpyxl==3.1.2
