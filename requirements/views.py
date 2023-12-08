@@ -30,12 +30,12 @@ class Requirement_Api(generics.GenericAPIView):
     operation_description="Lista de requisitos",
     )
     def get(self, request, *args, **kw):
-        total_requirements = requirements.count()
         page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', total_requirements))
+        limit_num = int(request.GET.get('limit', self.queryset.count()))
         start_num = (page_num) * limit_num
         end_num = limit_num * (page_num + 1)
         requirements = Requirement.objects.filter(is_active = True).order_by('id')
+        total_requirements = requirements.count()
         serializer = self.serializer_class(requirements[start_num:end_num], many=True)
         return Response({
             "status": "success",
@@ -107,12 +107,12 @@ class RateWithRelatedDataView(generics.ListAPIView):
     operation_description="Lista de requisitos y tarifas",
     )
     def get(self, request):
-        total_rates = rates.count()
         page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit',total_rates))
+        limit_num = int(request.GET.get('limit',self.queryset.count()))
         start_num = (page_num) * limit_num
         end_num = limit_num * (page_num + 1)
         rates = Rate.objects.all().order_by('id')
+        total_rates = rates.count()
         serializer = self.serializer_class(rates[start_num:end_num], many=True)
         return Response({
             "status":"success",
