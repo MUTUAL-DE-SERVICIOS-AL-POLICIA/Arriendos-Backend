@@ -33,7 +33,7 @@ class Customer_Type_Api(generics.GenericAPIView):
         customers = Customer_type.objects.all().order_by('id')
         total_customers = customers.count()
         if search_param:
-            customers = customers.filter(title__icontains=search_param)
+            customers = customers.filter(name__icontains=search_param)
         serializer = self.serializer_class(customers[start_num:end_num], many=True)
         return Response({
             "status": "success",
