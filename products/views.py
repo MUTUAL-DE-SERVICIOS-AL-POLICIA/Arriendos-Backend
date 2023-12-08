@@ -24,13 +24,13 @@ class Rate_Api(generics.GenericAPIView):
     operation_description="Lista de Tarifas",
     )
     def get(self, request, *args, **kwargs):
-        total_rates = rates.count()
         page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', total_rates))
+        limit_num = int(request.GET.get('limit', self.queryset.count()))
         start_num = (page_num) * limit_num
         end_num = limit_num * (page_num + 1)
         search_param = request.GET.get('search')
         rates = Rate.objects.all()
+        total_rates = rates.count()
         if search_param:
             rates = rates.filter(title__icontains=search_param)
         serializer = self.serializer_class(rates[start_num:end_num], many=True)
@@ -76,12 +76,12 @@ class Product_Api(generics.GenericAPIView):
     )
     def get(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        total_products = queryset.count()
         serializer = ProductsSerializer(queryset, many=True)
         page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', total_products))
+        limit_num = int(request.GET.get('limit', self.queryset.count()))
         start_num = page_num * limit_num
         end_num = limit_num * (page_num + 1)
+        total_products = queryset.count()
         products_with_active_prices = []
         for product in queryset:
             active_price_data = ProductSerializer.get_active_price(product)
@@ -290,3 +290,9 @@ class Posible_product(APIView):
                 return Response({"error": f"No hay requisitos asociados a la tarifa perteneciente al tipo de cliente: {customer.name}"}, status=status.HTTP_400_BAD_REQUEST)
         except Customer_type.DoesNotExist:
             return Response({"error": "Tipo de cliente no encontrado"}, status=status.HTTP_400_BAD_REQUEST)
+class Get_product(generics.GenericAPIView):
+    def get(self,request):
+        id_product = request.query_params.get('id_product')
+        product=Product.objects.get(id=id_product)
+        serialized_product=ProductSerializer(product)
+        return Response({'product':serialized_product.data})
