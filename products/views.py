@@ -12,6 +12,8 @@ import math
 from requirements.models import RateRequirement
 from .permissions import *
 from rest_framework.permissions import IsAuthenticated
+from django.db.models import Q
+
 
 class Rate_Api(generics.GenericAPIView):
     serializer_class = RateSerializer
@@ -290,9 +292,16 @@ class Posible_product(APIView):
                 return Response({"error": f"No hay requisitos asociados a la tarifa perteneciente al tipo de cliente: {customer.name}"}, status=status.HTTP_400_BAD_REQUEST)
         except Customer_type.DoesNotExist:
             return Response({"error": "Tipo de cliente no encontrado"}, status=status.HTTP_400_BAD_REQUEST)
-class Get_product(generics.GenericAPIView):
-    def get(self,request):
-        id_product = request.query_params.get('id_product')
-        product=Product.objects.get(id=id_product)
-        serialized_product=ProductSerializer(product)
-        return Response({'product':serialized_product.data})
+class ProductFilterView(generics.ListAPIView):
+    serializer_class = ProductsSerializer
+    def get_queryset(self):
+        query_param = self.request.query_params.get('search', '')
+        try:
+            queryset = Product.objects.filter(
+                Q(id__icontains=query_param) |
+                Q(rate_id__name__icontains=query_param)|
+                Q(room_id__name__icontains=query_param)
+            )
+        except ValueError:
+            queryset = Product.objects.none()
+        return queryset
