@@ -9,14 +9,14 @@ from .views import (
     Additional_Hour_List_Create_View,
     Additional_Hour_Retrieve_Update_Destroy_View,
     Get_price_additional_hour,
-    ProductFilterView
+    Product_Filter
 )
 
 urlpatterns = [
     path('', Product_Api.as_view(), name='product-list-create'),
     path('<int:pk>', Product_Api.as_view(), name='product-retrieve-update-destroy'),
 
-    path('product_filter/', ProductFilterView.as_view(), name='product-filter'),
+    path('product_filter/', Product_Filter.as_view(), name='product-filter'),
 
     path('rates/', Rate_Api.as_view(), name='rate-list-create'),
 
