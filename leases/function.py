@@ -22,9 +22,11 @@ def Make_Delivery_Form(request, rental_id, product):
     customer = rental.get("customer")
     contacts = customer.get("contacts")
     customers = customer.get("contacts")
-    for customer in customers:
-        name = customer.get("name")
-        nit = customer.get("ci_nit")
+
+    customer = customers[0]
+    name = customer.get("name")
+    nit = customer.get("ci_nit")
+    nup = customer.get("nup")
 
     selected_products_data = rental.get("selected_products")
     selected_products=[]
@@ -52,6 +54,7 @@ def Make_Delivery_Form(request, rental_id, product):
         'warranty': rental.get("initial_total"),
         'contacts': contacts,
         'contract_number': contract_number,
+        'nup': nup,
         'product':product,
         })
 
@@ -73,9 +76,10 @@ def Make_Overtime_Form(request, rental_id, product, hours, rate, total, descript
     customer = rental.get("customer")
     contacts = customer.get("contacts")
     customers = customer.get("contacts")
-    for customer in customers:
-        name = customer.get("name")
-        nit = customer.get("ci_nit")
+    customer = customers[0]
+    name = customer.get("name")
+    nit = customer.get("ci_nit")
+    nup = customer.get("nup")
    
     selected_products_data = rental.get("selected_products")
     selected_products=[]
@@ -105,6 +109,7 @@ def Make_Overtime_Form(request, rental_id, product, hours, rate, total, descript
         'selected_products':selected_products,
         'contacts': contacts,
         'contract_number': contract_number,
+        'nup': nup,
         'description': description,
         })
 
