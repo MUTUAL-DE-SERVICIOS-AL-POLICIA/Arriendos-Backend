@@ -108,11 +108,18 @@
             <td colspan="2">{{ name }}</td>
           </tr>
 
+          {% if nup %}
+          <tr>
+            <th>CI. DEL SOLICITANTE</th>
+            <td colspan="1">{{ nit }}</td>
+            <td><strong>NUP:</strong>{{nup}}</td>
+          </tr>
+          {% else %}
           <tr>
             <th>CI. DEL SOLICITANTE</th>
             <td colspan="2">{{ nit }}</td>
           </tr>
-
+          {% endif %}
           <tr style="border: none; height: 30px; background-color: white;">
             <th style="border: none; background-color: white;"></th>
             <td style="border: none; background-color: white;"></td>
