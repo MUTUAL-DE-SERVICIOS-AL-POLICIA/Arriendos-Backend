@@ -34,8 +34,11 @@ class Requirement_Api(generics.GenericAPIView):
         limit_num = int(request.GET.get('limit', self.queryset.count()))
         start_num = (page_num) * limit_num
         end_num = limit_num * (page_num + 1)
+        search_param = request.GET.get('search')
         requirements = Requirement.objects.filter(is_active = True).order_by('id')
         total_requirements = requirements.count()
+        if search_param:
+            requirements = requirements.filter(requirement_name__icontains=search_param)
         serializer = self.serializer_class(requirements[start_num:end_num], many=True)
         return Response({
             "status": "success",
