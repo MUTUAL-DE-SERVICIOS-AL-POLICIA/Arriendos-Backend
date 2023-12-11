@@ -292,16 +292,35 @@ class Posible_product(APIView):
                 return Response({"error": f"No hay requisitos asociados a la tarifa perteneciente al tipo de cliente: {customer.name}"}, status=status.HTTP_400_BAD_REQUEST)
         except Customer_type.DoesNotExist:
             return Response({"error": "Tipo de cliente no encontrado"}, status=status.HTTP_400_BAD_REQUEST)
-class ProductFilterView(generics.ListAPIView):
+class Product_Filter(generics.ListAPIView):
     serializer_class = ProductsSerializer
     def get_queryset(self):
-        query_param = self.request.query_params.get('search', '')
         try:
+            query_param = self.request.query_params.get('search', '')
             queryset = Product.objects.filter(
                 Q(id__icontains=query_param) |
-                Q(rate_id__name__icontains=query_param)|
+                Q(rate_id__name__icontains=query_param) |
                 Q(room_id__name__icontains=query_param)
             )
+            return queryset
         except ValueError:
-            queryset = Product.objects.none()
-        return queryset
+            return Product.objects.none()
+    def list(self, request, *args, **kwargs):
+        try:
+            queryset = self.get_queryset()
+            page_num = int(request.GET.get('page', 0))
+            limit_num = int(request.GET.get('limit', queryset.count()))
+            start_num = page_num * limit_num
+            end_num = limit_num * (page_num + 1)
+            total_products = queryset.count()
+            serializer = self.serializer_class(queryset[start_num:end_num], many=True)
+            response_data = {
+                "status": "success",
+                "total": total_products,
+                "page": page_num,
+                "last_page": math.ceil(total_products / limit_num),
+                "products": serializer.data
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        except ValueError:
+            return Response({"error": "Invalid request"}, status=status.HTTP_400_BAD_REQUEST)
