@@ -99,11 +99,18 @@
             <th>NOMBRE DEL SOLICITANTE</th>
             <td colspan="2">{{ name }}</td>
           </tr>
-
+          {% if nup %}
+          <tr>
+            <th>CI. DEL SOLICITANTE</th>
+            <td colspan="1">{{ nit }}</td>
+            <td><strong>NUP:</strong>{{nup}}</td>
+          </tr>
+          {% else %}
           <tr>
             <th>CI. DEL SOLICITANTE</th>
             <td colspan="2">{{ nit }}</td>
           </tr>
+          {% endif %}
 
           {% for selected_product in selected_products %}
 

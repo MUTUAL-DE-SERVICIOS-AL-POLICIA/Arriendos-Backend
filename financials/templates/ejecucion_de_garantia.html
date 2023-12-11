@@ -68,6 +68,12 @@
         padding: 0;
         margin-top: 100px;
       }
+      .text-header{
+        text-align: center;
+        line-height: 0pt;
+        border-bottom: 1px solid black;
+        font-size: 10pt;
+      }
       @page {
         @bottom-center {
         content: "Página " counter(page);
@@ -77,6 +83,9 @@
   </head>
   <body>
     <main>
+      <div class="text-header"><p>MUTUAL DE SERVICIOS AL POLICÍA "MUSERPOL"</p>
+        <p>UNIDAD DE INVERSIÓN EN SERVICIOS, BIENES Y PATRIMONIO</p>
+        </div>
         <table border="1">
           <tr>
             <th colspan="3">
@@ -96,10 +105,18 @@
             <td colspan="2">{{ name }}</td>
           </tr>
 
+          {% if nup %}
+          <tr>
+            <th>CI. DEL SOLICITANTE</th>
+            <td colspan="1">{{ nit }}</td>
+            <td><strong>NUP:</strong>{{nup}}</td>
+          </tr>
+          {% else %}
           <tr>
             <th>CI. DEL SOLICITANTE</th>
             <td colspan="2">{{ nit }}</td>
           </tr>
+          {% endif %}
 
           {% for selected_product in selected_products %}
 
