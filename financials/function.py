@@ -22,9 +22,10 @@ def Make_Warranty_Form(request, rental_id):
     customer = rental.get("customer")
     contacts = customer.get("contacts")
     customers = customer.get("contacts")
-    for customer in customers:
-        name = customer.get("name")
-        nit = customer.get("ci_nit")
+    customer = customers[0]
+    name = customer.get("name")
+    nit = customer.get("ci_nit")
+    nup = customer.get("nup")
     
     selected_products = rental.get("selected_products")
     departments = ''
@@ -60,6 +61,7 @@ def Make_Warranty_Form(request, rental_id):
         'departments': departments,
         'contacts': contacts,
         'contract_number': contract_number,
+        'nup': nup,
         'warranty': warranty.balance,
         'date':formatted_date
         })
@@ -81,9 +83,10 @@ def Make_Damage_Warranty_Form(request, rental_id, product, mount, total, observa
     customer = rental.get("customer")
     contacts = customer.get("contacts")
     customers = customer.get("contacts")
-    for customer in customers:
-        name = customer.get("name")
-        nit = customer.get("ci_nit")
+    customer = customers[0]
+    name = customer.get("name")
+    nit = customer.get("ci_nit")
+    nup = customer.get("nup")
 
     selected_products_data = rental.get("selected_products")
     selected_products=[]
@@ -111,6 +114,7 @@ def Make_Damage_Warranty_Form(request, rental_id, product, mount, total, observa
         'warranty': rental.get("initial_total"),
         'contacts': contacts,
         'contract_number': contract_number,
+        'nup': nup,
         'mount': mount,
         'observations': observations,
         'product':product,
@@ -118,7 +122,7 @@ def Make_Damage_Warranty_Form(request, rental_id, product, mount, total, observa
         })
 
     HTML(string=html_string).write_pdf(response, stylesheets=[CSS(
-        string='@page { margin-left: 2cm; margin-right: 1cm; margin-top: 2cm; margin-bottom: 1.5cm; }'
+        string='@page { margin-left: 2cm; margin-right: 1cm; margin-top: 1cm; margin-bottom: 1.5cm; }'
         )])
     return response
 
@@ -133,9 +137,10 @@ def Make_Return_Warranty_Form(request, rental_id):
     customer = rental.get("customer")
     contacts = customer.get("contacts")
     customers = customer.get("contacts")
-    for customer in customers:
-        name = customer.get("name")
-        nit = customer.get("ci_nit")
+    customer = customers[0]
+    name = customer.get("name")
+    nit = customer.get("ci_nit")
+    nup = customer.get("nup")
 
     selected_products = rental.get("selected_products")
     warranty = Warranty_Movement.objects.filter(rental_id=rental_id).latest('id')
@@ -169,6 +174,7 @@ def Make_Return_Warranty_Form(request, rental_id):
         'contacts': contacts,
         'requirements': requirements,
         'contract_number': contract_number,
+        'nup': nup,
         'warranty': warranty.balance
         })
 

@@ -29,10 +29,12 @@ def Make_Rental_Form(request, rental_id):
         for customer in customers:
             name = customer.get("name")
             nit = customer.get("ci_nit")
+            nup = customer.get("nup")
 
     else:
         name = customer.get("institution_name")
         nit = customer.get("nit")
+        nup = None
 
     selected_products = rental.get("selected_products")
 
@@ -64,7 +66,8 @@ def Make_Rental_Form(request, rental_id):
         'initial_total': rental.get("initial_total"),
         'contacts': contacts,
         'requirements': requirements,
-        'contract_number': contract_number
+        'contract_number': contract_number,
+        'nup': nup,
         })
 
     HTML(string=html_string).write_pdf(response, stylesheets=[CSS(
