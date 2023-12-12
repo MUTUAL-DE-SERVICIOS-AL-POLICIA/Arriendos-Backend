@@ -300,7 +300,8 @@ class Product_Filter(generics.ListAPIView):
             queryset = Product.objects.filter(
                 Q(id__icontains=query_param) |
                 Q(rate_id__name__icontains=query_param) |
-                Q(room_id__name__icontains=query_param)
+                Q(room_id__name__icontains=query_param) |
+                Q(room_id__property__name__icontains=query_param)
             )
             return queryset
         except ValueError:
@@ -313,13 +314,19 @@ class Product_Filter(generics.ListAPIView):
             start_num = page_num * limit_num
             end_num = limit_num * (page_num + 1)
             total_products = queryset.count()
-            serializer = self.serializer_class(queryset[start_num:end_num], many=True)
+            serializer = self.serializer_class(queryset, many=True)
+            serialized_data = serializer.data
+            for i, product_data in enumerate(serialized_data):
+                active_price_data = ProductSerializer.get_active_price(queryset[i])
+                if active_price_data:
+                    product_data['mount'] = active_price_data.get("mount")
+            paginated_data = serialized_data[start_num:end_num]
             response_data = {
                 "status": "success",
                 "total": total_products,
                 "page": page_num,
                 "last_page": math.ceil(total_products / limit_num),
-                "products": serializer.data
+                "products": paginated_data
             }
             return Response(response_data, status=status.HTTP_200_OK)
         except ValueError:
