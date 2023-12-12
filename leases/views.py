@@ -154,6 +154,7 @@ class Selected_Product_Calendar_Api(generics.GenericAPIView):
                 if product.rental.state_id < 5:
                     customer = Customer.objects.get(pk=product.rental.customer_id)
                     customer_serializer = CustomersSerializer(customer)
+                    name_state=product.rental.state.name
                     serialized_customer_data = customer_serializer.data
                     contacts = serialized_customer_data.get("contacts")
                     start_time = timezone.localtime(product.start_time)
