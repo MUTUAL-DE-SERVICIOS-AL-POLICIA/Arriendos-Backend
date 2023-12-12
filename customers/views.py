@@ -2,6 +2,7 @@ from django.shortcuts import render
 from rest_framework.response import Response
 from .serializer import CustomerSerializer, Customer_typeSerializer, CustomersSerializer
 from .models import Customer, Customer_type, Contact
+from leases.models import Rental
 import math
 from rest_framework import status, generics
 from django.db.models import Q
@@ -325,6 +326,9 @@ class Customer_Detail(generics.GenericAPIView):
     def delete(self, request, pk, **kwargs):
         try:
             customer = Customer.objects.get(pk=pk)
+            has_rental=Rental.objects.filter(customer=customer).exists()
+            if has_rental:
+                return Response({"error": "El cliente ya tiene con un alquiler."}, status=status.HTTP_400_BAD_REQUEST)
             customer.delete()
         except Customer.DoesNotExist:
             return Response({"error": "El cliente no existe."}, status=status.HTTP_400_BAD_REQUEST)
