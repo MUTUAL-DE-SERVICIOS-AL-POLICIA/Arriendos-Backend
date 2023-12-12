@@ -170,7 +170,8 @@ class Selected_Product_Calendar_Api(generics.GenericAPIView):
                         'institution_name': serialized_customer_data["institution_name"],
                         'nit': serialized_customer_data["nit"],
                         'contacts': contacts,
-                        'event_type_name': product.event_type.name
+                        'event_type_name': product.event_type.name,
+                        'name_state': name_state
                     }
                     date_products.append(product_data)
             return Response(date_products)
@@ -400,7 +401,8 @@ class Change_state(generics.ListAPIView):
             state_obj = State.objects.get(pk=state)
             self.save_state(rental_id,state_obj)
             response_data = {
-                "message": f"cambio de estado a {state_obj.name} exitosamente"
+                "message": f"cambio de estado a {state_obj.name} exitosamentasdade",
+                "name_state": state_obj.name
             }
             return Response(response_data, status=status.HTTP_200_OK)
         return Response({"error": "No se puede cambiar de estado "}, status=status.HTTP_400_BAD_REQUEST)
@@ -411,7 +413,8 @@ class Change_state(generics.ListAPIView):
             if requirement_delivered.exists():
                 self.save_state(rental_id,state_obj)
                 response_data = {
-                    "message": f"cambio de estado a {state_obj.name} exitosamente"
+                    "message": f"cambio de estado a {state_obj.name} exitosamente",
+                    "name_state": state_obj.name
                 }
                 return Response(response_data, status=status.HTTP_200_OK)
             return Response({"error": "No existen requisitos entregados"}, status=status.HTTP_400_BAD_REQUEST)
@@ -430,7 +433,8 @@ class Change_state(generics.ListAPIView):
                 if last_payment.payable_mount == 0:
                     self.save_state(rental_id,state_obj)
                     response_data = {
-                        "message": f"cambio de estado a {state_obj.name} exitosamente"
+                        "message": f"cambio de estado a {state_obj.name} exitosamente",
+                        "name_state": state_obj.name
                     }
                     return Response(response_data, status=status.HTTP_200_OK)
                 return Response({"error": f"No se puede realizar la acción, el monto pendiente de pago es: {last_payment.payable_mount}"}, status=status.HTTP_400_BAD_REQUEST)
@@ -442,7 +446,8 @@ class Change_state(generics.ListAPIView):
             if last_warranty.returned>0:
                 self.save_state(rental_id,state_obj)
                 response_data = {
-                        "message": f"cambio de estado a {state_obj.name} exitosamente"
+                        "message": f"cambio de estado a {state_obj.name} exitosamente",
+                        "name_state": state_obj.name
                     }
                 return Response(response_data, status=status.HTTP_200_OK)
             return Response({"error": f"No se puede realizar la acción, la monto de garantía: {last_warranty.balance} no ha sido retornada: "}, status=status.HTTP_400_BAD_REQUEST)
@@ -452,7 +457,8 @@ class Change_state(generics.ListAPIView):
         if self.validated_state(rental_id, state):
             self.save_state(rental_id,state_obj)
             response_data = {
-                "message": f"cambio de estado a {state_obj.name} exitosamente"
+                "message": f"cambio de estado a {state_obj.name} exitosamente",
+                "name_state": state_obj.name
             }
             return Response(response_data, status=status.HTTP_200_OK)
         return Response({"error": "No se puede cambiar de estado "}, status=status.HTTP_400_BAD_REQUEST)
