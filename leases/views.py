@@ -123,6 +123,7 @@ class Selected_Product_Calendar_Api(generics.GenericAPIView):
                 for product in selected_products:
                     if product.rental.state_id < 5:
                         customer = Customer.objects.get(pk=product.rental.customer_id)
+                        name_state=product.rental.state.name
                         customer_serializer = CustomersSerializer(customer)
                         serialized_customer_data = customer_serializer.data
                         contacts = serialized_customer_data.get("contacts")
@@ -140,7 +141,8 @@ class Selected_Product_Calendar_Api(generics.GenericAPIView):
                             'institution_name': serialized_customer_data["institution_name"],
                             'nit': serialized_customer_data["nit"],
                             'contacts': contacts,
-                            'event_type_name': product.event_type.name
+                            'event_type_name': product.event_type.name,
+                            'name_state': name_state
                         }
 
                         date_products.append(product_data)
