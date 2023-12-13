@@ -668,3 +668,34 @@ class Report_Api(generics.GenericAPIView):
             end_date = datetime.strptime(end_date, '%Y-%m-%dT%H:%M:%S.%fZ')
             end_date = pytz.timezone('America/La_Paz').localize(end_date)
         return Make_Rental_Report(request, start_date, end_date, state)
+class rental_list(generics.GenericAPIView):
+    queryset = Rental.objects.all().order_by("id")
+    serializer_class = RentalsSerializer
+    def get(self, request,*args, **kwargs):
+        serializer_instance = self.serializer_class(self.get_queryset(), many=True)
+        rental_list=[]
+        for item in serializer_instance.data:
+            customer_name= item["customer"]["institution_name"]
+            if customer_name is None:
+                customer_name= item["customer"]["contacts"][0]["name"]
+                rental=Rental.objects.get(id=item["id"])
+                state_name=item["state"]["name"]
+                date=rental.created_at
+                selected_products_list=[]
+                for product in item["selected_products"]:
+                    data_product={
+                        "id":product["id"],
+                        "event": product["event_type"]["name"],
+                        "start_time": product["start_time"],
+                        "end_time": product["end_time"]
+                    }
+                    selected_products_list.append(data_product)
+            data={
+                "id": item["id"],
+                "customer_name":customer_name,
+                "state_name":state_name,
+                "date":date,
+                "selected_product":selected_products_list
+            }
+            rental_list.append(data)
+        return Response(rental_list)
