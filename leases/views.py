@@ -21,6 +21,7 @@ from .permissions import *
 from rest_framework.permissions import IsAuthenticated
 from threadlocals.threadlocals import set_thread_variable
 from django.db.models import Q
+import math
 
 class StateRentalListCreateView(generics.ListCreateAPIView):
     queryset = State.objects.all()
@@ -672,6 +673,11 @@ class rental_list(generics.GenericAPIView):
     queryset = Rental.objects.all().order_by("id")
     serializer_class = RentalsSerializer
     def get(self, request,*args, **kwargs):
+        queryset = self.get_queryset()
+        page_num = int(request.GET.get('page', 0))
+        limit_num = int(request.GET.get('limit', queryset.count()))
+        start_num = page_num * limit_num
+        end_num = limit_num * (page_num + 1)
         serializer_instance = self.serializer_class(self.get_queryset(), many=True)
         rental_list=[]
         for item in serializer_instance.data:
@@ -680,7 +686,9 @@ class rental_list(generics.GenericAPIView):
                 customer_name= item["customer"]["contacts"][0]["name"]
                 rental=Rental.objects.get(id=item["id"])
                 state_name=item["state"]["name"]
-                date=rental.created_at
+                date = str(rental.created_at)
+                date_object = timezone.datetime.strptime(date, "%Y-%m-%d %H:%M:%S.%f%z")
+                date_formated = date_object.strftime("%d de %B de %Y %I:%M %p")
                 selected_products_list=[]
                 for product in item["selected_products"]:
                     data_product={
@@ -694,8 +702,15 @@ class rental_list(generics.GenericAPIView):
                 "id": item["id"],
                 "customer_name":customer_name,
                 "state_name":state_name,
-                "date":date,
+                "date":date_formated,
                 "selected_product":selected_products_list
             }
             rental_list.append(data)
-        return Response(rental_list)
+        response_data = {
+                "status": "success",
+                "total": queryset.count(),
+                "page": page_num,
+                "last_page": math.ceil(queryset.count()/ limit_num),
+                "products": rental_list[start_num:end_num]
+            }
+        return Response(response_data)
