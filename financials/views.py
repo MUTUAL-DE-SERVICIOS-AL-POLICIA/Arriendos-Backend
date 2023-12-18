@@ -133,7 +133,6 @@ class Register_payment(generics.ListAPIView):
                 return Response({"error": "No existen pagos para ese alquiler"}, status=status.HTTP_400_BAD_REQUEST)
         except Payment.DoesNotExist:
             return Response({"error": "El pago no existe."}, status=status.HTTP_400_BAD_REQUEST)
-
 request_body_schema = openapi.Schema(
     type=openapi.TYPE_OBJECT,
     properties={
@@ -143,6 +142,20 @@ request_body_schema = openapi.Schema(
         'detail': openapi.Schema(type=openapi.TYPE_STRING)
     }
 )
+class Edit_payment(generics.UpdateAPIView):
+    queryset = Payment.objects.all()
+    serializer_class = Payment_Serializer
+    def patch(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', True)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        response_data = {
+                "state":"success",
+                "message":"El pago se ha editado exitosamente"
+                }
+        return Response(response_data)
 class Register_total_payment(generics.ListAPIView):
     serializer_class = Payment_Serializer
     permission_classes = [IsAuthenticated, HasAddPaymentPermission]
