@@ -22,6 +22,8 @@ from rest_framework.permissions import IsAuthenticated
 from threadlocals.threadlocals import set_thread_variable
 from django.db.models import Q
 import math
+import calendar
+import locale
 
 class StateRentalListCreateView(generics.ListCreateAPIView):
     queryset = State.objects.all()
@@ -673,35 +675,44 @@ class rental_list(generics.GenericAPIView):
     queryset = Rental.objects.all().order_by("id")
     serializer_class = RentalsSerializer
     def get(self, request,*args, **kwargs):
-        queryset = self.get_queryset()
+        query_param = self.request.query_params.get('search', '')
+        queryset = Rental.objects.filter(
+            Q(state__name__icontains=query_param) |
+            Q(customer__institution_name__icontains=query_param) |
+            Q(customer__contact__name__icontains=query_param)
+        ).order_by("id")
         page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', queryset.count()))
+        limit_num = int(request.GET.get('limit', self.queryset.count()))
         start_num = page_num * limit_num
         end_num = limit_num * (page_num + 1)
-        serializer_instance = self.serializer_class(self.get_queryset(), many=True)
+        serializer_instance = self.serializer_class(queryset, many=True)
         rental_list=[]
         for item in serializer_instance.data:
+            state=item["state"]
+            can_edit=False
+            rental=Rental.objects.get(id=item["id"])
+            date = str(rental.created_at)
+            date_object = timezone.datetime.strptime(date, "%Y-%m-%d %H:%M:%S.%f%z")
+            date_formated = date_object.strftime("%d de %B de %Y %I:%M %p")
             customer_name= item["customer"]["institution_name"]
+            selected_products_list=[]
             if customer_name is None:
                 customer_name= item["customer"]["contacts"][0]["name"]
-                rental=Rental.objects.get(id=item["id"])
-                state_name=item["state"]["name"]
-                date = str(rental.created_at)
-                date_object = timezone.datetime.strptime(date, "%Y-%m-%d %H:%M:%S.%f%z")
-                date_formated = date_object.strftime("%d de %B de %Y %I:%M %p")
-                selected_products_list=[]
-                for product in item["selected_products"]:
-                    data_product={
-                        "id":product["id"],
-                        "event": product["event_type"]["name"],
-                        "start_time": product["start_time"],
-                        "end_time": product["end_time"]
-                    }
-                    selected_products_list.append(data_product)
+                if state["id"] is 3:
+                    can_edit=True
+            for product in item["selected_products"]:
+                data_product={
+                    "id":product["id"],
+                    "event": product["event_type"]["name"],
+                    "start_time": product["start_time"],
+                    "end_time": product["end_time"]
+                }
+                selected_products_list.append(data_product)
             data={
                 "id": item["id"],
                 "customer_name":customer_name,
-                "state_name":state_name,
+                "state_name":state["name"],
+                "can_edit":can_edit,
                 "date":date_formated,
                 "selected_product":selected_products_list
             }
