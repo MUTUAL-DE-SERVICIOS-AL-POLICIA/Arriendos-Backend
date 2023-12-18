@@ -339,7 +339,20 @@ class Register_warranty(generics.ListAPIView):
             return Response({"error": "El Arriendo no existe."}, status=status.HTTP_400_BAD_REQUEST)
 
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
-
+class Edit_warranty(generics.UpdateAPIView):
+    queryset = Warranty_Movement.objects.all()
+    serializer_class = Warranty_Movement_Serializer
+    def patch(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', True)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        response_data = {
+                "state":"success",
+                "message":"El movimiento de Garantía se ha editado exitosamente"
+                }
+        return Response(response_data)
 class Warranty_Return_Request(generics.GenericAPIView):
     @swagger_auto_schema(
     operation_description="Solicitud de devolución de garantía",
