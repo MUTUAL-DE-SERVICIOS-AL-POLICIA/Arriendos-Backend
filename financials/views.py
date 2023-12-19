@@ -5,6 +5,8 @@ from financials.models import Payment, Warranty_Movement, Event_Damage
 from financials.serializer import Payment_Serializer, Warranty_Movement_Serializer, Event_Damage_Serializer
 from leases.models import Rental, Selected_Product
 from django.utils import timezone
+from datetime import datetime
+import pytz
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from Arriendos_Backend.util import required_fields
@@ -490,7 +492,7 @@ class Warranty_Returned(generics.ListAPIView):
     request_body=request_body_schema
     )
     def post(self, request):
-        validated_fields = ["rental"]
+        validated_fields = ["rental", "date"]
         error_message = required_fields(request, validated_fields)
         if error_message:
             return Response(error_message, status=status.HTTP_400_BAD_REQUEST)
@@ -515,9 +517,11 @@ class Warranty_Returned(generics.ListAPIView):
                 serializer = self.serializer_class(data=warranty_data)
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
-                now = timezone.localtime(timezone.now())
+                warranty_returned_date = request.data["date"]
+                warranty_returned_date = datetime.strptime(warranty_returned_date, '%Y-%m-%dT%H:%M:%S.%fZ')
+                warranty_returned_date = pytz.timezone('America/La_Paz').localize(warranty_returned_date)
                 rental_date=Rental.objects.get(pk=rental_id)
-                rental_date.warranty_returned = now
+                rental_date.warranty_returned = warranty_returned_date,
                 rental_date.save()
                 return Response({"message": "Se retorno la garantía exitosamente"}, status=status.HTTP_201_CREATED)
             else:
