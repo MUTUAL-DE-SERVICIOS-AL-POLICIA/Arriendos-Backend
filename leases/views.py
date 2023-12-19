@@ -710,6 +710,7 @@ class rental_list(generics.GenericAPIView):
                 selected_products_list.append(data_product)
             data={
                 "id": item["id"],
+                "contract_number": item["contract_number"],
                 "customer_name":customer_name,
                 "state_name":state["name"],
                 "can_edit":can_edit,
