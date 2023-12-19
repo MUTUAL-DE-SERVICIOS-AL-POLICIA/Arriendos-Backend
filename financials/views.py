@@ -417,7 +417,14 @@ class Discount_warranty(generics.ListAPIView):
         validated_fields = ["rental","product", "detail","discount"]
         error_message = required_fields(request, validated_fields)
         if error_message:
-            return Response(error_message, status=400)
+            try:
+                rental_id = request.data["rental"]
+                product = request.data["product"]
+                if rental_id is None and product is None:
+                    return Response(error_message, status=400)
+                return Make_Damage_Warranty_Form(request, rental_id, product)
+            except:
+                return Response(error_message, status=400)
         rental_id = request.data["rental"]
         product = request.data["product"]
         detail = request.data["detail"]
@@ -459,7 +466,7 @@ class Discount_warranty(generics.ListAPIView):
                 event_damaged_serialized = Event_Damage_Serializer(data=event_damaged_data)
                 event_damaged_serialized.is_valid(raise_exception=True)
                 event_damaged_serialized.save()
-                return Make_Damage_Warranty_Form(request, rental_id, product, discount, total, detail)
+                return Make_Damage_Warranty_Form(request, rental_id, product)
             else:
                 return Response({"error":"no tiene garantias registrada"}, status=status.HTTP_400_BAD_REQUEST)
         except Rental.DoesNotExist:
@@ -534,6 +541,6 @@ class Return_Warranty_Form(generics.GenericAPIView):
             warranty_balance=warranty.latest('id').balance
         else:
             return Response({"error":"El alquiler no tiene garantías registradas"}, status=status.HTTP_404_NOT_FOUND)
-        if warranty_balance == 0:
-            return Response({"error":f"La garantía actual es: {warranty_balance}"}, status=status.HTTP_404_NOT_FOUND)
+        #if warranty_balance == 0:
+        #    return Response({"error":f"La garantía actual es: {warranty_balance}"}, status=status.HTTP_404_NOT_FOUND)
         return Make_Return_Warranty_Form(request, rental)
