@@ -15,7 +15,11 @@ class HasDeletePaymentPermission(permissions.BasePermission):
     def has_permission(self, request, view):
         has_permission = request.user.has_perm('financials.delete_payment')
         return has_permission
-
+class HasChangePaymentPermission(permissions.BasePermission):
+    message = "No tienes permisos para editar pagos"
+    def has_permission(self, request, view):
+        has_permission = request.user.has_perm('financials.change_payment')
+        return has_permission
 class HasViewWarrantyMovementPermission(permissions.BasePermission):
     message = "No tienes permisos para ver los movimientos de garantías"
     def has_permission(self, request, view):
@@ -30,4 +34,9 @@ class HasDeleteWarrantyMovementPermission(permissions.BasePermission):
     message = "No tienes permisos para borrar movimientos de garantías"
     def has_permission(self, request, view):
         has_permission = request.user.has_perm('financials.delete_warranty_movement')
+        return has_permission
+class HasChangeWarrantyMovementPermission(permissions.BasePermission):
+    message = "No tienes permisos para editar movimientos de garantías"
+    def has_permission(self, request, view):
+        has_permission = request.user.has_perm('financials.change_warranty_movement')
         return has_permission
