@@ -142,9 +142,13 @@ request_body_schema = openapi.Schema(
         'detail': openapi.Schema(type=openapi.TYPE_STRING)
     }
 )
-class Edit_payment(generics.UpdateAPIView):
+class Edit_payment(generics.RetrieveUpdateAPIView):
     queryset = Payment.objects.all()
     serializer_class = Payment_Serializer
+    def get(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
     def patch(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', True)
         instance = self.get_object()
@@ -308,6 +312,7 @@ class Register_warranty(generics.ListAPIView):
             if warranty.returned>0:
                 type = "RETORNO"
             response_data= {
+                "id":warranty.id,
                 "correlative":n,
                 "type": type,
                 "income":warranty.income,
@@ -342,6 +347,10 @@ rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INT
 class Edit_warranty(generics.UpdateAPIView):
     queryset = Warranty_Movement.objects.all()
     serializer_class = Warranty_Movement_Serializer
+    def get(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
     def patch(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', True)
         instance = self.get_object()
@@ -349,9 +358,9 @@ class Edit_warranty(generics.UpdateAPIView):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         response_data = {
-                "state":"success",
-                "message":"El movimiento de Garantía se ha editado exitosamente"
-                }
+            "state":"success",
+            "message":"El movimiento de Garantía se ha editado exitosamente"
+        }
         return Response(response_data)
 class Warranty_Return_Request(generics.GenericAPIView):
     @swagger_auto_schema(
@@ -364,7 +373,6 @@ class Warranty_Return_Request(generics.GenericAPIView):
             return Response({"error": "No se ha enviado rental"}, status=status.HTTP_404_NOT_FOUND)
         try:
             warranty=Warranty_Movement.objects.filter(rental_id=rental).latest('id')
-            
         except:
             return Response({"error": "No hay garantías registradas del alquiler"}, status=status.HTTP_400_BAD_REQUEST)
         now = timezone.localtime(timezone.now())
