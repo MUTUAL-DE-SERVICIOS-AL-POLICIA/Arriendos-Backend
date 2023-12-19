@@ -9,34 +9,74 @@
     <link rel="icon" href="./favicon.ico" type="image/x-icon">
 
     <style>
-      table {
+      body{
+        color: rgb(48, 48, 48);
         font-family: 'Arial', sans-serif;
-        border-collapse: collapse;
+      }
+      header {
+      margin-top: 0;
+      margin-bottom: 0;
+      padding: 10px;
+      padding-right: 0px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      font-size: 10px;
+      height: 50px;
+      border-bottom: 1px solid #5f5f5f;
+    }
+
+    .logo {
+      width: 100px;
+    }
+
+    .institution-info {
+      flex-grow: 1;
+      text-align: center;
+    }
+    .institution-info p {
+    margin: 2px;
+  }
+
+    .user-info {
+      text-align: right;
+      border-radius: 10px;
+    }
+    .color-info {
+      background-color: #707070;
+      color: white;
+    }
+    .title-form{
+      margin-top: 5px; 
+      margin-bottom: 5px; 
+      border-spacing: 0px;
+      font-family: 'Arial', sans-serif;
+    }
+    table {
         width: 100%;
-        font-size: 11px;
+        font-size: 9px;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-top: 0;
       }
 
       th, td {
-        border: 1px solid #4e4e4e;
+        border: 1px solid #707070;
         padding: 2px;
         text-align: left;
+      
       }
-
-      th {
-        background-color: #f2f2f2;
-      }
-
-      tr:nth-child(even) {
-        background-color: #f2f2f2;
-      }
-
-      tr:hover {
-        background-color: #ddd;
+      .th-header {
+        border-top-right-radius: 5px;
+        border-top-left-radius: 5px;
+        background-color: #707070;
+        color: white;
       }
 
       .svg-icon {
-        width: 2em;
-        height: 2em;
+        width: 1.5em;
+        height: 1.5em;
       }
 
       .svg-icon path,
@@ -50,9 +90,9 @@
         border-top: 1px solid black;
         height: 2px;
         max-width: 200px;
-        padding: 0;
-        margin-top: 100px;
-        font-size: 9pt;
+        padding: 5px;
+        margin-top: 90px;
+        font-size: 8pt;
         line-height: 0;
 
       }
@@ -60,9 +100,9 @@
         border-top: 1px solid black;
         height: 2px;
         max-width: 230px;
-        padding: 0;
-        margin-top: 100px;
-        font-size: 9pt;
+        padding: 5px;
+        margin-top: 90px;
+        font-size: 8pt;
         line-height: 0;
       }
     
@@ -72,22 +112,41 @@
         border-bottom: 1px solid black;
         font-size: 10pt;
       }
-      @page {
-        @bottom-center {
-        content: "Página " counter(page);
-      }
-    }
     </style>
   </head>
   <body>
     <main>
-      <div class="text-header"><p>MUTUAL DE SERVICIOS AL POLICÍA "MUSERPOL"</p>
-        <p>UNIDAD DE INVERSIÓN EN SERVICIOS, BIENES Y PATRIMONIO</p>
+      <header>
+        <div class="logo">
+          <img src="{{ logo }}" alt="Logo" style="width: 120px;">
         </div>
+        <div class="institution-info">
+          <p>MUTUAL DE SERVICIOS AL POLICÍA "MUSERPOL"</p>
+          <p>DIRECCIÓN DE ESTRATEGIAS SOCIALES E INVERSIONES</p>
+          <p>UNIDAD DE INVERSIÓN EN SERVICIOS, BIENES Y PATRIMONIO</p>
+        </div>
+        <div class="user-info">
+          <table>
+            <tr>
+              <th class="color-info" style="border-top-left-radius: 5px; border-bottom: 2px solid white;">Usuario</th>
+              <td style="border-top-right-radius: 5px;">{{user}}</td></tr>
+            <tr>
+              <th class="color-info" style="border-bottom: 2px solid white;">Fecha</th>
+            <td>{{date}}</td>
+            </tr>
+            <tr>
+              <th class="color-info" style="border-bottom-left-radius: 5px;">No. Alquiler</th>
+              <td style="border-bottom-right-radius: 5px;">{{contract_number}}</td></tr>
+          </table>
+        </div>
+      </header>
+      <h5 class="title-form"><center>FORMULARIO DE CONFORMIDAD DE ARRENDAMIENTO DE
+      </center>
+    <center>SALONES DE EVENTOS DE LA MUSERPOL</center></h5>
         <table border="1">
           <tr>
-            <th colspan="3">
-              <center>FORMULARIO DE CONFORMIDAD DE ARRENDAMIENTO DE SALONES DE EVENTOS DE LA MUSERPOL</center>
+            <th class="th-header" colspan="3" style="text-align: center">
+              DATOS DEL CLIENTE
             </th>
           </tr>
           <tr>
@@ -113,14 +172,27 @@
             <td colspan="2">{{ nit }}</td>
           </tr>
           {% endif %}
+          {% if institution_name is None %}
+        <tr>
+          <th style="border-bottom-left-radius: 5px;">INSTITUCIÓN</th>
+          <td colspan="1">Ninguno</td>
+          <td style="border-bottom-right-radius: 5px;"><strong>NIT:</strong></td>
+        </tr>
+        {% else %}
+        <tr>
+          <th style="border-bottom-left-radius: 5px;">INSTITUCIÓN</th>
+          <td colspan="1">{{ institution_name }}</td>
+          <td style="border-bottom-right-radius: 5px;"><strong>NIT: </strong>{{institution_nit}}</td>
+        </tr>
+        {% endif %}
 
-          <tr style="border: none; height: 30px; background-color: white;">
+          <tr style="border: none; height: 15px; background-color: white;">
             <th style="border: none; background-color: white;"></th>
             <td style="border: none; background-color: white;"></td>
           </tr>
 
           <tr>
-            <th colspan="3">
+            <th class="th-header" colspan="3">
               <center>INFORMACIÓN DE LOS SALONES</center>
             </th>
           </tr>
@@ -128,9 +200,7 @@
           <tr style="border-top: solid; border-left: solid; border-right: solid;">
             <th>NOMBRE DEL SALÓN SOLICITADO</th>
             <td colspan="2">
-              <p>
                 {{ selected_product.product.room.name }}
-              </p>
               </td>
           </tr>
 
@@ -138,7 +208,7 @@
             <th>AMBIENTES SOLICITADOS</th>
             <td colspan="2">
                 {% for sub_room in selected_product.product.room.sub_rooms %}
-              <p>
+              <p style="margin-top: 0; margin-bottom: 0;">
                     {{ sub_room.quantity}} {{ sub_room.name }}
               </p>
               {% endfor %}
@@ -148,125 +218,109 @@
           <tr style="border-left: solid; border-right: solid;">
             <th>FECHA DE EVENTO (DÍA)</th>
             <td colspan="2">
-              <p id="formatted-date">
                 {{ selected_product.start_time }}
-              </p>
             </td>
           </tr>
 
           <tr style="border-left: solid; border-right: solid;">
             <th>TIPO DE EVENTO</th>
             <td colspan="2">
-              <p>
                 {{ selected_product.event_type.name }}
-              </p>
             </td>
           </tr>
 
           <tr style="border-left: solid; border-right: solid;">
             <th>CANTIDAD DE HORAS DE USO</th>
             <td colspan="2">
-              <p>
                 {{ selected_product.product.hour_range.time }} Horas
-              </p>
             </td>
           </tr>
 
           <tr style="border-left: solid; border-right: solid;">
             <th>HORA DE INICIO DEL EVENTO</th>
             <td colspan="2">
-              <p>
                 {{ selected_product.start_time_only_hour }}
-              </p>
             </td>
           </tr>
 
           <tr style="border-left: solid; border-right: solid; border-bottom: solid;">
             <th>HORA DE FINALIZACIÓN DEL EVENTO</th>
             <td colspan="2">
-              <p>
                 {{ selected_product.end_time_only_hour }}
-              </p>
             </td>
           </tr>
-
+          <tr style="border: none; height: 15px; background-color: white;">
+            <th style="border: none; background-color: white;"></th>
+            <td style="border: none; background-color: white;"></td>
+          </tr>
           {% endfor %}
+        </table>
 
-          <tr style="border: none; height: 30px; background-color: white;">
-            <th style="border: none; background-color: white;"></th>
-            <td style="border: none; background-color: white;"></td>
-          </tr>
+          
 
-          <tr>
-            <th colspan="3">
-              <center>DATOS DEL ARRENDAMIENTO</center>
-            </th>
-          </tr>
+          <table>
+            <tr>
+              <th class="th-header" colspan="3">
+                <center>DATOS DEL ARRENDAMIENTO</center>
+              </th>
+            </tr>
+            <tr>
+              <th>GARANTÍA</th>
+              <td colspan="2">
+                  {{ warranty }}
+              </td>
+            </tr>
+  
+            <tr>
+              <th>CANON DE ARRENDAMIENTO</th>
+              <td colspan="2">
+              {{ initial_total }}
+              </td>
+            </tr>
+  
+            <tr>
+              <th style="border-bottom-left-radius: 5px;">DATOS DE CONTACTO</th>
+              <td style="border-bottom-right-radius: 5px;" colspan="2">
+                {% for contact in contacts %}
+                <strong>Nombre: </strong> {{ contact.name}} <strong>Teléfono: </strong> {{ contact.phone }} &nbsp
+                {% endfor %}
+              </td>
+            </tr>
+          </table>
+          <br>
 
-          <tr>
-            <th>GARANTÍA</th>
-            <td colspan="2">
-              <p>
-                {{ warranty }}
-              </p>
-            </td>
-          </tr>
-
-          <tr>
-            <th>CANON DE ARRENDAMIENTO</th>
-            <td colspan="2">
-            <p>{{ initial_total }}</p>
-            </td>
-          </tr>
-
-          <tr>
-            <th>DATOS DE CONTACTO</th>
-            <td colspan="2">
-              {% for contact in contacts %}
-              <p>
-                Contacto: {{ contact.name}} Teléfono: {{ contact.phone }}
-              </p>
-              {% endfor %}
-            </td>
-          </tr>
-
-          <tr style="border: none; height: 30px; background-color: white;">
-            <th style="border: none; background-color: white;"></th>
-            <td style="border: none; background-color: white;"></td>
-          </tr>
-
-          <tr>
-            <th colspan="3">
-              <center>DOCUMENTACIÓN REQUERIDA (adjunta)</center>
-            </th>
-          </tr>
-          <tr>
-            <th colspan="2">Favor adjuntar la siguiente documentación</th>
-            <td>Verif.</td>
-          </tr>
+          <table>
+            <tr>
+              <th class="th-header" colspan="3">
+                <center>DOCUMENTACIÓN REQUERIDA (ADJUNTA)</center>
+              </th>
+            </tr>
+            <tr>
+              <th colspan="2">FAVOR ADJUNTAR LA SIGUIENTE DOCUMENTACIÓN</th>
+              <td>VERIF.</td>
+            </tr>
+  
+            <tr>
+              <th colspan="2">FORMULARIO DE ENTREGA Y RECEPCIÓN DE AMBIENTES</th>
+              <td style="text-align:center;">
+  
+                <svg class="svg-icon" viewBox="0 0 20 20">
+                  <path d="M10.219,1.688c-4.471,0-8.094,3.623-8.094,8.094s3.623,8.094,8.094,8.094s8.094-3.623,8.094-8.094S14.689,1.688,10.219,1.688 M10.219,17.022c-3.994,0-7.242-3.247-7.242-7.241c0-3.994,3.248-7.242,7.242-7.242c3.994,0,7.241,3.248,7.241,7.242C17.46,13.775,14.213,17.022,10.219,17.022 M15.099,7.03c-0.167-0.167-0.438-0.167-0.604,0.002L9.062,12.48l-2.269-2.277c-0.166-0.167-0.437-0.167-0.603,0c-0.166,0.166-0.168,0.437-0.002,0.603l2.573,2.578c0.079,0.08,0.188,0.125,0.3,0.125s0.222-0.045,0.303-0.125l5.736-5.751C15.268,7.466,15.265,7.196,15.099,7.03"></path>
+                </svg>
+  
+              </td>
+            </tr>
+            <tr>
+              <th style="border-bottom-left-radius: 5px;" colspan="2">FORMULARIO DE SOLICITUD DE DEVOLUCIÓN DE GARANTÍA</th>
+              <td style="text-align:center; border-bottom-right-radius: 5px;">
+                <svg class="svg-icon" viewBox="0 0 20 20">
+                  <path d="M10.219,1.688c-4.471,0-8.094,3.623-8.094,8.094s3.623,8.094,8.094,8.094s8.094-3.623,8.094-8.094S14.689,1.688,10.219,1.688 M10.219,17.022c-3.994,0-7.242-3.247-7.242-7.241c0-3.994,3.248-7.242,7.242-7.242c3.994,0,7.241,3.248,7.241,7.242C17.46,13.775,14.213,17.022,10.219,17.022 M15.099,7.03c-0.167-0.167-0.438-0.167-0.604,0.002L9.062,12.48l-2.269-2.277c-0.166-0.167-0.437-0.167-0.603,0c-0.166,0.166-0.168,0.437-0.002,0.603l2.573,2.578c0.079,0.08,0.188,0.125,0.3,0.125s0.222-0.045,0.303-0.125l5.736-5.751C15.268,7.466,15.265,7.196,15.099,7.03"></path>
+                </svg>
+              </td>
+            </tr>
+          </table>
 
 
-
-          <tr>
-            <th colspan="2">FORMULARIO DE ENTREGA</th>
-            <td style="text-align:center;">
-
-              <svg class="svg-icon" viewBox="0 0 20 20">
-                <path d="M10.219,1.688c-4.471,0-8.094,3.623-8.094,8.094s3.623,8.094,8.094,8.094s8.094-3.623,8.094-8.094S14.689,1.688,10.219,1.688 M10.219,17.022c-3.994,0-7.242-3.247-7.242-7.241c0-3.994,3.248-7.242,7.242-7.242c3.994,0,7.241,3.248,7.241,7.242C17.46,13.775,14.213,17.022,10.219,17.022 M15.099,7.03c-0.167-0.167-0.438-0.167-0.604,0.002L9.062,12.48l-2.269-2.277c-0.166-0.167-0.437-0.167-0.603,0c-0.166,0.166-0.168,0.437-0.002,0.603l2.573,2.578c0.079,0.08,0.188,0.125,0.3,0.125s0.222-0.045,0.303-0.125l5.736-5.751C15.268,7.466,15.265,7.196,15.099,7.03"></path>
-              </svg>
-
-            </td>
-          </tr>
-          <tr>
-            <th colspan="2">FORMULARIO DE SOLICITUD DE DEVOLUCIÓN DE GARANTÍA</th>
-            <td style="text-align:center;">
-              <svg class="svg-icon" viewBox="0 0 20 20">
-                <path d="M10.219,1.688c-4.471,0-8.094,3.623-8.094,8.094s3.623,8.094,8.094,8.094s8.094-3.623,8.094-8.094S14.689,1.688,10.219,1.688 M10.219,17.022c-3.994,0-7.242-3.247-7.242-7.241c0-3.994,3.248-7.242,7.242-7.242c3.994,0,7.241,3.248,7.241,7.242C17.46,13.775,14.213,17.022,10.219,17.022 M15.099,7.03c-0.167-0.167-0.438-0.167-0.604,0.002L9.062,12.48l-2.269-2.277c-0.166-0.167-0.437-0.167-0.603,0c-0.166,0.166-0.168,0.437-0.002,0.603l2.573,2.578c0.079,0.08,0.188,0.125,0.3,0.125s0.222-0.045,0.303-0.125l5.736-5.751C15.268,7.466,15.265,7.196,15.099,7.03"></path>
-              </svg>
-            </td>
-          </tr>
-
-</table>
 <br>
 <div style="text-align:left; float: left;">
   <div class="line1">
