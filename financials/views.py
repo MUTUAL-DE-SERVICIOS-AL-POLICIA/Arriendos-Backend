@@ -354,12 +354,24 @@ class Edit_warranty(generics.UpdateAPIView):
     def patch(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', True)
         instance = self.get_object()
+        discount_value = request.data.get('discount')
+        income_value = request.data.get('income')
+        list_warranty=self.queryset.filter(rental=instance.rental).order_by('id')
+        number_rental_warranty=list_warranty.count()
+        if number_rental_warranty >1:
+            previus_warranty=list_warranty[len(list_warranty)-2]
+            if discount_value is not None:
+                request.data["balance"]=float(previus_warranty.balance) - float(request.data["discount"])
+            if income_value is not None:
+                request.data["balance"]=float(previus_warranty.balance) + float(request.data["income"])
+        else:
+            request.data["balance"]=request.data["income"]
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         response_data = {
-            "state":"success",
-            "message":"El movimiento de Garantía se ha editado exitosamente"
+            "state": "success",
+            "message": "El movimiento de Garantía se ha editado exitosamente"
         }
         return Response(response_data)
 class Warranty_Return_Request(generics.GenericAPIView):
