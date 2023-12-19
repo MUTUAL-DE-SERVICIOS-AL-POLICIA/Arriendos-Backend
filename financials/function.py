@@ -4,9 +4,10 @@ from leases.models import Rental
 from leases.serializer import RentalsSerializer
 from requirements.models import Requirement
 from requirements.models import Requirement_Delivered
-from .models import Warranty_Movement
+from .models import Warranty_Movement, Event_Damage
 from weasyprint import HTML, CSS
 from django.template.loader import render_to_string
+from datetime import datetime
 from django.utils import timezone
 from django.utils.dateformat import DateFormat
 from django.utils.formats import get_format
@@ -21,12 +22,19 @@ def Make_Warranty_Form(request, rental_id):
     director = "Cnl. MSc. CAD. LUCIO ENRIQUE RENÉ JIMÉNEZ VARGAS"
     customer = rental.get("customer")
     contacts = customer.get("contacts")
+    institution_name = customer.get("institution_name", None)
+    institution_nit = customer.get("nit", None)
     customers = customer.get("contacts")
     customer = customers[0]
     name = customer.get("name")
     nit = customer.get("ci_nit")
     nup = customer.get("nup")
-    
+    if institution_name is None:
+        detail_name = name
+        deatil_nit = nit
+    else:
+        detail_name = institution_name
+        deatil_nit = institution_nit
     selected_products = rental.get("selected_products")
     departments = ''
     for selected_product in selected_products:
@@ -42,10 +50,13 @@ def Make_Warranty_Form(request, rental_id):
     }
     month = month_names[now.month]
    
-    formatted_date = now.strftime(f"%d de {month} de %Y")
+    request_date = now.strftime(f"%d de {month} de %Y")
     warranty = Warranty_Movement.objects.filter(rental_id=rental_id).latest('id')
-    
+    user = request.user
+    today = datetime.now()
+    date = today.strftime("%d/%m/%y")
     ruta_archivo_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'solicitud_devolucion_de_garantia.html')
+    ruta_logo = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logo.jpg')
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="solicitud_devolucion_de_garantia.pdf"'
     if os.path.exists(ruta_archivo_html):
@@ -63,14 +74,21 @@ def Make_Warranty_Form(request, rental_id):
         'contract_number': contract_number,
         'nup': nup,
         'warranty': warranty.balance,
-        'date':formatted_date
+        'request_date': request_date,
+        'institution_name': institution_name,
+        'institution_nit': institution_nit,
+        'detail_name': detail_name,
+        'detail_nit': deatil_nit,
+        'date': date,
+        'user': user,
+        'logo': 'file://' + ruta_logo
         })
 
     HTML(string=html_string).write_pdf(response, stylesheets=[CSS(
-        string='@page { margin-left: 2cm; margin-right: 1cm; margin-top: 2cm; margin-bottom: 1.5cm; }'
+        string='@page { margin-left: 2cm; margin-right: 1cm; margin-top: 0.2cm; margin-bottom: 2cm; }'
         )])
     return response
-def Make_Damage_Warranty_Form(request, rental_id, product, mount, total, observations):
+def Make_Damage_Warranty_Form(request, rental_id, product):
     serializer_class = RentalsSerializer
 
     rental = rental_id
@@ -82,6 +100,8 @@ def Make_Damage_Warranty_Form(request, rental_id, product, mount, total, observa
 
     customer = rental.get("customer")
     contacts = customer.get("contacts")
+    institution_name = customer.get("institution_name", None)
+    institution_nit = customer.get("nit", None)
     customers = customer.get("contacts")
     customer = customers[0]
     name = customer.get("name")
@@ -92,14 +112,35 @@ def Make_Damage_Warranty_Form(request, rental_id, product, mount, total, observa
     selected_products=[]
     for selected_product_data in selected_products_data:
         if selected_product_data["id"] == product:
+            warranty_damages = Event_Damage.objects.filter(selected_product_id = selected_product_data["id"])
+            event_damage_data = []
+            for warranty_damage in warranty_damages:
+                warranty_movement = Warranty_Movement.objects.get(pk = warranty_damage.warranty_movement_id)
+                event_damage_date = warranty_damage.created_at
+
+                if isinstance(event_damage_date, str):
+                    event_damage_date = datetime.strptime(event_damage_date, "%Y-%m-%dT%H:%M:%S.%f%z")
+                event_damage_date = event_damage_date.strftime("%d-%m-%Y %I:%M:%S %p")
+                warranty_data = {
+                    'mount': warranty_damage.mount,
+                    'total': warranty_movement.balance,
+                    'detail': warranty_movement.detail,
+                    'date': event_damage_date
+                }
+                event_damage_data.append(warranty_data)
+
             selected_product = {
                 'id': selected_product_data["id"],
                 'start_time': selected_product_data["start_time"],
-                'product':selected_product_data["product"]
+                'product':selected_product_data["product"],
+                'warranty_data': event_damage_data
             }
             selected_products.append(selected_product)
-
+    user = request.user
+    today = datetime.now()
+    date = today.strftime("%d/%m/%y")
     ruta_archivo_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ejecucion_de_garantia.html')
+    ruta_logo = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logo.jpg')
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="formulariodeejecuciondegarantia.pdf"'
     if os.path.exists(ruta_archivo_html):
@@ -110,19 +151,20 @@ def Make_Damage_Warranty_Form(request, rental_id, product, mount, total, observa
     html_string = render_to_string('ejecucion_de_garantia.html', {
         'name': name,
         'nit': nit,
+        'institution_name': institution_name,
+        'institution_nit': institution_nit,
         'selected_products':selected_products,
         'warranty': rental.get("initial_total"),
         'contacts': contacts,
         'contract_number': contract_number,
         'nup': nup,
-        'mount': mount,
-        'observations': observations,
-        'product':product,
-        'total':total
+        'date': date,
+        'user': user,
+        'logo': 'file://' + ruta_logo
         })
 
     HTML(string=html_string).write_pdf(response, stylesheets=[CSS(
-        string='@page { margin-left: 2cm; margin-right: 1cm; margin-top: 1cm; margin-bottom: 1.5cm; }'
+        string='@page { margin-left: 2cm; margin-right: 1cm; margin-top: 0.2cm; margin-bottom: 2cm; }'
         )])
     return response
 
@@ -136,11 +178,19 @@ def Make_Return_Warranty_Form(request, rental_id):
 
     customer = rental.get("customer")
     contacts = customer.get("contacts")
+    institution_name = customer.get("institution_name", None)
+    institution_nit = customer.get("nit", None)
     customers = customer.get("contacts")
     customer = customers[0]
     name = customer.get("name")
     nit = customer.get("ci_nit")
     nup = customer.get("nup")
+    if institution_name is None:
+        detail_name = name
+        deatil_nit = nit
+    else:
+        detail_name = institution_name
+        deatil_nit = institution_nit
 
     selected_products = rental.get("selected_products")
     warranty = Warranty_Movement.objects.filter(rental_id=rental_id).latest('id')
@@ -156,8 +206,11 @@ def Make_Return_Warranty_Form(request, rental_id):
             'name': requirement.requirement_name
         }
         requirements.append(data)
-
+    user = request.user
+    today = datetime.now()
+    date = today.strftime("%d/%m/%y")
     ruta_archivo_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'devolucion_de_garantia.html')
+    ruta_logo = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logo.jpg')
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="devolucion_de_garantia.pdf"'
     if os.path.exists(ruta_archivo_html):
@@ -175,10 +228,17 @@ def Make_Return_Warranty_Form(request, rental_id):
         'requirements': requirements,
         'contract_number': contract_number,
         'nup': nup,
-        'warranty': warranty.balance
+        'institution_name': institution_name,
+        'institution_nit': institution_nit,
+        'detail_name': detail_name,
+        'detail_nit': deatil_nit,
+        'warranty': warranty.balance,
+        'date': date,
+        'user': user,
+        'logo': 'file://' + ruta_logo
         })
 
     HTML(string=html_string).write_pdf(response, stylesheets=[CSS(
-        string='@page { margin-left: 2cm; margin-right: 1cm; margin-top: 1cm; margin-bottom: 1.6cm; }'
+        string='@page { margin-left: 2cm; margin-right: 1cm; margin-top: 0.2cm; margin-bottom: 2cm; }'
         )])
     return response
