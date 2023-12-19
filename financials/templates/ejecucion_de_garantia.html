@@ -9,41 +9,70 @@
     <link rel="icon" href="./favicon.ico" type="image/x-icon">
 
     <style>
-      table {
+    body{
+        color: rgb(48, 48, 48);
         font-family: 'Arial', sans-serif;
-        border-collapse: collapse;
+      }
+      header {
+      margin-top: 0;
+      margin-bottom: 0;
+      padding: 10px;
+      padding-right: 0px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 97%;
+      font-size: 10px;
+      height: 50px;
+      border-bottom: 1px solid #5f5f5f;
+    }
+
+    .logo {
+      width: 100px;
+    }
+
+    .institution-info {
+      flex-grow: 1;
+      text-align: center;
+    }
+    .institution-info p {
+    margin: 2px;
+  }
+
+    .user-info {
+      text-align: right;
+      border-radius: 10px;
+    }
+    .color-info {
+      background-color: #707070;
+      color: white;
+    }
+    .title-form{
+      margin-top: 5px; 
+      margin-bottom: 5px; 
+      border-spacing: 0px;
+      font-family: 'Arial', sans-serif;
+    }
+    table {
         width: 100%;
-        font-size: 11px;
+        font-size: 9px;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-top: 0;
       }
 
       th, td {
-        border: 1px solid #4e4e4e;
-        padding: 5px;
+        border: 1px solid #707070;
+        padding: 2px;
         text-align: left;
+      
       }
-
-      th {
-        background-color: #f2f2f2;
-      }
-
-      tr:nth-child(even) {
-        background-color: #f2f2f2;
-      }
-
-      tr:hover {
-        background-color: #ddd;
-      }
-
-      .svg-icon {
-        width: 2em;
-        height: 2em;
-      }
-
-      .svg-icon path,
-      .svg-icon polygon,
-
-      .svg-icon circle {
-        stroke-width: 1;
+      .th-header {
+        border-top-right-radius: 5px;
+        border-top-left-radius: 5px;
+        background-color: #707070;
+        color: white;
+        text-align: center;
       }
 
       .line1 {
@@ -52,6 +81,7 @@
         max-width: 190px;
         padding: 0;
         margin-top: 100px;
+        font-size: 8pt;
 
       }
       .line2 {
@@ -60,6 +90,7 @@
         max-width: 230px;
         padding: 0;
         margin-top: 100px;
+        font-size: 8pt;
       }
       .line3 {
         border-top: 1px solid black;
@@ -67,36 +98,51 @@
         max-width: 220px;
         padding: 0;
         margin-top: 100px;
+        font-size: 8pt;
       }
       .text-header{
         text-align: center;
         line-height: 0pt;
         border-bottom: 1px solid black;
         font-size: 10pt;
+        text-align: center;
       }
-      @page {
-        @bottom-center {
-        content: "Página " counter(page);
-      }
-    }
     </style>
   </head>
   <body>
     <main>
-      <div class="text-header"><p>MUTUAL DE SERVICIOS AL POLICÍA "MUSERPOL"</p>
-        <p>UNIDAD DE INVERSIÓN EN SERVICIOS, BIENES Y PATRIMONIO</p>
+      <header>
+        <div class="logo">
+          <img src="{{ logo }}" alt="Logo" style="width: 120px;">
         </div>
+        <div class="institution-info">
+          <p>MUTUAL DE SERVICIOS AL POLICÍA "MUSERPOL"</p>
+          <p>DIRECCIÓN DE ESTRATEGIAS SOCIALES E INVERSIONES</p>
+          <p>UNIDAD DE INVERSIÓN EN SERVICIOS, BIENES Y PATRIMONIO</p>
+        </div>
+        <div class="user-info">
+          <table>
+            <tr>
+              <th class="color-info" style="border-top-left-radius: 5px; border-bottom: 2px solid white;">Usuario</th>
+              <td style="border-top-right-radius: 5px;">{{user}}</td></tr>
+            <tr>
+              <th class="color-info" style="border-bottom: 2px solid white;">Fecha</th>
+            <td>{{date}}</td>
+            </tr>
+            <tr>
+              <th class="color-info" style="border-bottom-left-radius: 5px;">No. Alquiler</th>
+              <td style="border-bottom-right-radius: 5px;">{{contract_number}}</td></tr>
+          </table>
+        </div>
+      </header>
+      <h5 class="title-form"><center>FORMULARIO DE DAÑOS U OBSERVACIONES DE ARRENDAMIENTO DE
+      </center>
+    <center>SALONES DE EVENTOS DE LA MUSERPOL</center></h5>
+
         <table border="1">
           <tr>
-            <th colspan="3">
-              <center>FORMULARIO DE DAÑOS U OBSERVACIONES DE ARRENDAMIENTO DE
-                SALONES DE EVENTOS DE LA MUSERPOL
-                </center>
-            </th>
-          </tr>
-          <tr>
-            <th colspan="3" style="text-align: right">
-              No. {{ contract_number }}
+            <th class="th-header" colspan="3">
+              DATOS DEL CLIENTE
             </th>
           </tr>
 
@@ -107,70 +153,130 @@
 
           {% if nup %}
           <tr>
-            <th>CI. DEL SOLICITANTE</th>
+            <th style="border-bottom-left-radius: 5px;">CI. DEL SOLICITANTE</th>
             <td colspan="1">{{ nit }}</td>
-            <td><strong>NUP:</strong>{{nup}}</td>
+            <td style="border-bottom-right-radius: 5px;"><strong>NUP:</strong>{{nup}}</td>
           </tr>
           {% else %}
           <tr>
-            <th>CI. DEL SOLICITANTE</th>
-            <td colspan="2">{{ nit }}</td>
+            <th style="border-bottom-left-radius: 5px;">CI. DEL SOLICITANTE</th>
+            <td style="border-bottom-right-radius: 5px;" colspan="2">{{ nit }}</td>
           </tr>
           {% endif %}
+          {% if institution_name is None %}
+        <tr>
+          <th style="border-bottom-left-radius: 5px;">INSTITUCIÓN</th>
+          <td colspan="1">Ninguno</td>
+          <td style="border-bottom-right-radius: 5px;"><strong>NIT:</strong></td>
+        </tr>
+        {% else %}
+        <tr>
+          <th style="border-bottom-left-radius: 5px;">INSTITUCIÓN</th>
+          <td colspan="1">{{ institution_name }}</td>
+          <td style="border-bottom-right-radius: 5px;"><strong>NIT: </strong>{{institution_nit}}</td>
+        </tr>
+        {% endif %}
+        </table>
+          <br>
 
           {% for selected_product in selected_products %}
 
-          <tr>
-            <th>NOMBRE DEL SALÓN SOLICITADO</th>
-            <td colspan="2">
-              <p>
-                {{ selected_product.product.room.name }}
-              </p>
+          <table>
+            <tr>
+              <th class="th-header" colspan="3">
+                DATOS DEL ALQUILER
+              </th>
+            </tr>
+            <tr>
+              <th>NOMBRE DEL SALÓN SOLICITADO</th>
+              <td colspan="2">
+                  {{ selected_product.product.room.name }}
+                </td>
+            </tr>
+  
+            <tr>
+              <th>FECHA DE EVENTO (DÍA)</th>
+              <td colspan="2">
+                  {{ selected_product.start_time }}
               </td>
-          </tr>
+            </tr>
+            <tr style="border: none; height: 15px; background-color: white;">
+              <th style="border: none; background-color: white;"></th>
+              <td style="border: none; background-color: white;"></td>
+            </tr>
 
-          <tr>
-            <th>FECHA DE EVENTO (DÍA)</th>
-            <td colspan="2">
-              <p id="formatted-date">
-                {{ selected_product.start_time }}
-              </p>
-            </td>
-          </tr>
+            <tr>
+              <th class="th-header" colspan="3">
+                DAÑOS U OBSERVACIONES DEL SALÓN
+              </th>
+            </tr>
+              {% if selected_product.warranty_data %}
+              {% for warranty_data_product in selected_product.warranty_data  %}
+              <tr>
+                <th>FECHA</th>
+                <td colspan="2">
+                    {{ warranty_data_product.date }}
+                </td>
+              </tr>
+              {% if warranty_data_product.detail is None %}
+              <tr>
+                <th>OBSERVACIONES</th>
+                <td colspan="2">
+                <p>NINGUNO</p>
+                </td>
+              </tr>
+              {% else %}
+              <tr>
+                <th>OBSERVACIONES</th>
+                <td colspan="2">
+                <p>{{ warranty_data_product.detail }}</p>
+                </td>
+              </tr>
+              {% endif %}
+    
+              <tr>
+                <th>MONTO A COBRAR Bs.</th>
+                <td colspan="2">
+                    {{ warranty_data_product.mount }}
+                </td>
+              </tr>
+              <tr>
+                <th style="border-bottom-left-radius: 5px;">SALDO Bs.</th>
+                <td style="border-bottom-right-radius: 5px;" colspan="2">
+                    {{ warranty_data_product.total }}
+                </td>
+              </tr>
+              <tr style="border: none; height: 15px; background-color: white;">
+                <th style="border: none; background-color: white;"></th>
+                <td style="border: none; background-color: white;"></td>
+              </tr>
+              {% endfor %}
+
+              {% else %}
+              <tr>
+                <th>OBSERVACIONES</th>
+                <td colspan="2">
+                <p>NINGUNO</p>
+                </td>
+              </tr>
+              {% endif %}
+
+
 
           {% endfor %}
+        </table>
 
-          <tr>
-            <th>OBSERVACIONES</th>
-            <td colspan="2">
-            <p>{{ observations }}</p>
-            </td>
-          </tr>
 
-          <tr>
-            <th>Monto a cobrar Bs.</th>
-            <td colspan="2">
-                {{ mount }}
-            </td>
-          </tr>
-          <tr>
-            <th>Saldo Bs.</th>
-            <td colspan="2">
-                {{ total }}
-            </td>
-          </tr>
-
-</table>
 <br>
 <div style="text-align:left; float: left;">
   <div class="line1">
-    <p style="text-align:left;">FIRMA FUNCIONARIO</p>
+    <p style="text-align:left; margin-top: 0;">FIRMA FUNCIONARIO</p>
   </div>
 </div>
 
 <div style="text-align:right; float: right;">
   <div class="line2">
-    <p style="text-align:right;">FIRMA ARRENDATARIO <br> (aceptación)</p>
+    <p style="text-align:right; margin-top: 0;">FIRMA ARRENDATARIO <br> (ACEPTACIÓN)</p>
   </div>
 </div>
 
@@ -179,7 +285,7 @@
 
 <div style="text-align:center; margin: 0; display: flex; justify-content: center; ">
   <div class="line3">
-    <p style="text-align:center;">VoBo Inmediato Superior</p>  </div>
+    <p style="text-align:center; margin-top: 0;">VoBo INMEDIATO SUPERIOR</p>  </div>
 </div>
 
     </main>
