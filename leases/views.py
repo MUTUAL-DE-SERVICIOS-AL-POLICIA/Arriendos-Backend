@@ -676,6 +676,10 @@ class Report_Api(generics.GenericAPIView):
 class rental_list(generics.GenericAPIView):
     queryset = Rental.objects.all().order_by("id")
     serializer_class = RentalsSerializer
+    permission_classes = [IsAuthenticated, HasViewRentalPermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewRentalPermission() ]
     def get(self, request,*args, **kwargs):
         query_param = self.request.query_params.get('search', '')
         queryset = Rental.objects.filter(
