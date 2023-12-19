@@ -223,6 +223,7 @@
                 <center>HORAS EXTRA APLICADAS</center>
               </th>
             </tr>
+            {% if selected_product.additional_hour_applieds is None %}
             {% for product in selected_product.additional_hour_applieds  %}
             <tr>
               <th>FECHA</th>
@@ -269,18 +270,24 @@
               {{ product.voucher_number }}
           </td>
             </tr>
-            
+
             <tr style="border: none; height: 15px; background-color: white;">
               <th style="border: none; background-color: white;"></th>
               <td style="border: none; background-color: white;"></td>
             </tr>
             {% endfor %}
+
+            {% else %}
+
+            <tr>
+              <th colspan="4"><center>NO HAY HORAS EXTRA APLICADAS AL EVENTO</center></th>
+            </tr>
+
+            {% endif %}
+
           </table>
-          
 
           {% endfor %}
-
-          
 
 <br>
 <div style="text-align:left; float: left;">
