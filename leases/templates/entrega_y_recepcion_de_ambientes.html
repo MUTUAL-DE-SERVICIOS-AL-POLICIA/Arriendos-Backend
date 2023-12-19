@@ -10,45 +10,67 @@
 
     <style>
       body{
-        font-size: 10pt;
-      }
-      table {
+        color: rgb(48, 48, 48);
         font-family: 'Arial', sans-serif;
-        border-collapse: collapse;
+      }
+      header {
+      margin-top: 0;
+      margin-bottom: 0;
+      padding: 10px;
+      padding-right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      font-size: 10px;
+      height: 50px;
+      border-bottom: 1px solid #5f5f5f;
+    }
+
+    .logo {
+      width: 100px;
+    }
+
+    .institution-info {
+      flex-grow: 1;
+      text-align: center;
+    }
+    .institution-info p {
+    margin: 2px;
+  }
+
+    .user-info {
+      text-align: right;
+      border-radius: 10px;
+    }
+    .color-info {
+      background-color: #707070;
+      color: white;
+    }
+    .title-form{
+      margin-top: 5px; 
+      margin-bottom: 5px; 
+      border-spacing: 0px;
+      font-family: 'Arial', sans-serif;
+    }
+    table {
         width: 100%;
-        font-size: 12pt;
+        font-size: 9px;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-top: 0;
       }
 
       th, td {
-        border: 1px solid #4e4e4e;
-        padding: 5px;
+        border: 1px solid #707070;
+        padding: 2px;
         text-align: left;
       }
-
-      th {
-        background-color: #f2f2f2;
+      .th-header {
+        background-color: #707070;
+        color: white;
+        text-align: center;
       }
-
-      tr:nth-child(even) {
-        background-color: #f2f2f2;
-      }
-
-      tr:hover {
-        background-color: #ddd;
-      }
-
-      .svg-icon {
-        width: 2em;
-        height: 2em;
-      }
-
-      .svg-icon path,
-      .svg-icon polygon,
-
-      .svg-icon circle {
-        stroke-width: 1;
-      }
-
       .line1 {
         border-top: 1px solid black;
         height: 2px;
@@ -56,7 +78,8 @@
         padding: 0;
         margin-top: 50px;
         line-height: 0;
-
+        text-align: center;
+        font-family: 'Arial', sans-serif;
       }
       .line2 {
         border-top: 1px solid black;
@@ -65,76 +88,94 @@
         padding: 0;
         margin-top: 50px;
         line-height: 0;
+        text-align: center;
+        font-family: 'Arial', sans-serif;
       }
       .line3 {
         margin-top: 100px;
         line-height: 0;
-      }
-      .text-header{
         text-align: center;
-        line-height: 0pt;
-        border-bottom: 1px solid black;
+        font-family: 'Arial', sans-serif;
       }
       .text-form{
         text-align: justify;
         font-size: 9pt;
       }
-      .title-form{
-        font-size: 16px;
-        line-height: 0;
-      }
-      @page {
-        @bottom-center {
-        content: "Página " counter(page);
-      }
-    }
     </style>
   </head>
   <body>
     <main>
 
-      <div class="text-header"><p>MUTUAL DE SERVICIOS AL POLICÍA "MUSERPOL"</p>
-      <p>UNIDAD DE INVERSIÓN EN SERVICIOS, BIENES Y PATRIMONIO</p>
-      </div>
-      
+      <header>
+        <div class="logo">
+          <img src="{{ logo }}" alt="Logo" style="width: 120px;">
+        </div>
+        <div class="institution-info">
+          <p>MUTUAL DE SERVICIOS AL POLICÍA "MUSERPOL"</p>
+          <p>DIRECCIÓN DE ESTRATEGIAS SOCIALES E INVERSIONES</p>
+          <p>UNIDAD DE INVERSIÓN EN SERVICIOS, BIENES Y PATRIMONIO</p>
+        </div>
+        <div class="user-info">
+          <table>
+            <tr>
+              <th class="color-info" style="border-top-left-radius: 5px; border-bottom: 2px solid white;">Usuario</th>
+              <td style="border-top-right-radius: 5px;">{{user}}</td></tr>
+            <tr>
+              <th class="color-info" style="border-bottom: 2px solid white;">Fecha</th>
+            <td>{{date}}</td>
+            </tr>
+            <tr>
+              <th class="color-info" style="border-bottom-left-radius: 5px;">No. Alquiler</th>
+              <td style="border-bottom-right-radius: 5px;">{{contract_number}}</td></tr>
+          </table>
+        </div>
+      </header>
       {% for selected_product in selected_products %}
-      <div class="title-form">
+      <h5 class="title-form"><center>ACTA DE ENTREGA Y RECEPCIÓN DE AMBIENTES
+        </center>
+      <center>ARRENDAMIENTO "{{ selected_product.product.room.name }}"</center></h5>
+     <!-- <div class="title-form">
         <center><p><strong>ACTA DE ENTREGA Y RECEPCIÓN DE AMBIENTES</strong></p></center>
         <center><p>ARRENDAMIENTO "{{ selected_product.product.room.name }}"</p></center>
-      </div>
+      </div>-->
 
       <div class="text-form">
         
         <p>En la ciudad de {{ selected_product.product.room.property.department }}, en instalaciones del 
-          <strong>{{ selected_product.product.room.name }}</strong> ubicado en {{ selected_product.product.room.property.address }}, a Hrs. ...... del día ………. ….DE ……… DEL……., de conformidad a Solicitud de Arrendamiento del {{ selected_product.product.room.name }},
-          en calidad de arrendamiento con Contrato <strong>N° {{ contract_number }}</strong> solicitada por el <strong>{{ name }} CON C.I. {{ nit }}</strong>{% if nup %}
+          <strong>{{ selected_product.product.room.name }}</strong> ubicado en {{ selected_product.product.room.property.address }}, a Hrs. ............... del día ……............... ...........DE ……….. DEL……....., de conformidad a Solicitud de Arrendamiento del {{ selected_product.product.room.name }},
+          en calidad de arrendamiento con Alquiler <strong>N° {{ contract_number }}</strong> solicitada por <strong>{{ name }} CON C.I. {{ nit }}</strong>{% if nup %}
           <strong>CON NUP: {{ nup }}</strong>{% endif %}, se acuerda la presente: <strong>ACTA DE ENTREGA Y RECEPCION DE INSTALACIONES - ARRENDAMIENTO “{{ selected_product.product.room.name }}”.</strong> 
           De conformidad a requerimiento en calidad de arrendamiento, el arrendatario tiene compromiso de reestablecer en las mismas condiciones, para su efecto se formaliza la entrega de las instalaciones y sus componentes, 
-          para realización de evento: {{ selected_product.event_type.name }} a desarrollarse el día <strong>{{ selected_product.start_time }}</strong>, quien está obligado a cumplir con todas las medidas de bioseguridad con número razonable de participantes de acuerdo a disposición, bajo el siguiente detalle:</p>
+          para realización de evento: <strong>{{ selected_product.event_type.name }}</strong> a desarrollarse el día <strong>{{ selected_product.start_time }}</strong>, quien está obligado a cumplir con todas las medidas de bioseguridad con número razonable de participantes de acuerdo a disposición, bajo el siguiente detalle:</p>
           
       </div>
       {% endfor %}
+
+      <table border="1">
+        <tr>
+          <th class="th-header" style="border-top-left-radius: 5px;" colspan="3">FECHA DE ENTREGA</th>
+          <th class="th-header" style="border-top-right-radius: 5px;" colspan="3">FECHA DE DEVOLUCIÓN</th>
+        </tr>
+        <tr style="height: 20px;">
+          <td colspan="3" style="border-bottom-left-radius: 5px;"></td>
+          <td colspan="3" style="border-bottom-right-radius: 5px;"></td>
+        </tr>
+      </table>
+      <br>
         <table border="1">
           {% for selected_product in selected_products %}
+          
           <tr>
-            <th></th>
-            <th></th>
-            <th></th>
-            <th>FECHA DE ENTREGA ............</th>
-            <th>FECHA DE DEVOLUCIÓN ...........</th>
-            <th>OBSERVACIONES</th>
-          </tr>
-          <tr>
-            <th>No</th>
-            <th>DETALLE</th>
-            <th>CANT.</th>
-            <th>ESTADO DE ENTREGA</th>
-            <th>ESTADO DE RECEPCIÓN</th>
-            <th></th>
+            <th class="th-header" style="width: 5%; border-top-left-radius: 5px;">No</th>
+            <th class="th-header" style="width: 15%;">DETALLE</th>
+            <th class="th-header" style="width: 5%;">CANT.</th>
+            <th class="th-header" style="width: 15%;">ESTADO DE ENTREGA</th>
+            <th class="th-header" style="width: 20%;">ESTADO DE RECEPCIÓN</th>
+            <th class="th-header" style="width: 20%; border-top-right-radius: 5px;">OBSERVACIONES</th>
           </tr>
           {% for sub_room in selected_product.product.room.sub_rooms %}
           <tr>
-            <td>{{ forloop.counter}}</td>
+            <td style="padding: 10px;">{{ forloop.counter}}</td>
             <td>{{ sub_room.name }}</td>
             <td>{{ sub_room.quantity }}</td>
             <td>{{ sub_room.state }}</td>
@@ -145,14 +186,16 @@
           {% endfor %}
 
 </table>
+{% for selected_product in selected_products %}
 <div class="text-form">
-  <p>La entrega se desarrolla en condiciones apropiadas y de conservación para EVENTO SOCIAL, 
+  <p>La entrega se desarrolla en condiciones apropiadas y de conservación para <strong>EVENTO SOCIAL</strong>, 
     al arrendatario, quien, concluido el evento, <u>al momento de la entrega está comprometida, a la devolución de todas las dependencias entregadas en las <strong>MISMAS CONDICIONES</strong> que inicialmente se la concedió en sujeción a 
       contrato de arrendamiento con la entidad (Físicas y estructurales, muros, puertas, etc.) incluida la limpieza y retiro de basura de las instalaciones.</u> Para conformidad de las partes intervinientes, durante y posterior 
-    a la recepción del Salón Biógrafo, se sujetará a valoración técnica final, en aceptación de la presente abajo firman.</p>
+    a la recepción del <strong>{{ selected_product.product.room.name }}</strong>, se sujetará a valoración técnica final, en aceptación de la presente abajo firman.</p>
 </div>
+{% endfor %}
 
-<div><p><strong>ENTREGA DE AMBIENTES</strong></p></div>
+<div style="text-align: center;"><h5><strong>ENTREGA DE AMBIENTES</strong></h5></div>
 <div>
   
   <br>
@@ -173,7 +216,7 @@
   </div>
 </div>
 <br>
-<div class="line3"><p><strong>DEVOLUCIÓN DE AMBIENTES</strong></p></div>
+<div class="line3"><h5><strong>DEVOLUCIÓN DE AMBIENTES</strong></h5></div>
 
 <br>
 
