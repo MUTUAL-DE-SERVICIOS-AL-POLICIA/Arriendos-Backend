@@ -9,6 +9,9 @@ from django.template.loader import get_template
 from weasyprint import HTML, CSS
 from django.template.loader import render_to_string
 import os
+from datetime import datetime
+from django.utils import timezone
+import pytz
 
 
 def Make_Rental_Form(request, rental_id):
@@ -23,18 +26,19 @@ def Make_Rental_Form(request, rental_id):
     customer = rental.get("customer")
     customer_type = customer.get("customer_type")
     contacts = customer.get("contacts")
-
-    if customer.get("institution_name") is None:
-        customers = customer.get("contacts")
-        for customer in customers:
-            name = customer.get("name")
-            nit = customer.get("ci_nit")
-            nup = customer.get("nup")
-
+    institution_name = customer.get("institution_name", None)
+    institution_nit = customer.get("nit", None)
+    customers = customer.get("contacts")
+    customer = customers[0]
+    name = customer.get("name")
+    nit = customer.get("ci_nit")
+    nup = customer.get("nup")
+    if institution_name is None:
+        detail_name = name
+        deatil_nit = nit
     else:
-        name = customer.get("institution_name")
-        nit = customer.get("nit")
-        nup = None
+        detail_name = institution_name
+        deatil_nit = institution_nit
 
     selected_products = rental.get("selected_products")
 
@@ -49,8 +53,11 @@ def Make_Rental_Form(request, rental_id):
             'name': requirement.requirement_name
         }
         requirements.append(data)
-
+    user = request.user
+    today = datetime.now()
+    date = today.strftime("%d/%m/%y")
     ruta_archivo_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'reserva.html')
+    ruta_logo = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logo.jpg')
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="formulariodesolicitudreserva.pdf"'
     if os.path.exists(ruta_archivo_html):
@@ -68,9 +75,44 @@ def Make_Rental_Form(request, rental_id):
         'requirements': requirements,
         'contract_number': contract_number,
         'nup': nup,
+        'institution_name': institution_name,
+        'institution_nit': institution_nit,
+        'detail_name': detail_name,
+        'detail_nit': deatil_nit,
+        'date': date,
+        'user': user,
+        'logo': 'file://' + ruta_logo
         })
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="formulariodesolicitudreserva.pdf"'
 
-    HTML(string=html_string).write_pdf(response, stylesheets=[CSS(
-        string='@page { margin-left: 2cm; margin-right: 1cm; margin-top: 1.5cm; margin-bottom: 1cm; }'
-        )])
+    base_url = request.build_absolute_uri()
+    HTML(string=html_string, base_url=base_url).write_pdf(response, stylesheets=[CSS(
+        string='@page { margin-left: 2cm; margin-right: 1cm; margin-top: 0.2cm; margin-bottom: 2cm; }'
+    )])
+    return response
+
+def Make_Rental_Form1(request, rental_id):
+    ruta_archivo_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'reserva.html')
+    ruta_logo = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logo.jpg')
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="formulariodesolicitudreserva.pdf"'
+    if os.path.exists(ruta_archivo_html):
+
+        with open(ruta_archivo_html, 'r', encoding='utf-8') as archivo_html:
+                html_content = archivo_html.read()
+
+    html_string = render_to_string('reserva.html', {
+        'usuario': 'usuario1',
+        'fecha': '12/12/2023',
+    'logo': 'file://' + ruta_logo
+    })
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="formulariodesolicitudreserva.pdf"'
+
+    base_url = request.build_absolute_uri()
+    HTML(string=html_string, base_url=base_url).write_pdf(response, stylesheets=[CSS(
+        string='@page { margin-left: 2cm; margin-right: 1cm; margin-top: 0.5cm; margin-bottom: 1cm; size: letter;}'
+    )])
     return response
