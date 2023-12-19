@@ -389,6 +389,10 @@ class Warranty_Return_Request(generics.GenericAPIView):
             warranty=Warranty_Movement.objects.filter(rental_id=rental).latest('id')
         except:
             return Response({"error": "No hay garantías registradas del alquiler"}, status=status.HTTP_400_BAD_REQUEST)
+        rental_state = Rental.objects.get(pk=rental)
+        rental_state = rental_state.state_id
+        if rental_state == 4:
+            return Response({"error": "Ya se ha retornado la garantía"}, status=status.HTTP_404_NOT_FOUND)
         now = timezone.localtime(timezone.now())
         rental_date=Rental.objects.get(pk=rental)
         rental_date.warranty_return_request = now
@@ -422,6 +426,10 @@ class Discount_warranty(generics.ListAPIView):
             try:
                 rental_id = request.data["rental"]
                 product = request.data["product"]
+                rental_state = Rental.objects.get(pk=rental_id)
+                rental_state = rental_state.state_id
+                if rental_state == 4:
+                    return Response({"error": "Ya se ha retornado la garantía"}, status=status.HTTP_404_NOT_FOUND)
                 if rental_id is None and product is None:
                     return Response(error_message, status=400)
                 return Make_Damage_Warranty_Form(request, rental_id, product)
@@ -545,6 +553,10 @@ class Return_Warranty_Form(generics.GenericAPIView):
             warranty_balance=warranty.latest('id').balance
         else:
             return Response({"error":"El alquiler no tiene garantías registradas"}, status=status.HTTP_404_NOT_FOUND)
+        rental_state = Rental.objects.get(pk=rental)
+        rental_state = rental_state.state_id
+        if rental_state == 4:
+            return Response({"error": "Ya se ha retornado la garantía"}, status=status.HTTP_404_NOT_FOUND)
         #if warranty_balance == 0:
         #    return Response({"error":f"La garantía actual es: {warranty_balance}"}, status=status.HTTP_404_NOT_FOUND)
         return Make_Return_Warranty_Form(request, rental)
