@@ -147,6 +147,12 @@ request_body_schema = openapi.Schema(
 class Edit_payment(generics.RetrieveUpdateAPIView):
     queryset = Payment.objects.all()
     serializer_class = Payment_Serializer
+    permission_classes = [IsAuthenticated,HasChangePaymentPermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewPaymentPermission() ]
+        if self.request.method == 'PATCH':
+            return [HasChangePaymentPermission() ]
     def get(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
@@ -349,6 +355,12 @@ rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INT
 class Edit_warranty(generics.UpdateAPIView):
     queryset = Warranty_Movement.objects.all()
     serializer_class = Warranty_Movement_Serializer
+    permission_classes = [IsAuthenticated,HasChangeWarrantyMovementPermission,HasViewWarrantyMovementPermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewWarrantyMovementPermission() ]
+        if self.request.method == 'PATCH':
+            return [HasChangeWarrantyMovementPermission() ]
     def get(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer = self.get_serializer(instance)
