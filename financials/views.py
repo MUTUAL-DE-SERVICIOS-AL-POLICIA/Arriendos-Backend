@@ -4,8 +4,8 @@ from rest_framework import status, generics
 from financials.models import Payment, Warranty_Movement, Event_Damage
 from financials.serializer import Payment_Serializer, Warranty_Movement_Serializer, Event_Damage_Serializer
 from leases.models import Rental, Selected_Product
-from django.utils import timezone
 from datetime import datetime
+from django.utils import timezone
 import pytz
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -14,6 +14,8 @@ from .function import Make_Damage_Warranty_Form, Make_Warranty_Form, Make_Return
 from .permissions import *
 from rest_framework.permissions import IsAuthenticated
 from threadlocals.threadlocals import set_thread_variable
+from django.http import HttpResponseBadRequest
+from django.shortcuts import get_object_or_404
 
 request_body_schema = openapi.Schema(
     type=openapi.TYPE_OBJECT,
@@ -498,9 +500,10 @@ request_body_schema = openapi.Schema(
     type=openapi.TYPE_OBJECT,
     properties={
         'rental': openapi.Schema(type=openapi.TYPE_INTEGER),
+        'return_date': openapi.Schema(type=openapi.TYPE_STRING),
     }
 )
-class Warranty_Returned(generics.ListAPIView):
+class Warranty_Returned(generics.GenericAPIView):
     serializer_class = Warranty_Movement_Serializer
     permission_classes = [IsAuthenticated, HasAddWarrantyMovementPermission]
     def get_permissions(self):
@@ -511,12 +514,23 @@ class Warranty_Returned(generics.ListAPIView):
     operation_description="API de devolución de garantía",
     request_body=request_body_schema
     )
-    def post(self, request):
-        validated_fields = ["rental", "date"]
+    def post(self, request, *args, **kwargs):
+        validated_fields = ["rental", "return_date"]
         error_message = required_fields(request, validated_fields)
         if error_message:
             return Response(error_message, status=status.HTTP_400_BAD_REQUEST)
-        rental_id = request.data["rental"]
+        try:
+            return_date_str = request.data["return_date"]
+            return_date = datetime.strptime(return_date_str, '%Y-%m-%dT%H:%M:%S.%fZ')
+            return_date = pytz.timezone('America/La_Paz').localize(return_date)
+        except ValueError:
+            return HttpResponseBadRequest("Error de formato de la fecha")
+
+        rental_id = request.data.get("rental")
+        rental_date = get_object_or_404(Rental, pk=rental_id)
+
+        rental_date.warranty_returned = str(return_date)
+        rental_date.save()
         try:
             rental = Rental.objects.get(pk=rental_id)
             warranty= Warranty_Movement.objects.filter(rental_id=rental.id)
@@ -537,12 +551,6 @@ class Warranty_Returned(generics.ListAPIView):
                 serializer = self.serializer_class(data=warranty_data)
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
-                warranty_returned_date = request.data["date"]
-                warranty_returned_date = datetime.strptime(warranty_returned_date, '%Y-%m-%dT%H:%M:%S.%fZ')
-                warranty_returned_date = pytz.timezone('America/La_Paz').localize(warranty_returned_date)
-                rental_date=Rental.objects.get(pk=rental_id)
-                rental_date.warranty_returned = warranty_returned_date,
-                rental_date.save()
                 return Response({"message": "Se retorno la garantía exitosamente"}, status=status.HTTP_201_CREATED)
             else:
                 return Response({"error":"no tiene garantias registrada"}, status=status.HTTP_400_BAD_REQUEST)
