@@ -91,28 +91,3 @@ def Make_Rental_Form(request, rental_id):
         string='@page { margin-left: 2cm; margin-right: 1cm; margin-top: 0.2cm; margin-bottom: 2cm; }'
     )])
     return response
-
-def Make_Rental_Form1(request, rental_id):
-    ruta_archivo_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'reserva.html')
-    ruta_logo = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logo.jpg')
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="formulariodesolicitudreserva.pdf"'
-    if os.path.exists(ruta_archivo_html):
-
-        with open(ruta_archivo_html, 'r', encoding='utf-8') as archivo_html:
-                html_content = archivo_html.read()
-
-    html_string = render_to_string('reserva.html', {
-        'usuario': 'usuario1',
-        'fecha': '12/12/2023',
-    'logo': 'file://' + ruta_logo
-    })
-
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="formulariodesolicitudreserva.pdf"'
-
-    base_url = request.build_absolute_uri()
-    HTML(string=html_string, base_url=base_url).write_pdf(response, stylesheets=[CSS(
-        string='@page { margin-left: 2cm; margin-right: 1cm; margin-top: 0.5cm; margin-bottom: 1cm; size: letter;}'
-    )])
-    return response
