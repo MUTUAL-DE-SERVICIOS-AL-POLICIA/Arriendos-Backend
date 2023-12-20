@@ -686,14 +686,16 @@ class rental_list(generics.GenericAPIView):
             Q(state__name__icontains=query_param) |
             Q(customer__institution_name__icontains=query_param) |
             Q(customer__contact__name__icontains=query_param)
-        ).order_by("id")
+        ).order_by("id").distinct()
         page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit', self.queryset.count()))
         start_num = page_num * limit_num
         end_num = limit_num * (page_num + 1)
         serializer_instance = self.serializer_class(queryset, many=True)
         rental_list=[]
+        count=0
         for item in serializer_instance.data:
+            count =count+1
             state=item["state"]
             can_edit=False
             rental=Rental.objects.get(id=item["id"])
@@ -704,8 +706,8 @@ class rental_list(generics.GenericAPIView):
             selected_products_list=[]
             if customer_name is None:
                 customer_name= item["customer"]["contacts"][0]["name"]
-                if state["id"] is 3:
-                    can_edit=True
+            if state["id"] is 3:
+                can_edit=True
             for product in item["selected_products"]:
                 data_product={
                     "id":product["id"],
@@ -715,6 +717,7 @@ class rental_list(generics.GenericAPIView):
                 }
                 selected_products_list.append(data_product)
             data={
+                "correlative":count,
                 "id": item["id"],
                 "contract_number": item["contract_number"],
                 "customer_name":customer_name,
@@ -729,6 +732,6 @@ class rental_list(generics.GenericAPIView):
                 "total": queryset.count(),
                 "page": page_num,
                 "last_page": math.ceil(queryset.count()/ limit_num),
-                "products": rental_list[start_num:end_num]
+                "rentals": rental_list[start_num:end_num]
             }
         return Response(response_data)
