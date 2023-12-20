@@ -514,6 +514,7 @@ request_body_schema = openapi.Schema(
     }
 )
 class Delivery_Form(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
     operation_description="API  de formulario de entrega y recepción de ambientes, con rental y producto seleccionado",
@@ -661,6 +662,7 @@ class List_additional_hour_applied(generics.ListAPIView):
 class Report_Api(generics.GenericAPIView):
     queryset= Rental.objects.all()
     serializer_class = RentalsSerializer
+    permission_classes = [IsAuthenticated]
     def post(self, request, *args, **kwargs):
         start_date = request.data.get("start_date", None)
         end_date = request.data.get("end_date", None)
