@@ -517,20 +517,10 @@ class Warranty_Returned(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         validated_fields = ["rental", "return_date"]
         error_message = required_fields(request, validated_fields)
+        rental_id = request.data.get("rental")
         if error_message:
             return Response(error_message, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            return_date_str = request.data["return_date"]
-            return_date = datetime.strptime(return_date_str, '%Y-%m-%dT%H:%M:%S.%fZ')
-            return_date = pytz.timezone('America/La_Paz').localize(return_date)
-        except ValueError:
-            return HttpResponseBadRequest("Error de formato de la fecha")
-
-        rental_id = request.data.get("rental")
-        rental_date = get_object_or_404(Rental, pk=rental_id)
-
-        rental_date.warranty_returned = str(return_date)
-        rental_date.save()
+        
         try:
             rental = Rental.objects.get(pk=rental_id)
             warranty= Warranty_Movement.objects.filter(rental_id=rental.id)
@@ -538,6 +528,21 @@ class Warranty_Returned(generics.GenericAPIView):
                 warranty_balance=warranty.latest('id').balance
                 if warranty_balance == 0:
                     return Response({"error":f"no se puede devolver la garatía, porque el monto de la garantía es: {warranty_balance}"}, status=status.HTTP_400_BAD_REQUEST)
+                
+                try:
+                    return_date_str = request.data["return_date"]
+                    return_date = datetime.strptime(return_date_str, '%Y-%m-%dT%H:%M:%S.%fZ')
+                    return_date = pytz.timezone('America/La_Paz').localize(return_date)
+                except ValueError:
+                    return HttpResponseBadRequest("Error de formato de la fecha")
+
+                
+                rental_date = get_object_or_404(Rental, pk=rental_id)
+
+                rental_date.warranty_returned = str(return_date)
+                rental_date.save()
+                
+                
                 total=  0
                 returned=warranty_balance
                 warranty_data = {
