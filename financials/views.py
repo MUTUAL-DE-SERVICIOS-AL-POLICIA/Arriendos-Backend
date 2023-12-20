@@ -391,6 +391,7 @@ class Edit_warranty(generics.UpdateAPIView):
         }
         return Response(response_data)
 class Warranty_Return_Request(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
     @swagger_auto_schema(
     operation_description="Solicitud de devolución de garantía",
     manual_parameters=[rental],
@@ -564,7 +565,7 @@ class Warranty_Returned(generics.GenericAPIView):
 
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Return_Warranty_Form(generics.GenericAPIView):
-
+    permission_classes = [IsAuthenticated]
     @swagger_auto_schema(
     operation_description="Formulario de conformidad de devolución de garantía",
     manual_parameters=[rental],
