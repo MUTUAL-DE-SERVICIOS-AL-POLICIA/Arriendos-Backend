@@ -47,7 +47,7 @@ class Register_payment(generics.ListAPIView):
         if not rental_id:
             return Response({"error": "Parámetro 'rental' faltante en la consulta."}, status=status.HTTP_400_BAD_REQUEST)
         total_mount=Rental.objects.get(pk=rental_id).initial_total
-        payment = Payment.objects.filter(rental_id=rental_id)
+        payment = Payment.objects.filter(rental_id=rental_id).order_by("id")
         if payment.exists():
             payable_mount = payment.latest('id').payable_mount
             payment_serialized = self.serializer_class(payment, many=True)
@@ -162,14 +162,28 @@ class Edit_payment(generics.RetrieveUpdateAPIView):
     def patch(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', True)
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        response_data = {
-                "state":"success",
-                "message":"El pago se ha editado exitosamente"
+        amount_paid = float(request.data.get('amount_paid'))
+        list_payment=self.queryset.filter(rental=instance.rental).order_by('id')
+        number_payment=list_payment.count()
+        if number_payment >1:
+            previus_payment=list_payment[len(list_payment)-2]
+            previus_payable_mount=float(previus_payment.payable_mount)
+            if amount_paid is not None and amount_paid<=previus_payable_mount:
+                request.data["payable_mount"]=float(previus_payment.payable_mount)-float(request.data["amount_paid"])
+                serializer = self.get_serializer(instance, data=request.data, partial=partial)
+                serializer.is_valid(raise_exception=True)
+                self.perform_update(serializer)
+                response_data = {
+                        "state":"success",
+                        "message":"El pago se ha editado exitosamente"
+                        }
+                return Response(response_data)
+            else:
+                response_data = {
+                "state":"error",
+                "error":"El monto registrado es mayor al monto a pagar"
                 }
-        return Response(response_data)
+                return Response(response_data,status=status.HTTP_400_BAD_REQUEST)
 class Register_total_payment(generics.ListAPIView):
     serializer_class = Payment_Serializer
     permission_classes = [IsAuthenticated, HasAddPaymentPermission]
