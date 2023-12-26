@@ -311,6 +311,12 @@ class Register_warranty(generics.ListAPIView):
         if not rental_id:
             return Response({"error": "Parámetro 'rental' faltante en la consulta."}, status=status.HTTP_400_BAD_REQUEST)
         warranties=Warranty_Movement.objects.filter(rental=rental_id)
+        rental=Rental.objects.get(pk=rental_id)
+        plan=rental.plan
+        if plan is None:
+            warranty_mount=Selected_Product.objects.filter(rental=rental).first().product.room.warranty
+        else:
+            warranty_mount=0
         list_warranties=[]
         n=0
         for warranty in warranties:
@@ -333,7 +339,12 @@ class Register_warranty(generics.ListAPIView):
                 "voucher":warranty.voucher_number
             }
             list_warranties.append(response_data)
-        return Response(list_warranties, status=status.HTTP_200_OK)
+        response_data={
+            "state":"success",
+            "warranty_movements":list_warranties,
+            "total_warranty":warranty_mount
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
     @swagger_auto_schema(
     operation_description="Eliminar el ultimo registro de garantía",
     )
