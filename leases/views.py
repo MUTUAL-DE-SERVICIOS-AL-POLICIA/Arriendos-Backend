@@ -581,7 +581,7 @@ class Register_additional_hour_applied(generics.RetrieveUpdateDestroyAPIView):
         data_serialized = Additional_hour_AppliedSerializer(data=data)
         if data_serialized.is_valid():
             data_serialized.save()
-            return Make_Overtime_Form(request, rental, selected_product_id, number, price, total, description)
+            return Make_Overtime_Form(request, rental, selected_product_id)
         else:
             return Response({"error":"no se pudo registar la hora extra"}, status=status.HTTP_400_BAD_REQUEST)
     @swagger_auto_schema(
