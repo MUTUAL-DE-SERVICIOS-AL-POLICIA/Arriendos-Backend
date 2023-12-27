@@ -223,7 +223,7 @@
                 <center>HORAS EXTRA APLICADAS</center>
               </th>
             </tr>
-            {% if selected_product.additional_hour_applieds is None %}
+            {% if selected_product.additional_hour_applieds %}
             {% for product in selected_product.additional_hour_applieds  %}
             <tr>
               <th>FECHA</th>

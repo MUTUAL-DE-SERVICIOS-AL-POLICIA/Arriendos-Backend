@@ -116,8 +116,7 @@ def Make_Damage_Warranty_Form(request, rental_id, product):
             event_damage_data = []
             for warranty_damage in warranty_damages:
                 warranty_movement = Warranty_Movement.objects.get(pk = warranty_damage.warranty_movement_id)
-                event_damage_date = warranty_damage.created_at
-
+                event_damage_date = timezone.localtime(warranty_damage.created_at)
                 if isinstance(event_damage_date, str):
                     event_damage_date = datetime.strptime(event_damage_date, "%Y-%m-%dT%H:%M:%S.%f%z")
                 event_damage_date = event_damage_date.strftime("%d-%m-%Y %I:%M:%S %p")
