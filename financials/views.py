@@ -184,6 +184,19 @@ class Edit_payment(generics.RetrieveUpdateAPIView):
                 "error":"El monto registrado es mayor al monto a pagar"
                 }
                 return Response(response_data,status=status.HTTP_400_BAD_REQUEST)
+        else:
+            payable_mount = float(instance.rental.initial_total)-amount_paid
+            if payable_mount<0:
+                return Response({"error": "El monto de pago es mayor al del monto total."}, status=status.HTTP_400_BAD_REQUEST)
+            request.data["payable_mount"]=payable_mount
+            serializer = self.get_serializer(instance, data=request.data, partial=partial)
+            serializer.is_valid(raise_exception=True)
+            self.perform_update(serializer)
+            response_data = {
+                    "state":"success",
+                    "message":"El pago se ha editado exitosamente"
+                    }
+            return Response(response_data)
 class Register_total_payment(generics.ListAPIView):
     serializer_class = Payment_Serializer
     permission_classes = [IsAuthenticated, HasAddPaymentPermission]
