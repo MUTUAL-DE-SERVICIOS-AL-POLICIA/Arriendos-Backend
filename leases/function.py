@@ -101,11 +101,13 @@ def Make_Overtime_Form(request, rental_id, product):
             additional_hour_applieds = []
             for additional_hour_applied in additional_hour_applieds_data:
                 payment_date = additional_hour_applied["created_at"]
-                payment_date = datetime.strptime(payment_date, "%Y-%m-%dT%H:%M:%S.%f%z")
+                try:
+                    payment_date = datetime.strptime(payment_date, "%Y-%m-%dT%H:%M:%S.%f%z")
+                except ValueError:
+                    payment_date = datetime.strptime(payment_date, "%Y-%m-%dT%H:%M:%S%z")
                 payment_date = payment_date.strftime("%d-%m-%Y %I:%M:%S %p")
                 additional_hour_applied["rate_data"] = additional_hour_applied["total"] / additional_hour_applied["number"]
                 additional_hour_applied["payment_date"] = payment_date
-
             selected_product = {
                 'id': selected_product_data["id"],
                 'start_time': selected_product_data["start_time"],
@@ -206,20 +208,32 @@ def Make_Rental_Report(request, start_date, end_date, state):
             payment_total = payment_total + Decimal(payment["amount_paid"])
 
         if payment_date:
-            payment_date = datetime.strptime(payment_date, "%Y-%m-%dT%H:%M:%S.%f%z")
+            try:
+                payment_date = datetime.strptime(payment_date, "%Y-%m-%dT%H:%M:%S.%f%z")
+            except ValueError:
+                payment_date = datetime.strptime(payment_date, "%Y-%m-%dT%H:%M:%S%z")
             payment_date = payment_date.strftime("%d-%m-%Y %I:%M:%S %p")
 
         warranty_return_request = rentals["warranty_return_request"]
         if warranty_return_request:
-            warranty_return_request = datetime.strptime(warranty_return_request, "%Y-%m-%dT%H:%M:%S.%f%z")
+            try:
+                warranty_return_request = datetime.strptime(warranty_return_request, "%Y-%m-%dT%H:%M:%S.%f%z")
+            except ValueError:
+                warranty_return_request = datetime.strptime(warranty_return_request, "%Y-%m-%dT%H:%M:%S%z")
+
             warranty_return_request = warranty_return_request.strftime("%d-%m-%Y %I:%M:%S %p")
         else:
             warranty_return_request = "No se realizo la solicitud"
 
         warranty_returned = rentals["warranty_returned"]
         if warranty_returned:
-            warranty_returned = datetime.strptime(warranty_returned, "%Y-%m-%dT%H:%M:%S.%f%z")
+            try:
+                warranty_returned = datetime.strptime(warranty_returned, "%Y-%m-%dT%H:%M:%S.%f%z")
+            except ValueError:
+                warranty_returned = datetime.strptime(warranty_returned, "%Y-%m-%dT%H:%M:%S%z")
+
             warranty_returned = warranty_returned.strftime("%d-%m-%Y %I:%M:%S %p")
+
         else:
             warranty_returned = "No se retornó la garantía"
         warranty_movements = rentals.get("warranty_movements", [])
@@ -229,9 +243,12 @@ def Make_Rental_Report(request, start_date, end_date, state):
         get_warranty_voucher_number = get_warranty.get("voucher_number", "")
         get_warranty_created_at = get_warranty.get("created_at", "")
         if get_warranty_created_at:
-            get_warranty_datetime = datetime.strptime(get_warranty_created_at, "%Y-%m-%dT%H:%M:%S.%f%z")
+            try:
+                get_warranty_datetime = datetime.strptime(get_warranty_created_at, "%Y-%m-%dT%H:%M:%S.%f%z")
+            except ValueError:
+                get_warranty_datetime = datetime.strptime(get_warranty_created_at, "%Y-%m-%dT%H:%M:%S%z")
             get_warranty_created_at = get_warranty_datetime.strftime("%d-%m-%Y %I:%M:%S %p")
-        
+
         warranty_total = 0
         for warranty_movement in warranty_movements:
             warranty_total = warranty_total + Decimal(warranty_movement["income"])
