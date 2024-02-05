@@ -335,7 +335,7 @@ class Customer_Detail(generics.GenericAPIView):
         return Response({'message': 'Cliente eliminado exitosamente'})
 class identify_affiliate(generics.GenericAPIView):
     def get_token_access(self):
-        url = f'{settings.MICROSERVICE_API_URL}/auth/login'
+        url = f'{settings.MICROSERVICE_API_URL}/auth/login_ext'
         username = settings.MICROSERVICE_API_USERNAME
         password = settings.MICROSERVICE_API_PASSWORD
         response = requests.post(url, data={'username': username, 'password': password})
@@ -346,7 +346,7 @@ class identify_affiliate(generics.GenericAPIView):
             response.raise_for_status()
     def get_police(self, id_card):
         token_de_autenticacion = self.get_token_access()
-        url_police = f'{settings.MICROSERVICE_API_URL}/affiliate/affiliate'
+        url_police = f'{settings.MICROSERVICE_API_URL}/affiliate/affiliate_ext'
         params_police = {
             'identity_card_affiliate': id_card,
             'registration_affiliate': '',
