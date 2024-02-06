@@ -385,7 +385,7 @@ class identify_affiliate(generics.GenericAPIView):
             return ({'error': 'Error en la solicitud al microservicio'})
     def get_spouse(self, id_card):
         token_de_autenticacion = self.get_token_access()
-        url_spouse = f'{settings.MICROSERVICE_API_URL}/affiliate/spouse'
+        url_spouse = f'{settings.MICROSERVICE_API_URL}/affiliate/spouse_ext'
         params_spouse = {
             'identity_card_spouses': id_card,
             'registration_affiliate': '',
@@ -429,18 +429,15 @@ class identify_affiliate(generics.GenericAPIView):
             return Response({'error': f'Error al obtener el token de acceso: {e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if 'error' in police_response:
-            return Response({'error': 'Error al buscar afiliado en la policía'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            try:
+                spouse_response = self.get_spouse(id_card)
+                if spouse_response.get("is_spouse"):
+                    return Response(spouse_response["data"])
+                else:
+                    return Response({"error": "No existe el afiliado"}, status=status.HTTP_404_NOT_FOUND)
+            except Exception as e:
+                return Response({'error': f'Error al buscar afiliado en los cónyuges: {e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if police_response.get("is_police"):
             return Response(police_response["data"])
-        try:
-            spouse_response = self.get_spouse(id_card)
-        except Exception as e:
-            return Response({'error': f'Error al obtener el token de acceso del cónyuge: {e}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        if 'error' in spouse_response:
-            return Response({'error': 'Error al buscar afiliado en los cónyuges'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        if spouse_response.get("is_spouse"):
-            return Response(spouse_response["data"])
-        return Response({"message": "No existe el afiliado"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": "No existe el afiliado"}, status=status.HTTP_404_NOT_FOUND)
