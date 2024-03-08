@@ -19,11 +19,13 @@ request_data_customer_type= [
     },
     {
         "name": "Funcionario Policial Activo",
-        "is_institution":"False"
+        "is_institution":"False",
+        "is_police":"True"
     },
     {
         "name": "Funcionario Policial Pasivo",
-        "is_institution":"False"
+        "is_institution":"False",
+        "is_police":"True"
     },
     {
         "name": "Funcionario de la MUSERPOL - Miembros del Directorio",
