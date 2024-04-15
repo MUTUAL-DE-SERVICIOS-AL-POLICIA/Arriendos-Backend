@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Customer_data</title>
+    <style>
+
+    </style>
+  </head>
+<body>
+<table border="1">
+        <tr>
+          <th class="th-header" colspan="3">
+            DATOS DEL CLIENTE
+          </th>
+        </tr>
+        <tr>
+          <th>NOMBRE DEL SOLICITANTE</th>
+          <td colspan="2">{{ customer.name }}</td>
+        </tr>
+        <tr>
+            <th style="border-bottom-left-radius: 5px;">CI. DEL SOLICITANTE</th>
+            <td colspan="2">{{ customer.nit }}</td>
+            {% if customer.nup %}
+            <tr>
+              <th style="border-bottom-right-radius: 5px;">NUP</td>
+              <td colspan="2">{{ customer.nup }}</td>
+            </tr>
+            {% endif %}
+        </tr>
+        {% if customer.institution_name %}
+        <tr>
+          <th style="border-bottom-left-radius: 5px;">INSTITUCIÓN</th>
+          <td colspan="1">{{ customer.institution_name }}</td>
+          <td style="border-bottom-right-radius: 5px;"><strong>NIT: </strong>{{customer.institution_nit}}</td>
+        </tr>
+        {%endif%}
+      </table>
+</body>
+</html>
