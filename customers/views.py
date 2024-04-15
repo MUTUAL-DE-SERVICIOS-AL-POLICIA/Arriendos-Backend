@@ -441,3 +441,23 @@ class identify_affiliate(generics.GenericAPIView):
         if police_response.get("is_police"):
             return Response(police_response["data"])
         return Response({"error": "No existe el afiliado"}, status=status.HTTP_404_NOT_FOUND)
+def customer_data(rental_id):
+    rental= Rental.objects.get(pk=rental_id)
+    customer=rental.customer
+    contact=Contact.objects.get(pk=customer.id)
+    name = contact.name
+    nit = contact.ci_nit
+    nup=contact.nup
+    institution_name=""
+    institution_nit=""
+    if customer.institution_name is not None:
+        institution_name = customer.institution_name
+        institution_nit = customer.nit
+    contact_data={
+        "name":name,
+        "nit":nit,
+        "nup":nup,
+        "institution_name":institution_name,
+        "institution_nit":institution_nit
+    }
+    return contact_data
