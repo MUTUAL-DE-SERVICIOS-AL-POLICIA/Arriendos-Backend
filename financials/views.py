@@ -18,6 +18,7 @@ from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from Arriendos_Backend import util
 from customers import views
+from leases.serializer import RentalsSerializer
 
 request_body_schema = openapi.Schema(
     type=openapi.TYPE_OBJECT,
@@ -158,11 +159,16 @@ class Print_payment(generics.ListAPIView):
         payments=Register_payment.list_payment(self,rental_id)["payments"]
         rental= Rental.objects.get(pk=rental_id)
         customer=views.customer_data(rental_id)
+        serializer_class = RentalsSerializer
+        serializer = serializer_class(rental)
+        serialized_rental = serializer.data
+        selected_products_data = serialized_rental.get("selected_products")
         params={
             'user': self.request.user,
             'contract_number': rental.contract_number,
             'customer': customer,
-            'payments' : payments
+            'payments' : payments,
+            'selected_products': selected_products_data
         }
         return util.generate_pdf('payments.html',params)
 class Edit_payment(generics.RetrieveUpdateAPIView):
@@ -420,11 +426,16 @@ class Print_Warranties(generics.ListAPIView):
         warranties=Register_warranty.List_Warranties(self,rental_id)
         rental= Rental.objects.get(pk=rental_id)
         customer=views.customer_data(rental_id)
+        serializer_class = RentalsSerializer
+        serializer = serializer_class(rental)
+        serialized_rental = serializer.data
+        selected_products_data = serialized_rental.get("selected_products")
         params={
             'user': self.request.user,
             'contract_number': rental.contract_number,
             'customer': customer,
-            'warranties' : warranties
+            'warranties' : warranties,
+            'selected_products':selected_products_data
         }
         return util.generate_pdf('warranties.html',params)
 class Edit_warranty(generics.UpdateAPIView):
