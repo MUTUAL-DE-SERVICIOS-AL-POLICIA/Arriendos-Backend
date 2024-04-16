@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Customer_data</title>
+    <style>
+
+    </style>
+  </head>
+<body>
+<table border="1">
+    <table>
+        <tr>
+            <th class="th-header" colspan="3">
+              <center>INFORMACIÓN DE LOS SALONES</center>
+            </th>
+          </tr>
+          {% for selected_product in selected_products %}
+          <tr style="border-top: solid; border-left: solid; border-right: solid;">
+            <th>NOMBRE DEL SALÓN SOLICITADO</th>
+            <td colspan="2">
+                {{ selected_product.product.room.name }}
+              </td>
+          </tr>
+          <tr style="border-left: solid; border-right: solid;">
+            <th>FECHA DE EVENTO (DÍA)</th>
+            <td colspan="2">
+                {{ selected_product.start_time }}
+            </td>
+          </tr>
+          <tr style="border-left: solid; border-right: solid;">
+            <th>TIPO DE EVENTO</th>
+            <td colspan="2">
+                {{ selected_product.event_type.name }}
+            </td>
+          </tr>
+          <tr style="border-left: solid; border-right: solid;">
+            <th>CANTIDAD DE HORAS DE USO</th>
+            <td colspan="2">
+                {{ selected_product.product.hour_range.time }} Horas
+            </td>
+          </tr>
+          <tr style="border-left: solid; border-right: solid;">
+            <th>HORA DE INICIO DEL EVENTO</th>
+            <td colspan="2">
+                {{ selected_product.start_time_only_hour }}
+            </td>
+          </tr>
+
+          <tr style="border-left: solid; border-right: solid;">
+            <th>HORA DE FINALIZACIÓN DEL EVENTO</th>
+            <td colspan="2">
+                {{ selected_product.end_time_only_hour }}
+            </td>
+          </tr>
+          <tr style="border-left: solid; border-right: solid;">
+            <th>PRECIO</th>
+            <td colspan="2">
+            {{ selected_product.product_price }}
+            </td>
+          </tr>
+          <tr style="border-left: solid; border-right: solid; border-bottom: solid;">
+            <th>GARANTÍA</th>
+            <td colspan="2">
+                {{ selected_product.product.room.warranty }}
+            </td>
+          </tr>
+          <tr style="border: none; height: 15px; background-color: white;">
+            <th style="border: none; background-color: white;"></th>
+            <td style="border: none; background-color: white;"></td>
+          </tr>
+          {%endfor%}
+    </table>
+</body>
+</html>
