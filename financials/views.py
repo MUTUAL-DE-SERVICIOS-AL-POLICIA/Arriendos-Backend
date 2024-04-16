@@ -356,13 +356,20 @@ class Register_warranty(generics.ListAPIView):
         rental_id = request.query_params.get('rental')
         if not rental_id:
             return Response({"error": "Parámetro 'rental' faltante en la consulta."}, status=status.HTTP_400_BAD_REQUEST)
-        warranties=Warranty_Movement.objects.filter(rental=rental_id)
         rental=Rental.objects.get(pk=rental_id)
         plan=rental.plan
         if plan is None:
             warranty_mount=Selected_Product.objects.filter(rental=rental).first().product.room.warranty
         else:
             warranty_mount=0
+        response_data={
+            "state":"success",
+            "warranty_movements":self.List_Warranties(rental_id),
+            "total_warranty":warranty_mount
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+    def List_Warranties(self,rental_id):
+        warranties=Warranty_Movement.objects.filter(rental=rental_id)
         list_warranties=[]
         n=0
         for warranty in warranties:
@@ -373,7 +380,7 @@ class Register_warranty(generics.ListAPIView):
                 type = "DESCUENTO"
             if warranty.returned>0:
                 type = "RETORNO"
-            response_data= {
+            warranty_data= {
                 "id":warranty.id,
                 "correlative":n,
                 "type": type,
@@ -384,13 +391,8 @@ class Register_warranty(generics.ListAPIView):
                 "detail":warranty.detail,
                 "voucher":warranty.voucher_number
             }
-            list_warranties.append(response_data)
-        response_data={
-            "state":"success",
-            "warranty_movements":list_warranties,
-            "total_warranty":warranty_mount
-        }
-        return Response(response_data, status=status.HTTP_200_OK)
+            list_warranties.append(warranty_data)
+        return list_warranties
     @swagger_auto_schema(
     operation_description="Eliminar el ultimo registro de garantía",
     )
@@ -411,6 +413,20 @@ class Register_warranty(generics.ListAPIView):
             return Response({"error": "El Arriendo no existe."}, status=status.HTTP_400_BAD_REQUEST)
 
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
+class Print_Warranties(generics.ListAPIView):
+    def get(self,request,rental_id):
+        return self.Warranties_pdf_generate(rental_id)
+    def Warranties_pdf_generate(self,rental_id):
+        warranties=Register_warranty.List_Warranties(self,rental_id)
+        rental= Rental.objects.get(pk=rental_id)
+        customer=views.customer_data(rental_id)
+        params={
+            'user': self.request.user,
+            'contract_number': rental.contract_number,
+            'customer': customer,
+            'warranties' : warranties
+        }
+        return util.generate_pdf('warranties.html',params)
 class Edit_warranty(generics.UpdateAPIView):
     queryset = Warranty_Movement.objects.all()
     serializer_class = Warranty_Movement_Serializer
