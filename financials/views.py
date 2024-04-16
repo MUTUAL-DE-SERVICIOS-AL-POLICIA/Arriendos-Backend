@@ -16,6 +16,8 @@ from rest_framework.permissions import IsAuthenticated
 from threadlocals.threadlocals import set_thread_variable
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
+from Arriendos_Backend import util
+from customers import views
 
 request_body_schema = openapi.Schema(
     type=openapi.TYPE_OBJECT,
@@ -46,6 +48,8 @@ class Register_payment(generics.ListAPIView):
         rental_id = request.query_params.get('rental')
         if not rental_id:
             return Response({"error": "Parámetro 'rental' faltante en la consulta."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(self.list_payment(rental_id))
+    def list_payment(self,rental_id):
         total_mount=Rental.objects.get(pk=rental_id).initial_total
         payment = Payment.objects.filter(rental_id=rental_id).order_by("id")
         if payment.exists():
@@ -57,7 +61,7 @@ class Register_payment(generics.ListAPIView):
                 "payable_mount":payable_mount,
                 "payments":payment_serialized.data
             }
-            return Response(response_data, status=status.HTTP_200_OK)
+            return response_data
         else:
             response_data= {
                 "state" :"success",
@@ -65,7 +69,7 @@ class Register_payment(generics.ListAPIView):
                 "payable_mount":0,
                 "payments":[]
             }
-            return Response(response_data, status=status.HTTP_200_OK)
+        return response_data
 
     @swagger_auto_schema(
     operation_description="Registro de pagos",
@@ -146,6 +150,21 @@ request_body_schema = openapi.Schema(
         'detail': openapi.Schema(type=openapi.TYPE_STRING)
     }
 )
+class Print_payment(generics.ListAPIView):
+    serializer_class = Payment_Serializer
+    def get(self,request, rental_id):
+        return self.Payment_pdf_generate(rental_id)
+    def Payment_pdf_generate(self,rental_id):
+        payments=Register_payment.list_payment(self,rental_id)["payments"]
+        rental= Rental.objects.get(pk=rental_id)
+        customer=views.customer_data(rental_id)
+        params={
+            'user': self.request.user,
+            'contract_number': rental.contract_number,
+            'customer': customer,
+            'payments' : payments
+        }
+        return util.generate_pdf('payments.html',params)
 class Edit_payment(generics.RetrieveUpdateAPIView):
     queryset = Payment.objects.all()
     serializer_class = Payment_Serializer
