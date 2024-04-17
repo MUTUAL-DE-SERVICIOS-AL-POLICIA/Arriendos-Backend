@@ -7,31 +7,37 @@
     </style>
   </head>
 <body>
+  <h2 class="subtitle">1.- DATOS DEL CLIENTE</h2>
 <table border="1">
         <tr>
-          <th class="th-header" colspan="3">
-            DATOS DEL CLIENTE
+          <th class="th-header">
+            NOMBRE DEL SOLICITANTE
           </th>
+          <th class="th-header">
+            CI DEL SOLICITANTE
+          </th>
+          {% if customer.nup %}
+          <th class="th-header">
+            NUP
+          </th>
+          {% endif %}
         </tr>
         <tr>
-          <th>NOMBRE DEL SOLICITANTE</th>
-          <td colspan="2">{{ customer.name }}</td>
+          <td >{{ customer.name }}</td>
+          <td >{{ customer.nit }}</td>
+          {% if customer.nup %}
+            <td>{{ customer.nup }}</td>
+          {% endif %}
         </tr>
-        <tr>
-            <th style="border-bottom-left-radius: 5px;">CI. DEL SOLICITANTE</th>
-            <td colspan="2">{{ customer.nit }}</td>
-            {% if customer.nup %}
-            <tr>
-              <th style="border-bottom-right-radius: 5px;">NUP</td>
-              <td colspan="2">{{ customer.nup }}</td>
-            </tr>
-            {% endif %}
         </tr>
         {% if customer.institution_name %}
         <tr>
-          <th style="border-bottom-left-radius: 5px;">INSTITUCIÓN</th>
-          <td colspan="1">{{ customer.institution_name }}</td>
-          <td style="border-bottom-right-radius: 5px;"><strong>NIT: </strong>{{customer.institution_nit}}</td>
+          <th class="th-header">INSTITUCIÓN</th>
+          <td class="th-header">NIT</td>
+        </tr>
+        <tr>
+          <td >{{ customer.institution_name }}</td>
+          <td >{{customer.institution_nit}}</td>
         </tr>
         {%endif%}
       </table>
