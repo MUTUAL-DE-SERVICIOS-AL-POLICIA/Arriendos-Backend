@@ -63,20 +63,23 @@ def Make_Warranty_Form(request, rental_id):
 
         with open(ruta_archivo_html, 'r', encoding='utf-8') as archivo_html:
                 html_content = archivo_html.read()
-
-    html_string = render_to_string('solicitud_devolucion_de_garantia.html', {
+    customer= {
         'name': name,
         'nit': nit,
+        'nup': nup,
+        'institution_name': institution_name,
+        'institution_nit': institution_nit,
+    }
+
+    html_string = render_to_string('solicitud_devolucion_de_garantia.html', {
+        'customer':customer,
         'director': director,
         'selected_products':selected_products,
         'departments': departments,
         'contacts': contacts,
         'contract_number': contract_number,
-        'nup': nup,
         'warranty': warranty.balance,
         'request_date': request_date,
-        'institution_name': institution_name,
-        'institution_nit': institution_nit,
         'detail_name': detail_name,
         'detail_nit': deatil_nit,
         'date': date,
@@ -146,17 +149,20 @@ def Make_Damage_Warranty_Form(request, rental_id, product):
 
         with open(ruta_archivo_html, 'r', encoding='utf-8') as archivo_html:
                 html_content = archivo_html.read()
-
-    html_string = render_to_string('ejecucion_de_garantia.html', {
+    customer= {
         'name': name,
         'nit': nit,
+        'nup': nup,
         'institution_name': institution_name,
         'institution_nit': institution_nit,
+    }
+
+    html_string = render_to_string('ejecucion_de_garantia.html', {
+        'customer':customer,
         'selected_products':selected_products,
         'warranty': rental.get("initial_total"),
         'contacts': contacts,
         'contract_number': contract_number,
-        'nup': nup,
         'date': date,
         'user': user,
         'logo': 'file://' + ruta_logo
