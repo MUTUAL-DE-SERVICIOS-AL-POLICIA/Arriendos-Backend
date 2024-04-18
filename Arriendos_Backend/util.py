@@ -19,7 +19,7 @@ def generate_pdf(html, params):
     params["date"]=datetime.now().strftime("%d/%m/%y")
     html_content = render_to_string(html, params)
     html = HTML(string=html_content)
-    css = CSS(string='@page { margin-top: 0px; margin-bottom: 20mm; margin-left: 20mm; margin-right: 20mm; }')
+    css = CSS(string='@page { margin-top: 10mm; margin-bottom: 20mm; margin-left: 10mm; margin-right: 10mm; }')
     pdf_file = html.write_pdf(stylesheets=[css])
     response = HttpResponse(pdf_file, content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="hello_world.pdf"'
