@@ -10,12 +10,12 @@ from weasyprint import HTML, CSS
 from django.template.loader import render_to_string
 import os
 from datetime import datetime
+from Arriendos_Backend import util
 from django.utils import timezone
 import pytz
 
 
 def Make_Rental_Form(request, rental_id):
-
     serializer_class = RentalsSerializer
     rental = rental_id
     rental =  Rental.objects.get(pk=rental)
@@ -64,19 +64,21 @@ def Make_Rental_Form(request, rental_id):
 
         with open(ruta_archivo_html, 'r', encoding='utf-8') as archivo_html:
                 html_content = archivo_html.read()
-
-    html_string = render_to_string('reserva.html', {
-        'num':num,
+    customer= {
         'name': name,
         'nit': nit,
+        'nup': nup,
+        'institution_name': institution_name,
+        'institution_nit': institution_nit,
+    }
+    html_string = render_to_string('reserva.html', {
+        'num':num,
+        'customer':customer,
         'selected_products':selected_products,
         'initial_total': rental.get("initial_total"),
         'contacts': contacts,
         'requirements': requirements,
         'contract_number': contract_number,
-        'nup': nup,
-        'institution_name': institution_name,
-        'institution_nit': institution_nit,
         'detail_name': detail_name,
         'detail_nit': deatil_nit,
         'date': date,
