@@ -8,67 +8,64 @@
   </head>
 <body>
 <table border="1">
+  <h2 class="subtitle"> 2.- INFORMACIÓN DE LOS AMBIENTES</h2>
+    </table> {% endcomment %}
+    {% for selected_product in selected_products %}
     <table>
-        <tr>
-            <th class="th-header" colspan="3">
-              <center>INFORMACIÓN DE LOS SALONES</center>
-            </th>
-          </tr>
-          {% for selected_product in selected_products %}
-          <tr style="border-top: solid; border-left: solid; border-right: solid;">
-            <th>NOMBRE DEL SALÓN SOLICITADO</th>
-            <td colspan="2">
-                {{ selected_product.product.room.name }}
-              </td>
-          </tr>
-          <tr style="border-left: solid; border-right: solid;">
-            <th>FECHA DE EVENTO (DÍA)</th>
-            <td colspan="2">
-                {{ selected_product.start_time }}
-            </td>
-          </tr>
-          <tr style="border-left: solid; border-right: solid;">
-            <th>TIPO DE EVENTO</th>
-            <td colspan="2">
-                {{ selected_product.event_type.name }}
-            </td>
-          </tr>
-          <tr style="border-left: solid; border-right: solid;">
-            <th>CANTIDAD DE HORAS DE USO</th>
-            <td colspan="2">
-                {{ selected_product.product.hour_range.time }} Horas
-            </td>
-          </tr>
-          <tr style="border-left: solid; border-right: solid;">
-            <th>HORA DE INICIO DEL EVENTO</th>
-            <td colspan="2">
-                {{ selected_product.start_time_only_hour }}
-            </td>
-          </tr>
+      <tr>
+          <th class="th-header">
+            NOMBRE DEL SALÓN SOLICITADO
+          </th>
+          <th class="th-header">
+            FECHA DE EVENTO (DÍA)
+          </th>
+      </tr>
 
-          <tr style="border-left: solid; border-right: solid;">
-            <th>HORA DE FINALIZACIÓN DEL EVENTO</th>
-            <td colspan="2">
-                {{ selected_product.end_time_only_hour }}
-            </td>
-          </tr>
-          <tr style="border-left: solid; border-right: solid;">
-            <th>PRECIO</th>
-            <td colspan="2">
-            {{ selected_product.product_price }}
-            </td>
-          </tr>
-          <tr style="border-left: solid; border-right: solid; border-bottom: solid;">
-            <th>GARANTÍA</th>
-            <td colspan="2">
-                {{ selected_product.product.room.warranty }}
-            </td>
-          </tr>
-          <tr style="border: none; height: 15px; background-color: white;">
-            <th style="border: none; background-color: white;"></th>
-            <td style="border: none; background-color: white;"></td>
-          </tr>
-          {%endfor%}
-    </table>
+      <tr style="border-top: solid; border-left: solid; border-right: solid;">
+        <td>
+          {{ selected_product.product.room.name }}
+        </td>
+        <td >
+          {{ selected_product.start_time }}
+      </td>
+      </tr>
+      <tr style="border-left: solid; border-right: solid;">
+          <th class="th-header">TIPO DE EVENTO</th>
+          <th class="th-header">CANTIDAD DE HORAS DE USO</th>
+      </tr>
+      <tr style="border-left: solid; border-right: solid;">
+        <td>
+          {{ selected_product.event_type.name }}
+        </td>
+        <td>
+          {{ selected_product.product.hour_range.time }} Horas
+        </td>
+      </tr>
+      <tr style="border-left: solid; border-right: solid;">
+          <th class="th-header">HORA DE INICIO DEL EVENTO</th>
+          <th class="th-header">HORA DE FINALIZACIÓN DEL EVENTO</th>
+      </tr>
+      <tr style="border-left: solid; border-right: solid;">
+        <td >
+          {{ selected_product.start_time_only_hour }}
+        </td>
+        <td >
+          {{ selected_product.end_time_only_hour }}
+        </td>
+      </tr>
+      <tr style="border-left: solid; border-right: solid;">
+        <th class="th-header">PRECIO</th>
+        <th class="th-header">GARANTÍA</th>
+      </tr>
+      <tr style="border-left: solid; border-right: solid; border-bottom: solid;">
+        <td>
+          {{ selected_product.product_price }}
+        </td>
+        <td >
+            {{ selected_product.product.room.warranty }}
+        </td>
+        </tr>
+  </table>
+  {%endfor%}
 </body>
 </html>
