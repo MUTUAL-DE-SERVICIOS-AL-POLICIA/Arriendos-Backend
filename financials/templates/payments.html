@@ -21,53 +21,50 @@
             border-spacing: 0px;
             font-family: 'Arial', sans-serif;
         }
+        .td-payment {
+          text-align: right;
+        }
     </style>
     <title>Payment_Form</title>
 </head>
 <body>
     {% include 'header.html' with user=user date=date %}
-    <h5 class="title-form">FORMULARIO DE PAGOS <br>SALONES DE EVENTOS DE LA MUSERPOL
+    <h5 class="title-form">FORMULARIO DE CANON DE PAGOS <br>SALONES DE EVENTOS DE LA MUSERPOL
     </h5>
     {% include 'customer_data.html' with customer=customer %}
-    <br>
     {% include 'room_data.html' with selected_products=selected_products %}
-    <br>
+    <h2 class="subtitle"> 3.- INFORMACIÓN DE LOS PAGOS</h2>
       <table>
-        <tr>
-          <th class="th-header" colspan="4">
-            LISTA DE PAGOS
-          </th>
-        </tr>
-        {% for payment in payments %}
-        <tr>
-          <th>N° COMPROBANTE</th>
-          <td colspan="3">
-              {{ payment.voucher_number }}
-          </td>
-        </tr>
-        <tr>
-          <th>MONTO CANCELADO</th>
-          <td colspan="3">
-              {{ payment.amount_paid }}
-          </td>
-        </tr>
-        <tr>
-          <th>DETALLE</th>
-          <td colspan="3">
-              {{ payment.detail }}
-          </td>
-        </tr>
-        <tr>
-          <th>MONTO A PAGAR</th>
-          <td colspan="3">
-            {{payment.payable_mount}}
-          </td>
-        </tr>
-        <tr style="border: none; height: 15px; background-color: white;">
-          <th style="border: none; background-color: white;"></th>
-          <td style="border: none; background-color: white;"></td>
-        </tr>
-        {% endfor %}
+      <tr>
+        <th class="th-header" >
+          NÚMERO DE COMPROBANTE
+        </th>
+        <th class="th-header">
+          DETALLE
+        </th>
+        <th class="th-header" >
+          MONTO CANCELADO
+        </th>
+      </tr>
+      {%for payment in payments%}
+      <tr>
+        <td class="td-payment">
+          {{payment.voucher_number}}
+        </td>
+        {%if payment.detail%}
+        <td class="td-payment">
+          {{payment.detail}}
+        </td>
+        {%else%}
+        <td class="td-payment">
+          -
+        </td>
+        {%endif%}
+        <td class="td-payment">
+          {{payment.amount_paid}}
+        </td>
+      </tr>
+      {%endfor%}
       </table>
       <br>
       {%include 'signatures.html' %}
