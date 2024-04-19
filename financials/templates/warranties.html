@@ -35,60 +35,63 @@
     <h2 class="subtitle">3.- LISTA DE REGISTROS DE GARANTÍAS</h2>
       <table>
         <tr>
-          <th class="th-header" colspan="4">
-            LISTA DE REGISTROS DE GARANTÍA
+          <th class="th-header" >
+            NÚMERO DE COMPROBANTE
+          </th>
+          <th class="th-header" >
+            TIPO
+          </th>
+          <th class="th-header" >
+            MONTO
+          </th>
+          <th class="th-header" >
+            DETALLE
+          </th>
+          <th class="th-header" >
+            SALDO
           </th>
         </tr>
         {% for warranty in warranties %}
         <tr>
-          <th>TIPO</th>
-          <td colspan="3">
-              {{ warranty.type }}
-          </td>
-        </tr>
-        {% if warranty.voucher != "0" %}
-        <tr>
-            <th>NÚMERO DE COMPROBANTE</th>
-            <td colspan="3">
-                {{ warranty.voucher }}
+            {% if warranty.voucher != "0"%}
+              <td>
+                {{warranty.voucher}}
+              </td>
+            {%else%}
+              <td>
+                -
+              </td>
+            {%endif%}
+            {% if warranty.income != 0 %}
+            <td>
+              INGRESO
             </td>
-        </tr>
-        {% endif %}
-        <tr>
-          <th>ENTRADA</th>
-          <td colspan="3">
-              {{ warranty.income }}
-          </td>
-        </tr>
-        <tr>
-          <th>DESCUENTO</th>
-          <td colspan="3">
-            {{warranty.discount}}
-          </td>
-        </tr>
-        <tr>
-            <th> DEVUELTO</th>
-            <td colspan="3">
-              {{warranty.returned}}
+            <td>
+              {{warranty.income}}
             </td>
-        </tr>
-        <tr>
-            <th> SALDO</th>
-            <td colspan="3">
+            {% endif %}
+            {% if warranty.discount != 0 %}
+            <td>
+             DESCUENTO
+            </td>
+            <td>
+              {{warranty.discount}}
+            </td>
+            {%endif%}
+            {%if warranty.detail%}
+            <td>
+              {{warranty.detail}}
+            </td>
+            {%else%}
+            <td>
+              -
+            </td>
+            {%endif%}
+            <td>
               {{warranty.balance}}
             </td>
         </tr>
-        <tr>
-            <th> DETALLE</th>
-            <td colspan="3">
-              {{warranty.detail}}
-            </td>
-        </tr>
-        <tr style="border: none; height: 15px; background-color: white;">
-          <th style="border: none; background-color: white;"></th>
-          <td style="border: none; background-color: white;"></td>
-        </tr>
-        {% endfor %}
+        {%endfor%}
       </table>
 </body>
 </html>
