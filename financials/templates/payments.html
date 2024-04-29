@@ -21,8 +21,11 @@
             border-spacing: 0px;
             font-family: 'Arial', sans-serif;
         }
-        .td-payment {
+        .td-number {
           text-align: right;
+        }
+        .td-name{
+          text-align: center;
         }
     </style>
     <title>Payment_Form</title>
@@ -37,8 +40,15 @@
       <table>
       <tr>
         <th class="th-header" >
-          NÚMERO DE COMPROBANTE
+          N° DE COMPROBANTE
         </th>
+        <th class="th-header" >
+          RAZÓN SOCIAL
+        </th>
+        <th class="th-header" >
+          NIT
+        </th>
+
         <th class="th-header">
           DETALLE
         </th>
@@ -48,25 +58,30 @@
       </tr>
       {%for payment in payments%}
       <tr>
-        <td class="td-payment">
+        <td class="td-number">
           {{payment.voucher_number}}
         </td>
+        <td class="td-name">
+          {{payment.business_name}}
+        </td>
+        <td class="td-number">
+          {{payment.nit}}
+        </td>
         {%if payment.detail%}
-        <td class="td-payment">
+        <td class="td-number">
           {{payment.detail}}
         </td>
         {%else%}
-        <td class="td-payment">
+        <td class="td-number">
           -
         </td>
         {%endif%}
-        <td class="td-payment">
+        <td class="td-number">
           {{payment.amount_paid}}
         </td>
       </tr>
       {%endfor%}
       </table>
       <br>
-      {%include 'signatures.html' %}
 </body>
 </html>

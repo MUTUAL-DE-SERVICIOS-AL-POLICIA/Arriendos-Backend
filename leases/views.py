@@ -567,6 +567,8 @@ class Register_additional_hour_applied(generics.RetrieveUpdateDestroyAPIView):
         number = request.data.get('number')
         description = request.data.get('description')
         voucher_number = request.data.get('voucher_number')
+        business_name=request.data.get('business_name')
+        nit=request.data.get('nit')
         price = request.data.get('price')
         if number is None and description is None and voucher_number is None and price is None:
             return Make_Overtime_Form(request, rental, selected_product_id)
@@ -574,6 +576,8 @@ class Register_additional_hour_applied(generics.RetrieveUpdateDestroyAPIView):
         data= {
             'selected_product': selected_product_id,
             'number': number,
+            'business_name':business_name,
+            'nit':nit,
             'description': description,
             'voucher_number': voucher_number,
             'total': total
