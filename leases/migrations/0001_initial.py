@@ -70,6 +70,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('number', models.IntegerField()),
+                ('business_name', models.CharField(max_length=255)),
+                ('nit', models.CharField(max_length=255)),
                 ('voucher_number', models.CharField(max_length=255)),
                 ('total', models.FloatField()),
                 ('description', models.CharField(max_length=255, null=True)),
