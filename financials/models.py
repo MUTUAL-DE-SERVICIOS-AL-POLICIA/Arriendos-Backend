@@ -4,6 +4,8 @@ from leases.models import Rental, Selected_Product
 class Payment(models.Model):
     rental = models.ForeignKey(Rental, on_delete=models.CASCADE)
     voucher_number= models.CharField(max_length=255)
+    business_name=models.CharField(max_length=255)
+    nit=models.CharField(max_length=255)
     detail = models.CharField(max_length=255, null=True)
     payable_mount = models.DecimalField(max_digits=10, decimal_places=2)
     amount_paid = models.DecimalField(max_digits=10, decimal_places=2)

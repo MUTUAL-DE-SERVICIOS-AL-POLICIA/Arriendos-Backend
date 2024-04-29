@@ -33,6 +33,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('voucher_number', models.CharField(max_length=255)),
+                ('business_name', models.CharField(max_length=255)),
+                ('nit', models.CharField(max_length=255)),
                 ('detail', models.CharField(max_length=255, null=True)),
                 ('payable_mount', models.DecimalField(decimal_places=2, max_digits=10)),
                 ('amount_paid', models.DecimalField(decimal_places=2, max_digits=10)),
