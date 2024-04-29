@@ -110,35 +110,11 @@
     </style>
   </head>
   <body>
+    {% include 'header.html' with user=user date=date %}
     <main>
-      <header>
-        <div class="logo">
-          <img src="{{ logo }}" alt="Logo" style="width: 120px;">
-        </div>
-        <div class="institution-info">
-          <p>MUTUAL DE SERVICIOS AL POLICÍA "MUSERPOL"</p>
-          <p>DIRECCIÓN DE ESTRATEGIAS SOCIALES E INVERSIONES</p>
-          <p>UNIDAD DE INVERSIÓN EN SERVICIOS, BIENES Y PATRIMONIO</p>
-        </div>
-        <div class="user-info">
-          <table>
-            <tr>
-              <th class="color-info" style="border-top-left-radius: 5px; border-bottom: 2px solid white;">Usuario</th>
-              <td style="border-top-right-radius: 5px;">{{user}}</td></tr>
-            <tr>
-              <th class="color-info" style="border-bottom: 2px solid white;">Fecha</th>
-            <td>{{date}}</td>
-            </tr>
-            <tr>
-              <th class="color-info" style="border-bottom-left-radius: 5px;">No. Alquiler</th>
-              <td style="border-bottom-right-radius: 5px;">{{contract_number}}</td></tr>
-          </table>
-        </div>
-      </header>
       <h5 class="title-form"><center>FORMULARIO DE HORAS ADICIONALES DE ARRENDAMIENTO DE
       </center>
     <center>SALONES DE EVENTOS DE LA MUSERPOL</center></h5>
-
         <table border="1">
           <tr>
             <th class="th-header" colspan="3" style="text-align: center">
@@ -150,7 +126,6 @@
               No. {{ contract_number }}
             </th>
           </tr>
-
           <tr>
             <th>NOMBRE DEL SOLICITANTE</th>
             <td colspan="2">{{ name }}</td>
@@ -207,7 +182,6 @@
                 {% endfor %}
                 </td>
             </tr>
-  
             <tr>
               <th style="border-bottom-left-radius: 5px;">FECHA DE EVENTO (DÍA)</th>
               <td style="border-bottom-right-radius: 5px;" colspan="2">
@@ -216,7 +190,6 @@
             </tr>
           </table>
           <br>
-
           <table>
             <tr>
               <th class="th-header" colspan="4">
@@ -258,6 +231,18 @@
               </td>
             </tr>
             {% endif %}
+            <tr>
+              <th>RAZON SOCIAL</th>
+              <td colspan="3">
+                  {{ product.business_name }}
+              </td>
+            </tr>
+            <tr>
+              <th>NIT</th>
+              <td colspan="3">
+                  {{ product.nit }}
+              </td>
+            </tr>
             <tr>
               <th>MONTO TOTAL EN Bs.</th>
               <td colspan="1">
