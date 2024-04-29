@@ -39,6 +39,8 @@ class Additional_Hour_Applied(models.Model):
     selected_product = models.ForeignKey(Selected_Product, on_delete=models.CASCADE)
     number = models.IntegerField()
     voucher_number = models.CharField(max_length=255)
+    business_name=models.CharField(max_length=255)
+    nit= models.CharField(max_length=255)
     total = models.FloatField()
     description = models.CharField(max_length=255, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
