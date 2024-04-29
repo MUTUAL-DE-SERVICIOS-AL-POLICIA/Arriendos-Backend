@@ -80,6 +80,8 @@ class Register_payment(generics.ListAPIView):
             rental_id = request.data["rental"]
             detail = request.data["detail"]
             mount=request.data["mount"]
+            business_name=request.data["business_name"]
+            nit=request.data["nit"]
             voucher = request.data["voucher_number"]
             if mount<=0:
                 return Response({"error":"el monto ingresado debe ser mayor 0"}, status=status.HTTP_400_BAD_REQUEST)
@@ -94,6 +96,8 @@ class Register_payment(generics.ListAPIView):
                     payment_data={
                         "rental": rental_id,
                         "detail": detail,
+                        "business_name":business_name,
+                        "nit":nit,
                         "payable_mount": total,
                         "amount_paid": mount,
                         "voucher_number":voucher
@@ -113,6 +117,8 @@ class Register_payment(generics.ListAPIView):
                     payment_data={
                         "rental": rental_id,
                         "detail": detail,
+                        "business_name":business_name,
+                        "nit":nit,
                         "payable_mount": total,
                         "amount_paid": mount,
                         "voucher_number":voucher
