@@ -6,6 +6,11 @@ WORKDIR /app
 # Copia el archivo requirements.txt al contenedor en /app/
 COPY requirements.txt /app/
 
+# instala las dependencias del sistema
+RUN apt-get update && apt-get install -y \
+    libpq-dev \ 
+    && rm -rf /var/lib/apt/lists/*
+
 # Crea y activa el entorno virtual
 RUN python -m venv venv
 RUN /bin/bash -c "source venv/bin/activate"
@@ -24,7 +29,8 @@ ENV DJANGO_SETTINGS_MODULE=Arriendos_Backend.settings
 
 # Instala Gunicorn
 
-RUN pip install gunicorn
+#RUN pip install gunicorn
 
 
-CMD ["gunicorn", "-c", "gunicorn_config.py", "Arriendos_Backend.wsgi:application"]
+#CMD ["gunicorn", "-c", "gunicorn_config.py", "Arriendos_Backend.wsgi:application"]
+CMD ["python3","manage.py","runserver", "0.0.0.0:9005"]
