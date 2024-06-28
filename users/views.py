@@ -16,6 +16,8 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from django.conf import settings
 from threadlocals.threadlocals import set_thread_variable
+from rest_framework.permissions import IsAuthenticated
+from .permissions import *
 import math
 
 request_body_schema = openapi.Schema(
@@ -31,6 +33,11 @@ request_body_schema = openapi.Schema(
 class User_Ldap(APIView):
     serializer_class = UserCustomSerializer
     queryset = User.objects.all()
+    permission_classes = [IsAuthenticated, HasViewUserPermission]
+    def get_permissions(self):
+        set_thread_variable('thread_user', self.request.user)
+        if self.request.method == 'GET':
+            return [HasViewUserPermission()]
     @swagger_auto_schema(
     operation_description="Listado de usuarios",
     )
