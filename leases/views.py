@@ -119,36 +119,33 @@ class Selected_Product_Calendar_Api(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         room = request.GET.get('room', None)
         if room is None:
-            all_dates = Selected_Product.objects.values_list('start_time', flat=True).distinct().order_by('id')
             date_products = []
-            for date in all_dates:
-                selected_products = Selected_Product.objects.filter(start_time=date)
-                for product in selected_products:
-                    if product.rental.state_id < 5:
-                        customer = Customer.objects.get(pk=product.rental.customer_id)
-                        name_state=product.rental.state.name
-                        customer_serializer = CustomersSerializer(customer)
-                        serialized_customer_data = customer_serializer.data
-                        contacts = serialized_customer_data.get("contacts")
-                        start_time = timezone.localtime(product.start_time)
-                        end_time = timezone.localtime(product.end_time)
-                        product_data = {
-                            'selected_product_id': product.id,
-                            'room_id': product.product.room_id,
-                            'product_id': product.product.id,
-                            'room_name': product.product.room.name,
-                            'start_time': start_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                            'end_time': end_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
-                            'rental': product.rental.id,
-                            'customer_id': product.rental.customer_id,
-                            'institution_name': serialized_customer_data["institution_name"],
-                            'nit': serialized_customer_data["nit"],
-                            'contacts': contacts,
-                            'event_type_name': product.event_type.name,
-                            'name_state': name_state
-                        }
-
-                        date_products.append(product_data)
+            selected_products = Selected_Product.objects.all()
+            for product in selected_products:
+                if product.rental.state_id < 5:
+                    customer = Customer.objects.get(pk=product.rental.customer_id)
+                    name_state=product.rental.state.name
+                    customer_serializer = CustomersSerializer(customer)
+                    serialized_customer_data = customer_serializer.data
+                    contacts = serialized_customer_data.get("contacts")
+                    start_time = timezone.localtime(product.start_time)
+                    end_time = timezone.localtime(product.end_time)
+                    product_data = {
+                        'selected_product_id': product.id,
+                        'room_id': product.product.room_id,
+                        'product_id': product.product.id,
+                        'room_name': product.product.room.name,
+                        'start_time': start_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                        'end_time': end_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
+                        'rental': product.rental.id,
+                        'customer_id': product.rental.customer_id,
+                        'institution_name': serialized_customer_data["institution_name"],
+                        'nit': serialized_customer_data["nit"],
+                        'contacts': contacts,
+                        'event_type_name': product.event_type.name,
+                        'name_state': name_state
+                    }
+                    date_products.append(product_data)
             return Response(date_products)
         else:
             selected_products = Selected_Product.objects.filter(product__room_id=room)
