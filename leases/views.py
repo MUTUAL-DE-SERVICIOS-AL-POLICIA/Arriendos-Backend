@@ -397,22 +397,22 @@ class Change_state(generics.ListAPIView):
     def get_permissions(self):
         if self.request.method == 'POST':
             return [HasChangeRentalPermission() ]
-    def prereserved(self, rental_id,state):
+    def prereserved(self, rental_id,state,reason):
         if self.validated_state(rental_id, state):
             state_obj = State.objects.get(pk=state)
-            self.save_state(rental_id,state_obj)
+            self.save_state(rental_id,state_obj,reason)
             response_data = {
                 "message": f"cambio de estado a {state_obj.name} exitosamentasdade",
                 "name_state": state_obj.name
             }
             return Response(response_data, status=status.HTTP_200_OK)
         return Response({"error": "No se puede cambiar de estado "}, status=status.HTTP_400_BAD_REQUEST)
-    def reserved(self, rental_id, state):
+    def reserved(self, rental_id, state, reason):
         state_obj = State.objects.get(pk=state)
         requirement_delivered = Requirement_Delivered.objects.filter(rental_id=rental_id)
         if self.validated_state(rental_id, state):
             if requirement_delivered.exists():
-                self.save_state(rental_id,state_obj)
+                self.save_state(rental_id,state_obj,reason)
                 response_data = {
                     "message": f"cambio de estado a {state_obj.name} exitosamente",
                     "name_state": state_obj.name
@@ -420,7 +420,7 @@ class Change_state(generics.ListAPIView):
                 return Response(response_data, status=status.HTTP_200_OK)
             return Response({"error": "No existen requisitos entregados"}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"error": "No se puede cambiar de estado "}, status=status.HTTP_400_BAD_REQUEST)
-    def rented(self, rental_id, state):
+    def rented(self, rental_id, state,reason):
         state_obj = State.objects.get(pk=state)
         warranty = Warranty_Movement.objects.filter(rental_id=rental_id)
         if self.validated_state(rental_id, state):
@@ -432,7 +432,7 @@ class Change_state(generics.ListAPIView):
             else:
                 last_payment = payment.latest("id")
                 if last_payment.payable_mount == 0:
-                    self.save_state(rental_id,state_obj)
+                    self.save_state(rental_id,state_obj,reason)
                     response_data = {
                         "message": f"cambio de estado a {state_obj.name} exitosamente",
                         "name_state": state_obj.name
@@ -440,12 +440,12 @@ class Change_state(generics.ListAPIView):
                     return Response(response_data, status=status.HTTP_200_OK)
                 return Response({"error": f"No se puede realizar la acción, el monto pendiente de pago es: {last_payment.payable_mount}"}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"error": "No se puede cambiar de estado "}, status=status.HTTP_400_BAD_REQUEST)
-    def concluded(self, rental_id, state):
+    def concluded(self, rental_id, state,reason):
         state_obj = State.objects.get(pk=state)
         last_warranty = Warranty_Movement.objects.filter(rental_id=rental_id).latest("id")
         if self.validated_state(rental_id, state):
             if last_warranty.returned>0:
-                self.save_state(rental_id,state_obj)
+                self.save_state(rental_id,state_obj,reason)
                 response_data = {
                         "message": f"cambio de estado a {state_obj.name} exitosamente",
                         "name_state": state_obj.name
@@ -453,16 +453,18 @@ class Change_state(generics.ListAPIView):
                 return Response(response_data, status=status.HTTP_200_OK)
             return Response({"error": f"No se puede realizar la acción, la monto de garantía: {last_warranty.balance} no ha sido retornada: "}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"error": "No se puede cambiar de estado "}, status=status.HTTP_400_BAD_REQUEST)
-    def canceled(self, rental_id, state):
+    def canceled(self, rental_id, state, reason):
         state_obj = State.objects.get(pk=state)
-        if self.validated_state(rental_id, state):
-            self.save_state(rental_id,state_obj)
+        payment = Payment.objects.filter(rental_id=rental_id)
+        warranty = Warranty_Movement.objects.filter(rental_id=rental_id)
+        if self.validated_state(rental_id, state) and not warranty and not payment:
+            self.save_state(rental_id,state_obj,reason)
             response_data = {
                 "message": f"cambio de estado a {state_obj.name} exitosamente",
                 "name_state": state_obj.name
             }
             return Response(response_data, status=status.HTTP_200_OK)
-        return Response({"error": "No se puede cambiar de estado "}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "No se puede cambiar de estado existen garantías o pagos registrados"}, status=status.HTTP_400_BAD_REQUEST)
     def default_case(self, rental_id, state):
         return Response({"error": "No existe el estado"}, status=status.HTTP_400_BAD_REQUEST)
     def validated_state(self,rental_id,state):
@@ -471,8 +473,9 @@ class Change_state(generics.ListAPIView):
             if state==state_object:
                 return True
         return False
-    def save_state(self,rental_id, state):
+    def save_state(self,rental_id, state,reason ):
         rental= Rental.objects.get(pk=rental_id)
+        rental.cancel_reason = reason
         rental.state = state
         rental.save()
     @swagger_auto_schema(
@@ -487,6 +490,7 @@ class Change_state(generics.ListAPIView):
             return Response(error_message, status=400)
 
         rental_id = request.data["rental"]
+        reason = request.data.get("reason", None)
         try:
             state = request.data["state"]
             rental = Rental.objects.get(pk=rental_id)
@@ -498,7 +502,7 @@ class Change_state(generics.ListAPIView):
                 '5': self.canceled
             }
             opcion = f"{state}"
-            response = switcher.get(opcion, self.default_case)(rental_id,state)
+            response = switcher.get(opcion, self.default_case)(rental_id,state,reason)
             return response
         except Rental.DoesNotExist:
             return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
@@ -709,7 +713,7 @@ class rental_list(generics.GenericAPIView):
             selected_products_list=[]
             if customer_name is None:
                 customer_name= item["customer"]["contacts"][0]["name"]
-            if state["id"] is 3:
+            if state["id"] == 3:
                 can_edit=True
             for product in item["selected_products"]:
                 data_product={
