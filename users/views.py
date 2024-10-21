@@ -38,6 +38,9 @@ class User_Ldap(APIView):
         set_thread_variable('thread_user', self.request.user)
         if self.request.method == 'GET':
             return [HasViewUserPermission()]
+        elif self.request.method == 'POST':
+            return [IsAuthenticated()]
+        return super().get_permissions()
     @swagger_auto_schema(
     operation_description="Listado de usuarios",
     )
@@ -89,7 +92,6 @@ class User_Ldap(APIView):
                 return Response({"message":"Usuario registrado con exito", "user": user.id, "username": user.username, "email": user.email, "first_name": user.first_name, "last_name": user.last_name}, status=status.HTTP_201_CREATED)
             else:
                 return Response({"status": "fail"}, status=status.HTTP_404_NOT_FOUND)
-            
 class User_Delete(generics.GenericAPIView):
     @swagger_auto_schema(
     operation_description="Desactivar usuarios",
