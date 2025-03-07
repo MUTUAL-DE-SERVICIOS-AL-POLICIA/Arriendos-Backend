@@ -326,13 +326,15 @@ class Customer_Detail(generics.GenericAPIView):
     def delete(self, request, pk, **kwargs):
         try:
             customer = Customer.objects.get(pk=pk)
-            has_rental=Rental.objects.filter(customer=customer).exists()
-            if has_rental:
-                return Response({"error": "El cliente ya tiene con un alquiler."}, status=status.HTTP_400_BAD_REQUEST)
+            rental = Rental.objects.filter(customer=customer).first()
+            if rental:
+                if rental.state_id != 5:
+                    return Response({"error": "El cliente tiene un alquiler."}, status=status.HTTP_400_BAD_REQUEST)
             customer.delete()
+            return Response({'message': 'Cliente eliminado exitosamente'})
         except Customer.DoesNotExist:
             return Response({"error": "El cliente no existe."}, status=status.HTTP_400_BAD_REQUEST)
-        return Response({'message': 'Cliente eliminado exitosamente'})
+
 class identify_affiliate(generics.GenericAPIView):
     def get_token_access(self):
         url = f'{settings.MICROSERVICE_API_URL}/auth/login_ext'
