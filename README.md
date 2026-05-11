@@ -1,11 +1,28 @@
-# SOFTWARE DE ARRIENDO
+# SOFTWARE DE ARRIENDOS (Backend)
+
+Sistema de gestión de arriendos que permite el registro de inmuebles, arrendatarios y contratos de arrendamiento, además del control de pagos y la generación de consultas administrativas. Está desarrollado en Django y puede ejecutarse tanto en entornos locales como mediante Docker, lo que facilita su despliegue y portabilidad en distintos ambientes.
+
+Guía rápida para levantar el backend de **Arriendos**.
+
+## Formas de ejecución
+
+Puedes ejecutar el proyecto de dos maneras:
+
+1. **Sin Docker**
+2. **Con Docker**
+
+---
+
+### Despliegue Sin DOCKER   
+
 ## REQUISITOS
 - PYTHON
 - DJANGO
+
 ## INSTALACION
-PASO 1: Copiar el proyecto de github
+PASO 1: Hacer el fork al proyecto desde GitHub
 ```
-git clone https://github.com/MUTUAL-DE-SERVICIOS-AL-POLICIA/Arriendos-Backend.git
+https://github.com/MUTUAL-DE-SERVICIOS-AL-POLICIA/Arriendos-Backend.git
 ```
 PASO  2: verificar si tienes python instalado con
 ```
@@ -55,8 +72,12 @@ cd initial_data
 PASO 12: corre el script load_data.py con:
 ```
 python3 load_data.py <ip del server> <puerto>
+### segunda forma ( dockerizando)
+
 ```
-# DESPLIEGUE CON DOCKER
+
+# Despligue con DOCKER
+PASO 0: Posicionarse en la ruta del proyecto Arriendos-Backend
 PASO 1: Construir la imagen con:
 ```
 docker build -t arriendos:latest .
