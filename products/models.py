@@ -19,12 +19,18 @@ class Product(models.Model):
     room= models.ForeignKey(Room,on_delete=models.PROTECT)
     hour_range = models.ForeignKey(HourRange,on_delete=models.PROTECT)
     day = ArrayField(models.CharField(max_length=255))
+    is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['id']
 class Price(models.Model):
     product = models.ForeignKey(Product,on_delete=models.PROTECT)
     mount = models.FloatField()
     is_active = models.BooleanField()
+    valid_from = models.DateTimeField(null=True, blank=True)
+    valid_to = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
 class Price_Additional_Hour(models.Model):
