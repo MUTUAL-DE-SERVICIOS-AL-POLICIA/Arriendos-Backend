@@ -2,7 +2,7 @@ from rest_framework import generics, status
 from rest_framework.views import APIView
 from .models import Rate, HourRange, Product, Price, Price_Additional_Hour
 from customers.models import Customer_type
-from .serializers import RateSerializer, HourRangeSerializer, ProductsSerializer, ProductSerializer, PriceSerializer, PriceAdditionalHourSerializer
+from .serializers import RateSerializer, HourRangeSerializer, ProductsSerializer, ProductSerializer, PriceSerializer, PriceAdditionalHourSerializer, PriceHistorySerializer
 from leases.models import Selected_Product
 from rest_framework.response import Response
 from drf_yasg import openapi
@@ -13,6 +13,7 @@ from requirements.models import RateRequirement
 from .permissions import *
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
+from django.utils import timezone
 
 
 class Rate_Api(generics.GenericAPIView):
@@ -58,7 +59,7 @@ request_body_schema = openapi.Schema(
     }
 )
 class Product_Api(generics.GenericAPIView):
-    queryset = Product.objects.all()
+    queryset = Product.objects.filter(is_deleted=False)
     serializer_class = ProductSerializer
     permission_classes = [IsAuthenticated, HasViewProductPermission, HasAddroductPermission, HasChangeProductPermission]
     def get_permissions(self):
@@ -68,9 +69,11 @@ class Product_Api(generics.GenericAPIView):
             return [HasAddroductPermission()]
         if self.request.method == 'PATCH':
             return [HasChangeProductPermission()]
+        if self.request.method == 'DELETE':
+            return []  # Any authenticated user can soft delete
     def get_product(self, pk):
         try:
-            return Product.objects.get(pk=pk)
+            return Product.objects.get(pk=pk, is_deleted=False)
         except:
             return None
     @swagger_auto_schema(
@@ -114,7 +117,8 @@ class Product_Api(generics.GenericAPIView):
             price_data = {
                 "mount": mount,
                 "is_active": True,
-                "product": Product_saved.id
+                "product": Product_saved.id,
+                "valid_from": timezone.now()
             }
             PriceSerialized=PriceSerializer(data=price_data)
             if (PriceSerialized.is_valid()):
@@ -136,11 +140,17 @@ class Product_Api(generics.GenericAPIView):
             return Response({"status": "success", "message": f"Product with id {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
         if 'mount' in request.data:
             mount_value = request.data['mount']
-            Price.objects.filter(product_id=pk).update(is_active=False)
+            now = timezone.now()
+            active_prices = Price.objects.filter(product_id=pk, is_active=True)
+            for price in active_prices:
+                price.is_active = False
+                price.valid_to = now
+                price.save()
             new_price={
                 "mount":mount_value,
                 "is_active":True,
-                "product":pk
+                "product":pk,
+                "valid_from": now
             }
             price_serialized=PriceSerializer(data=new_price)
             if price_serialized.is_valid():
@@ -162,6 +172,14 @@ class Product_Api(generics.GenericAPIView):
                 serializer.save()
                 return Response({"status": "success", "data": {"product": serializer.data}}, status=status.HTTP_200_OK)
             return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        product = self.get_product(pk=pk)
+        if product is None:
+            return Response({"status": "fail", "message": f"Producto con id {pk} no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+        product.is_deleted = True
+        product.save()
+        return Response({"status": "success", "message": "Producto eliminado correctamente"}, status=status.HTTP_200_OK)
 
 class HourRange_List_Create_View(generics.ListCreateAPIView):
     queryset = HourRange.objects.all()
@@ -206,6 +224,29 @@ class Price_Retrieve_Update_Destroy_View(generics.RetrieveUpdateDestroyAPIView):
             return [HasChangePricePermission()]
         if self.request.method == 'DELETE':
             return [HasDeletePricePermission()]
+
+product_param = openapi.Parameter('product', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
+
+class Price_History_View(generics.GenericAPIView):
+    serializer_class = PriceHistorySerializer
+    permission_classes = [IsAuthenticated, HasViewPricePermission]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [HasViewPricePermission()]
+    @swagger_auto_schema(
+        operation_description="Historial de precios de un producto",
+        manual_parameters=[product_param],
+    )
+    def get(self, request):
+        product_id = request.query_params.get('product')
+        if not product_id:
+            return Response({"error": "Parámetro 'product' requerido"}, status=status.HTTP_400_BAD_REQUEST)
+        prices = Price.objects.filter(product_id=product_id).order_by('-created_at')
+        serializer = self.serializer_class(prices, many=True)
+        return Response({
+            "status": "success",
+            "prices": serializer.data
+        }, status=status.HTTP_200_OK)
 class Additional_Hour_List_Create_View(generics.ListCreateAPIView):
     queryset = Price_Additional_Hour.objects.all()
     serializer_class = PriceAdditionalHourSerializer
@@ -298,6 +339,8 @@ class Product_Filter(generics.ListAPIView):
         try:
             query_param = self.request.query_params.get('search', '')
             queryset = Product.objects.filter(
+                is_deleted=False
+            ).filter(
                 Q(id__icontains=query_param) |
                 Q(rate_id__name__icontains=query_param) |
                 Q(room_id__name__icontains=query_param) |

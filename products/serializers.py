@@ -11,6 +11,18 @@ class PriceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Price
         fields = '__all__'
+
+class PriceHistorySerializer(serializers.ModelSerializer):
+    product_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Price
+        fields = ['id', 'product', 'product_name', 'mount', 'is_active', 'valid_from', 'valid_to', 'created_at']
+    
+    def get_product_name(self, obj):
+        if obj.product:
+            return f"{obj.product.room.name} - {obj.product.rate.name}"
+        return None
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
