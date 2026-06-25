@@ -16,7 +16,7 @@ class Command(BaseCommand):
             {'name': 'Arriendos', 'codename': 'leases', 'description': 'Gestion de arriendos y reservas'},
             {'name': 'Finanzas', 'codename': 'financials', 'description': 'Gestion de pagos y garantias'},
             {'name': 'Requisitos', 'codename': 'requirements', 'description': 'Gestion de requisitos'},
-            {'name': 'Usuarios', 'codename': 'users', 'description': 'Gestion de usuarios del sistema'},
+            {'name': 'Usuarios', 'codename': 'users', 'description': 'Gestion de usuarios y roles del sistema'},
         ]
 
         permissions_data = [

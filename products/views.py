@@ -10,7 +10,7 @@ from drf_yasg.utils import swagger_auto_schema
 from threadlocals.threadlocals import set_thread_variable
 import math
 from requirements.models import RateRequirement
-from .permissions import *
+from roles.permissions import HasModulePermission
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
 from django.utils import timezone
@@ -19,10 +19,9 @@ from django.utils import timezone
 class Rate_Api(generics.GenericAPIView):
     serializer_class = RateSerializer
     queryset = Rate.objects.all()
-    permission_classes = [IsAuthenticated, HasViewRatePermission]
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [HasViewRatePermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'products'
+
     @swagger_auto_schema(
     operation_description="Lista de Tarifas",
     )
@@ -61,21 +60,15 @@ request_body_schema = openapi.Schema(
 class Product_Api(generics.GenericAPIView):
     queryset = Product.objects.filter(is_deleted=False)
     serializer_class = ProductSerializer
-    permission_classes = [IsAuthenticated, HasViewProductPermission, HasAddroductPermission, HasChangeProductPermission]
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [HasViewProductPermission()]
-        if self.request.method == 'POST':
-            return [HasAddroductPermission()]
-        if self.request.method == 'PATCH':
-            return [HasChangeProductPermission()]
-        if self.request.method == 'DELETE':
-            return []  # Any authenticated user can soft delete
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'products'
+
     def get_product(self, pk):
         try:
             return Product.objects.get(pk=pk, is_deleted=False)
         except:
             return None
+
     @swagger_auto_schema(
     operation_description="Lista de productos y precio",
     )
@@ -104,6 +97,7 @@ class Product_Api(generics.GenericAPIView):
         "last_page": math.ceil(total_products/ limit_num),
         "products": paged_products
         })
+
     @swagger_auto_schema(
     operation_description="Crear productos",
     request_body=request_body_schema
@@ -129,6 +123,7 @@ class Product_Api(generics.GenericAPIView):
                 return Response({"status": "fail", "message": PriceSerialized.errors}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
     @swagger_auto_schema(
     operation_description="Actualizar producto y precio",
     request_body=request_body_schema
@@ -184,55 +179,50 @@ class Product_Api(generics.GenericAPIView):
 class HourRange_List_Create_View(generics.ListCreateAPIView):
     queryset = HourRange.objects.all()
     serializer_class = HourRangeSerializer
-    permission_classes = [IsAuthenticated, HasAddHourRangePermission, HasViewHourRangePermission]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'products'
+
     def get_permissions(self):
         set_thread_variable('thread_user', self.request.user)
-        if self.request.method == 'GET':
-            return [HasViewHourRangePermission()]
-        if self.request.method == 'POST':
-            return [HasAddHourRangePermission()]
+        return [IsAuthenticated(), HasModulePermission()]
 
 class HourRange_Retrieve_Update_Destroy_View(generics.RetrieveUpdateDestroyAPIView):
     queryset = HourRange.objects.all()
     serializer_class = HourRangeSerializer
-    permission_classes = [IsAuthenticated, HasChangeHourRangePermission, HasDeleteHourRangePermission]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'products'
+
     def get_permissions(self):
         set_thread_variable('thread_user', self.request.user)
-        if self.request.method == 'PATCH':
-            return [HasChangeHourRangePermission()]
-        if self.request.method == 'DELETE':
-            return [HasDeleteHourRangePermission()]
+        return [IsAuthenticated(), HasModulePermission()]
 
 class Price_List_Create_View(generics.ListCreateAPIView):
     queryset = Price.objects.all()
     serializer_class = PriceSerializer
-    permission_classes = [IsAuthenticated, HasAddPricePermission, HasViewPricePermission]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'products'
+
     def get_permissions(self):
         set_thread_variable('thread_user', self.request.user)
-        if self.request.method == 'POST':
-            return [HasAddPricePermission()]
-        if self.request.method == 'GET':
-            return [HasViewPricePermission()]
+        return [IsAuthenticated(), HasModulePermission()]
 
 class Price_Retrieve_Update_Destroy_View(generics.RetrieveUpdateDestroyAPIView):
     queryset=Price.objects.all()
     serializer_class = PriceSerializer
-    permission_classes = [IsAuthenticated, HasChangePricePermission, HasDeletePricePermission]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'products'
+
     def get_permissions(self):
         set_thread_variable('thread_user', self.request.user)
-        if self.request.method == 'PATCH':
-            return [HasChangePricePermission()]
-        if self.request.method == 'DELETE':
-            return [HasDeletePricePermission()]
+        return [IsAuthenticated(), HasModulePermission()]
 
 product_param = openapi.Parameter('product', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 
 class Price_History_View(generics.GenericAPIView):
     serializer_class = PriceHistorySerializer
-    permission_classes = [IsAuthenticated, HasViewPricePermission]
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [HasViewPricePermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'products'
+
     @swagger_auto_schema(
         operation_description="Historial de precios de un producto",
         manual_parameters=[product_param],
@@ -247,35 +237,33 @@ class Price_History_View(generics.GenericAPIView):
             "status": "success",
             "prices": serializer.data
         }, status=status.HTTP_200_OK)
+
 class Additional_Hour_List_Create_View(generics.ListCreateAPIView):
     queryset = Price_Additional_Hour.objects.all()
     serializer_class = PriceAdditionalHourSerializer
-    permission_classes = [IsAuthenticated, HasAddAdditionalHourPermission, HasViewAdditionalHourPermission]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'products'
+
     def get_permissions(self):
         set_thread_variable('thread_user', self.request.user)
-        if self.request.method == 'POST':
-            return [HasAddAdditionalHourPermission()]
-        if self.request.method == 'GET':
-            return [HasViewAdditionalHourPermission()]
+        return [IsAuthenticated(), HasModulePermission()]
 
 class Additional_Hour_Retrieve_Update_Destroy_View(generics.RetrieveUpdateDestroyAPIView):
     queryset = Price_Additional_Hour.objects.all()
     serializer_class = PriceAdditionalHourSerializer
-    permission_classes = [IsAuthenticated, HasChangeAdditionalHourPermission, HasDeleteAdditionalHourPermission]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'products'
+
     def get_permissions(self):
         set_thread_variable('thread_user', self.request.user)
-        if self.request.method == 'PATCH':
-            return [HasChangeAdditionalHourPermission()]
-        if self.request.method == 'DELETE':
-            return [HasDeleteAdditionalHourPermission()]
+        return [IsAuthenticated(), HasModulePermission()]
 
 selected_product = openapi.Parameter('selected_product', in_=openapi.IN_QUERY, type=openapi.TYPE_STRING)
 
 class Get_price_additional_hour(generics.ListAPIView):
-    permission_classes = [IsAuthenticated, HasViewAdditionalHourPermission]
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [HasViewAdditionalHourPermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'products'
+
     @swagger_auto_schema(
     operation_description="Precio de hora adicional del producto seleccionado",
     manual_parameters=[selected_product],
@@ -302,10 +290,9 @@ request_body_schema = openapi.Schema(
     }
 )
 class Posible_product(APIView):
-    permission_classes = [IsAuthenticated, HasViewProductPermission]
-    def get_permissions(self):
-        if self.request.method == 'POST':
-            return [HasViewProductPermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'products'
+
     @swagger_auto_schema(
     request_body=request_body_schema,
     )
@@ -333,8 +320,12 @@ class Posible_product(APIView):
                 return Response({"error": f"No hay requisitos asociados a la tarifa perteneciente al tipo de cliente: {customer.name}"}, status=status.HTTP_400_BAD_REQUEST)
         except Customer_type.DoesNotExist:
             return Response({"error": "Tipo de cliente no encontrado"}, status=status.HTTP_400_BAD_REQUEST)
+
 class Product_Filter(generics.ListAPIView):
     serializer_class = ProductsSerializer
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'products'
+
     def get_queryset(self):
         try:
             query_param = self.request.query_params.get('search', '')
@@ -349,6 +340,7 @@ class Product_Filter(generics.ListAPIView):
             return queryset
         except ValueError:
             return Product.objects.none()
+
     def list(self, request, *args, **kwargs):
         try:
             queryset = self.get_queryset()
@@ -368,7 +360,7 @@ class Product_Filter(generics.ListAPIView):
                 "status": "success",
                 "total": total_products,
                 "page": page_num,
-                "last_page": math.ceil(total_products / limit_num),
+                "last_page": math.ceil(total_products / limit_num) if limit_num > 0 else 0,
                 "products": paginated_data
             }
             return Response(response_data, status=status.HTTP_200_OK)

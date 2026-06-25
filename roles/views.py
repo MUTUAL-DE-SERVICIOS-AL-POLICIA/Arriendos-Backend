@@ -9,14 +9,15 @@ from .serializers import (
     UserRoleSerializer, UserRoleCreateSerializer,
     UserWithRoleSerializer
 )
-from users.permissions import HasViewUserPermission
+from roles.permissions import HasModulePermission
 import math
 
 
 class Module_List_View(generics.ListAPIView):
     queryset = Module.objects.filter(is_active=True)
     serializer_class = ModuleSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'users'
 
     def get(self, request, *args, **kwargs):
         modules = self.get_queryset()
@@ -30,7 +31,8 @@ class Module_List_View(generics.ListAPIView):
 class Permission_List_View(generics.ListAPIView):
     queryset = Permission.objects.all()
     serializer_class = PermissionSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'users'
 
     def get(self, request, *args, **kwargs):
         permissions = self.get_queryset()
@@ -44,7 +46,8 @@ class Permission_List_View(generics.ListAPIView):
 class Role_List_Create_View(generics.GenericAPIView):
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'users'
 
     def get(self, request, *args, **kwargs):
         page_num = int(request.GET.get('page', 0))
@@ -85,7 +88,8 @@ class Role_List_Create_View(generics.GenericAPIView):
 class Role_Detail_View(generics.GenericAPIView):
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'users'
 
     def get(self, request, pk, *args, **kwargs):
         try:
@@ -142,7 +146,8 @@ class Role_Detail_View(generics.GenericAPIView):
 
 
 class UserRole_Assign_View(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'users'
 
     def post(self, request, *args, **kwargs):
         serializer = UserRoleCreateSerializer(data=request.data)
@@ -159,7 +164,8 @@ class UserRole_Assign_View(generics.GenericAPIView):
 
 
 class UserRole_List_View(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'users'
 
     def get(self, request, *args, **kwargs):
         user_roles = UserRole.objects.select_related('user', 'role').all()
@@ -171,7 +177,8 @@ class UserRole_List_View(generics.GenericAPIView):
 
 
 class UserRole_Detail_View(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'users'
 
     def delete(self, request, pk, *args, **kwargs):
         try:
@@ -189,7 +196,8 @@ class UserRole_Detail_View(generics.GenericAPIView):
 
 
 class MyPermissions_View(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'users'
 
     def get(self, request, *args, **kwargs):
         user = request.user

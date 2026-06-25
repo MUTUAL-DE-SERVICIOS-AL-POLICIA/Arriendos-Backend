@@ -8,7 +8,7 @@ from rest_framework import status, generics
 from django.db.models import Q
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from .permissions import *
+from roles.permissions import HasModulePermission
 from rest_framework.permissions import IsAuthenticated
 from threadlocals.threadlocals import set_thread_variable
 import requests
@@ -18,14 +18,10 @@ import re
 class Customer_Type_Api(generics.GenericAPIView):
     serializer_class = Customer_typeSerializer
     queryset = Customer_type.objects.all()
-    permission_classes = [IsAuthenticated, HasViewCustomerTypePermission,HasAddCustomerTypePermission]
-    def get_permissions(self):
-        set_thread_variable('thread_user', self.request.user)
-        if self.request.method == 'GET':
-            return [HasViewCustomerTypePermission()]
-        if self.request.method == 'POST':
-            return [HasAddCustomerTypePermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'customers'
     def get(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
         page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit', self.queryset.count()))
         start_num = (page_num) * limit_num
@@ -44,6 +40,7 @@ class Customer_Type_Api(generics.GenericAPIView):
             "customer_type": serializer.data
         })
     def post(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -54,25 +51,22 @@ class Customer_Type_Api(generics.GenericAPIView):
 class Customer_Type_Detail(generics.GenericAPIView):
     queryset = Customer_type.objects.all()
     serializer_class = Customer_typeSerializer
-    permission_classes = [IsAuthenticated,HasViewCustomerTypePermission,HasChangeCustomerTypePermission]
-    def get_permissions(self):
-        set_thread_variable('thread_user', self.request.user)
-        if self.request.method == 'GET':
-            return [HasViewCustomerTypePermission()]
-        if self.request.method == 'PATCH':
-            return [HasChangeCustomerTypePermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'customers'
     def get_customer_type(self, pk, *args, **kwargs):
         try:
             return Customer_type.objects.get(pk=pk)
         except:
             return None
     def get(self,request, pk, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
         customer_type = self.get_customer_type(pk=pk)
         if customer_type == None:
             return Response({"error": f"Customer_type with id: {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
         serializer = self.serializer_class(customer_type)
         return Response({"data": {"customer_type": serializer.data}}, status=status.HTTP_200_OK)
     def patch(self, request, pk):
+        set_thread_variable('thread_user', request.user)
         customer_type = self.get_customer_type(pk)
         if customer_type == None:
             return Response({"error": "Customer type not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -122,18 +116,14 @@ request_body_schema = openapi.Schema(
 class Customer_Api(generics.GenericAPIView):
     serializer_class = CustomersSerializer
     queryset = Customer.objects.all()
-    permission_classes = [IsAuthenticated, HasViewCustomerPermission,HasAddCustomerPermission]
-    def get_permissions(self):
-        set_thread_variable('thread_user', self.request.user)
-        if self.request.method == 'GET':
-            return [HasViewCustomerPermission()]
-        if self.request.method == 'POST':
-            return [HasAddCustomerPermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'customers'
     @swagger_auto_schema(
     operation_description="Search es opcional para buscar el cliente",
     manual_parameters=[search],
     )
     def get(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
         serializer_class = CustomersSerializer
         page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit', self.queryset.count()))
@@ -174,6 +164,7 @@ class Customer_Api(generics.GenericAPIView):
     request_body=request_body_schema
     )
     def post(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
         try:
             customer_type_req = request.data["customer_type"]
             customer_type = Customer_type.objects.get(pk=customer_type_req)
@@ -256,13 +247,8 @@ request_body_schema = openapi.Schema(
 class Customer_Detail(generics.GenericAPIView):
     queryset = Customer.objects.all()
     serializer_class = CustomerSerializer
-    permission_classes = [IsAuthenticated,HasChangeCustomerPermission]
-    def get_permissions(self):
-        set_thread_variable('thread_user', self.request.user)
-        if self.request.method == 'PATCH':
-            return [HasChangeCustomerPermission()]
-        if self.request.method == 'DELETE':
-            return [HasDeleteCustomerPermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'customers'
     def get_customer(self, pk, **kwargs):
         try:
             return Customer.objects.get(pk=pk)
@@ -273,6 +259,7 @@ class Customer_Detail(generics.GenericAPIView):
     request_body=request_body_schema
     )
     def patch(self, request, pk, **kwargs):
+        set_thread_variable('thread_user', request.user)
         customer = Customer.objects.get(pk=pk)
         customer_type = Customer_type.objects.get(pk=customer.customer_type_id)
         if customer_type.is_institution == True:
@@ -324,6 +311,7 @@ class Customer_Detail(generics.GenericAPIView):
             customer_data.save()
             return Response({"message":"Cliente actualizado"}, status=status.HTTP_200_OK)
     def delete(self, request, pk, **kwargs):
+        set_thread_variable('thread_user', request.user)
         try:
             customer = Customer.objects.get(pk=pk)
             rental = Rental.objects.filter(customer=customer).first()

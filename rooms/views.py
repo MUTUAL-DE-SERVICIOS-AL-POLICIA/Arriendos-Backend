@@ -3,7 +3,7 @@ from .models import Property, Room, Sub_Room
 from .serializers import PropertySerializer, RoomSerializer, Sub_RoomSerializer
 from rest_framework.response import Response
 import math
-from .permissions import *
+from roles.permissions import HasModulePermission
 from rest_framework.permissions import IsAuthenticated
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -11,58 +11,57 @@ from threadlocals.threadlocals import set_thread_variable
 class PropertyListCreateView(generics.ListCreateAPIView):
     queryset = Property.objects.all()
     serializer_class = PropertySerializer
-    permission_classes = [IsAuthenticated, HasAddPropertyPermission, HasViewPropertyPermission]
-    def get_permissions(self):
-        set_thread_variable('thread_user', self.request.user)
-        if self.request.method == 'POST':
-            return [IsAuthenticated(), HasAddPropertyPermission()]
-        elif self.request.method == 'GET':
-            return [IsAuthenticated(), HasViewPropertyPermission()]
-        return super().get_permissions()
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'rooms'
+    def get(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
+        return super().get(request, *args, **kwargs)
+    def post(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
+        return super().post(request, *args, **kwargs)
 
 class PropertyRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Property.objects.all()
     serializer_class = PropertySerializer
-    permission_classes = [IsAuthenticated, HasChangePropertyPermission, HasDeletePropertyPermission]
-    def get_permissions(self):
-        set_thread_variable('thread_user', self.request.user)
-        if self.request.method == 'PATCH':
-            return [IsAuthenticated(), HasChangePropertyPermission()]
-        elif self.request.method == 'DELETE':
-            return [IsAuthenticated(), HasDeletePropertyPermission()]
-        return super().get_permissions()
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'rooms'
+    def patch(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
+        return super().patch(request, *args, **kwargs)
+    def delete(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
+        return super().delete(request, *args, **kwargs)
 class RoomListCreateView(generics.ListCreateAPIView):
     queryset = Room.objects.all()
     serializer_class = RoomSerializer
-    permission_classes = [IsAuthenticated, HasAddRoomPermission, HasViewRoomPermission]
-    def get_permissions(self):
-        set_thread_variable('thread_user', self.request.user)
-        if self.request.method == 'POST':
-            return [IsAuthenticated(), HasAddRoomPermission()]
-        elif self.request.method == 'GET':
-            return [IsAuthenticated(), HasViewRoomPermission()]
-        return super().get_permissions()
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'rooms'
+    def get(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
+        return super().get(request, *args, **kwargs)
+    def post(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
+        return super().post(request, *args, **kwargs)
 
 class RoomRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Room.objects.all()
     serializer_class = RoomSerializer
-    permission_classes = [IsAuthenticated, HasChangeRoomPermission, HasDeleteRoomPermission]
-    def get_permissions(self):
-        set_thread_variable('thread_user', self.request.user)
-        if self.request.method == 'PATCH':
-            return [IsAuthenticated(), HasChangeRoomPermission()]
-        elif self.request.method == 'DELETE':
-            return [IsAuthenticated(), HasDeleteRoomPermission()]
-        return super().get_permissions()
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'rooms'
+    def patch(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
+        return super().patch(request, *args, **kwargs)
+    def delete(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
+        return super().delete(request, *args, **kwargs)
 class List_Properties_with_Rooms(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated, HasViewPropertyPermission, HasViewRoomPermission]
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [HasViewPropertyPermission(), HasViewRoomPermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'rooms'
     @swagger_auto_schema(
     operation_description="Listado de ambientes y propiedades",
     )
     def get(self, request):
+        set_thread_variable('thread_user', request.user)
         properties = Property.objects.all()
         response_data = []
         for property in properties:
@@ -101,17 +100,13 @@ class List_Properties_with_Rooms(generics.GenericAPIView):
 class Sub_Room_Api(generics.GenericAPIView):
     queryset = Sub_Room.objects.all()
     serializer_class = Sub_RoomSerializer
-    permission_classes = [IsAuthenticated, HasViewSub_RoomPermission, HasAddSub_RoomPermission]
-    def get_permissions(self):
-        set_thread_variable('thread_user', self.request.user)
-        if self.request.method == 'GET':
-            return [HasViewSub_RoomPermission()]
-        if self.request.method == 'POST':
-            return [HasAddSub_RoomPermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'rooms'
     @swagger_auto_schema(
     operation_description="Lista de sub ambientes",
     )
     def get(self, request):
+        set_thread_variable('thread_user', request.user)
         serializer_class = Sub_RoomSerializer
         page_num = int(request.GET.get('page',0))
         limit_num = int(request.GET.get('limit', 10))
@@ -131,6 +126,7 @@ class Sub_Room_Api(generics.GenericAPIView):
     operation_description="Crear sub ambiente",
     )
     def post(self, request):
+        set_thread_variable('thread_user', request.user)
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -141,19 +137,15 @@ class Sub_Room_Api(generics.GenericAPIView):
 class Sub_Room_Detail(generics.GenericAPIView):
     queryset = Sub_Room.objects.all()
     serializer_class = Sub_RoomSerializer
-    permission_classes = [IsAuthenticated, HasChangeSub_RoomPermission, HasViewSub_RoomPermission]
-    def get_permissions(self):
-        set_thread_variable('thread_user', self.request.user)
-        if self.request.method == 'GET':
-            return [HasViewSub_RoomPermission()]
-        if self.request.method == 'PATCH':
-            return [HasChangeSub_RoomPermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'rooms'
     def get_sub_room(self, pk):
         try:
             return Sub_Room.objects.get(pk=pk)
         except:
             return None
     def get(self, request, pk):
+        set_thread_variable('thread_user', request.user)
         sub_room = self.get_sub_room(pk)
         if sub_room == None:
             return Response({"error":"Sub ambiente no encontrado"}, status=status.HTTP_404_NOT_FOUND)
@@ -163,6 +155,7 @@ class Sub_Room_Detail(generics.GenericAPIView):
     operation_description="Actualizar sub ambiente",
     )
     def patch(self, request, pk):
+        set_thread_variable('thread_user', request.user)
         sub_room = self.get_sub_room(pk)
         if sub_room == None:
             return Response({"error":"Sub ambiente no encontrado"}, status=status.HTTP_404_NOT_FOUND)

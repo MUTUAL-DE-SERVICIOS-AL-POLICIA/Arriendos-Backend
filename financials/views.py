@@ -11,7 +11,7 @@ from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from Arriendos_Backend.util import required_fields
 from .function import Make_Damage_Warranty_Form, Make_Warranty_Form, Make_Return_Warranty_Form
-from .permissions import *
+from roles.permissions import HasModulePermission
 from rest_framework.permissions import IsAuthenticated
 from threadlocals.threadlocals import set_thread_variable
 from django.http import HttpResponseBadRequest
@@ -32,20 +32,14 @@ request_body_schema = openapi.Schema(
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Register_payment(generics.ListAPIView):
     serializer_class = Payment_Serializer
-    permission_classes = [IsAuthenticated, HasAddPaymentPermission, HasViewPaymentPermission,HasDeletePaymentPermission]
-    def get_permissions(self):
-        set_thread_variable('thread_user', self.request.user)
-        if self.request.method == 'POST':
-            return [HasAddPaymentPermission()]
-        if self.request.method == 'GET':
-            return [HasViewPaymentPermission()]
-        if self.request.method == 'DELETE':
-            return [HasDeletePaymentPermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'financials'
     @swagger_auto_schema(
     operation_description="Lista de pagos por alquiler",
     manual_parameters=[rental],
     )
     def get(self,request):
+        set_thread_variable('thread_user', request.user)
         rental_id = request.query_params.get('rental')
         if not rental_id:
             return Response({"error": "Parámetro 'rental' faltante en la consulta."}, status=status.HTTP_400_BAD_REQUEST)
@@ -77,6 +71,7 @@ class Register_payment(generics.ListAPIView):
     request_body=request_body_schema
     )
     def post(self,request):
+            set_thread_variable('thread_user', request.user)
             rental_id = request.data["rental"]
             detail = request.data["detail"]
             mount=request.data["mount"]
@@ -138,6 +133,7 @@ class Register_payment(generics.ListAPIView):
     operation_description="Borrar registro de pago",
     )
     def delete(self,request,rental_id):
+        set_thread_variable('thread_user', request.user)
         try:
             exist_payment= Payment.objects.filter(rental_id=rental_id).exists()
             if (exist_payment):
@@ -180,17 +176,15 @@ class Print_payment(generics.ListAPIView):
 class Edit_payment(generics.RetrieveUpdateAPIView):
     queryset = Payment.objects.all()
     serializer_class = Payment_Serializer
-    permission_classes = [IsAuthenticated,HasChangePaymentPermission]
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [HasViewPaymentPermission() ]
-        if self.request.method == 'PATCH':
-            return [HasChangePaymentPermission() ]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'financials'
     def get(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
     def patch(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
         partial = kwargs.pop('partial', True)
         instance = self.get_object()
         amount_paid = float(request.data.get('amount_paid'))
@@ -230,16 +224,14 @@ class Edit_payment(generics.RetrieveUpdateAPIView):
             return Response(response_data)
 class Register_total_payment(generics.ListAPIView):
     serializer_class = Payment_Serializer
-    permission_classes = [IsAuthenticated, HasAddPaymentPermission]
-    def get_permissions(self):
-        set_thread_variable('thread_user', self.request.user)
-        if self.request.method == 'POST':
-            return [HasAddPaymentPermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'financials'
     @swagger_auto_schema(
     operation_description="Registro del pago total del arriendo",
     request_body=request_body_schema
     )
     def post(self,request):
+        set_thread_variable('thread_user', request.user)
         rental_id = request.data["rental"]
         detail = request.data["detail"]
         voucher = request.data["voucher_number"]
@@ -301,20 +293,14 @@ request_body_schema = openapi.Schema(
 )
 class Register_warranty(generics.ListAPIView):
     serializer_class = Warranty_Movement_Serializer
-    permission_classes = [IsAuthenticated, HasAddWarrantyMovementPermission, HasViewWarrantyMovementPermission,HasDeleteWarrantyMovementPermission]
-    def get_permissions(self):
-        set_thread_variable('thread_user', self.request.user)
-        if self.request.method == 'POST':
-            return [HasAddWarrantyMovementPermission()]
-        if self.request.method == 'GET':
-            return [HasViewWarrantyMovementPermission()]
-        if self.request.method == 'DELETE':
-            return [HasDeleteWarrantyMovementPermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'financials'
     @swagger_auto_schema(
     operation_description="Registrar garantía",
     request_body=request_body_schema
     )
     def post(self, request):
+        set_thread_variable('thread_user', request.user)
         validated_fields = ["rental","income", "detail","voucher_number"]
         error_message = required_fields(request, validated_fields)
         if error_message:
@@ -365,6 +351,7 @@ class Register_warranty(generics.ListAPIView):
     manual_parameters=[rental],
     )
     def get(self,request):
+        set_thread_variable('thread_user', request.user)
         rental_id = request.query_params.get('rental')
         if not rental_id:
             return Response({"error": "Parámetro 'rental' faltante en la consulta."}, status=status.HTTP_400_BAD_REQUEST)
@@ -409,6 +396,7 @@ class Register_warranty(generics.ListAPIView):
     operation_description="Eliminar el ultimo registro de garantía",
     )
     def delete(self,request,rental_id):
+        set_thread_variable('thread_user', request.user)
         try:
             Rental.objects.get(pk=rental_id)
             exist_warranty= Warranty_Movement.objects.filter(rental_id=rental_id).exists()
@@ -447,17 +435,15 @@ class Print_Warranties(generics.ListAPIView):
 class Edit_warranty(generics.UpdateAPIView):
     queryset = Warranty_Movement.objects.all()
     serializer_class = Warranty_Movement_Serializer
-    permission_classes = [IsAuthenticated,HasChangeWarrantyMovementPermission,HasViewWarrantyMovementPermission]
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [HasViewWarrantyMovementPermission() ]
-        if self.request.method == 'PATCH':
-            return [HasChangeWarrantyMovementPermission() ]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'financials'
     def get(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
     def patch(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
         partial = kwargs.pop('partial', True)
         instance = self.get_object()
         discount_value = request.data.get('discount')
@@ -481,12 +467,14 @@ class Edit_warranty(generics.UpdateAPIView):
         }
         return Response(response_data)
 class Warranty_Return_Request(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'financials'
     @swagger_auto_schema(
     operation_description="Solicitud de devolución de garantía",
     manual_parameters=[rental],
     )
     def get(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
         rental = request.GET.get('rental', None)
         if rental is None:
             return Response({"error": "No se ha enviado rental"}, status=status.HTTP_404_NOT_FOUND)
@@ -515,16 +503,14 @@ request_body_schema = openapi.Schema(
 )
 class Discount_warranty(generics.ListAPIView):
     serializer_class = Warranty_Movement_Serializer
-    permission_classes = [IsAuthenticated, HasAddWarrantyMovementPermission]
-    def get_permissions(self):
-        set_thread_variable('thread_user', self.request.user)
-        if self.request.method == 'POST':
-            return [HasAddWarrantyMovementPermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'financials'
     @swagger_auto_schema(
     operation_description="API para registro de descuentos por daños",
     request_body=request_body_schema
     )
     def post(self, request):
+        set_thread_variable('thread_user', request.user)
         validated_fields = ["rental","product", "detail","discount"]
         error_message = required_fields(request, validated_fields)
         if error_message:
@@ -596,16 +582,14 @@ request_body_schema = openapi.Schema(
 )
 class Warranty_Returned(generics.GenericAPIView):
     serializer_class = Warranty_Movement_Serializer
-    permission_classes = [IsAuthenticated, HasAddWarrantyMovementPermission]
-    def get_permissions(self):
-        set_thread_variable('thread_user', self.request.user)
-        if self.request.method == 'POST':
-            return [HasAddWarrantyMovementPermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'financials'
     @swagger_auto_schema(
     operation_description="API de devolución de garantía",
     request_body=request_body_schema
     )
     def post(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
         validated_fields = ["rental", "return_date"]
         error_message = required_fields(request, validated_fields)
         rental_id = request.data.get("rental")
@@ -655,12 +639,14 @@ class Warranty_Returned(generics.GenericAPIView):
 
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Return_Warranty_Form(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'financials'
     @swagger_auto_schema(
     operation_description="Formulario de conformidad de devolución de garantía",
     manual_parameters=[rental],
     )
     def get(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
         rental = int(request.GET.get('rental', None))
         warranty= Warranty_Movement.objects.filter(rental_id=rental)
         if rental is None:

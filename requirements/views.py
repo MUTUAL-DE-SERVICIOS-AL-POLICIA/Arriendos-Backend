@@ -13,23 +13,20 @@ from Arriendos_Backend.util import required_fields
 from .function import Make_Rental_Form
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from .permissions import *
+from roles.permissions import HasModulePermission
 from rest_framework.permissions import IsAuthenticated
 from threadlocals.threadlocals import set_thread_variable
 
 class Requirement_Api(generics.GenericAPIView):
     serializer_class = RequirementSerializer
     queryset = Requirement.objects.all()
-    permission_classes = [IsAuthenticated, HasViewRequirementPermission]
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [HasViewRequirementPermission()]
-        if self.request.method == 'POST':
-            return [HasAddRequirementPermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'requirements'
     @swagger_auto_schema(
     operation_description="Lista de requisitos",
     )
     def get(self, request, *args, **kw):
+        set_thread_variable('thread_user', request.user)
         page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit', self.queryset.count()))
         start_num = (page_num) * limit_num
@@ -62,12 +59,8 @@ class Requirement_Api(generics.GenericAPIView):
 class Requirement_Detail(generics.GenericAPIView):
     queryset = Requirement.objects.all()
     serializer_class = RequirementSerializer
-    permission_classes = [IsAuthenticated, HasChangeRequirementPermission, HasDeleteRequirementPermission]
-    def get_permissions(self):
-        if self.request.method == 'PATCH':
-            return [HasChangeRequirementPermission()]
-        if self.request.method == 'DELETE':
-            return [HasDeleteRequirementPermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'requirements'
     def get_requirement(self, pk, *args, **kw):
         try:
             return Requirement.objects.get(pk=pk)
@@ -102,14 +95,13 @@ class Requirement_Detail(generics.GenericAPIView):
 class RateWithRelatedDataView(generics.ListAPIView):
     queryset = Rate.objects.all()
     serializer_class = RateWithRelatedDataSerializer
-    permission_classes = [IsAuthenticated, HasViewRateRequirementPermission]
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [HasViewRateRequirementPermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'requirements'
     @swagger_auto_schema(
     operation_description="Lista de requisitos y tarifas",
     )
     def get(self, request):
+        set_thread_variable('thread_user', request.user)
         page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit',self.queryset.count()))
         start_num = (page_num) * limit_num
@@ -143,10 +135,8 @@ request_body_schema = openapi.Schema(
 class RateRequirement_Api(generics.GenericAPIView):
     serializer_class = RateRequirementSerializer
     queryset = RateRequirement.objects.all()
-    permission_classes = [IsAuthenticated, HasViewRateRequirementPermission, HasAddRateRequirementPermission]
-    def get_permissions(self):
-        if self.request.method == 'POST':
-            return [HasAddRateRequirementPermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'requirements'
 
     @swagger_auto_schema(
     operation_description="Crear tarifa con tipo de cliente y requisitos",
@@ -190,12 +180,8 @@ request_body_schema = openapi.Schema(
 class RateRequirement_Detail(generics.GenericAPIView):
     queryset = RateRequirement.objects.all()
     serializer_class = RateRequirementSerializer
-    permission_classes = [IsAuthenticated, HasViewRateRequirementPermission, HasChangeRateRequirementPermission]
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [HasViewRateRequirementPermission()]
-        if self.request.method == 'PATCH':
-            return [HasChangeRateRequirementPermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'requirements'
     def get_raterequirement(self, pk, *args, **kw):
         try:
             return RateRequirement.objects.get(pk=pk)
@@ -203,6 +189,7 @@ class RateRequirement_Detail(generics.GenericAPIView):
             return None
 
     def get(self, request, pk, *args, **kw):
+        set_thread_variable('thread_user', request.user)
         raterequirement = self.get_raterequirement(pk=pk)
         if raterequirement == None:
             return Response({"error": "No existe el requisito asignado a la tarifa"}, status=status.HTTP_404_NOT_FOUND)
@@ -249,15 +236,14 @@ class RateRequirement_Detail(generics.GenericAPIView):
 
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Requirements_customer(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated, HasViewRequirementPermission]
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [HasViewRequirementPermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'requirements'
     @swagger_auto_schema(
      operation_description="Requisitos requeridos y opcionales",
      manual_parameters=[rental],
      )
     def get(self, request):
+        set_thread_variable('thread_user', request.user)
         rental_id = request.GET.get('rental', None)
         try:
             selected_product = Selected_Product.objects.filter(rental_id=rental_id).first()
@@ -301,10 +287,8 @@ class ExtractNumber(Func):
     function = 'CAST'
     template = "%(function)s(SUBSTRING(%(expressions)s FROM '^[0-9]+') AS INTEGER)"
 class Register_delivered_requirement(generics.ListAPIView):
-        permission_classes = [IsAuthenticated, HasAddRequirementDeliveredRequirementPermission]
-        def get_permissions(self):
-            if self.request.method == 'POST':
-                return [HasAddRequirementDeliveredRequirementPermission()]
+        permission_classes = [IsAuthenticated, HasModulePermission]
+        rbac_module = 'requirements'
         @swagger_auto_schema(
         operation_description="Registro de requisitos entregados",
         request_body=request_body_schema

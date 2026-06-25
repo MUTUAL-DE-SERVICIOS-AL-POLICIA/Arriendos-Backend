@@ -17,7 +17,7 @@ from drf_yasg.utils import swagger_auto_schema
 from Arriendos_Backend.util import required_fields
 from .function import Make_Delivery_Form, Make_Overtime_Form, Make_Rental_Report
 
-from .permissions import *
+from roles.permissions import HasModulePermission
 from rest_framework.permissions import IsAuthenticated
 from threadlocals.threadlocals import set_thread_variable
 from django.db.models import Q
@@ -28,13 +28,14 @@ import locale
 class StateRentalListCreateView(generics.ListCreateAPIView):
     queryset = State.objects.all()
     serializer_class = StateSerializer
-    permission_classes = [IsAuthenticated, HasViewRentalStatePermission, HasAddRentalStatePermission]
-    def get_permissions(self):
-        set_thread_variable('thread_user', self.request.user)
-        if self.request.method == 'POST':
-            return [HasAddRentalStatePermission()]
-        if self.request.method == 'GET':
-            return [HasViewRentalStatePermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'leases'
+    def get(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
+        return super().get(request, *args, **kwargs)
+    def post(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
+        return super().post(request, *args, **kwargs)
     def perform_create(self, serializer):
         next_state = self.request.data.get('next_state', [])
         serializer.save(next_state=next_state)
@@ -84,15 +85,14 @@ class Get_Rental(generics.ListCreateAPIView):
             products.append(product_data)
         return Response({"customer":customer, "products":products})
 class List_state(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated, HasViewRentalStatePermission, HasAddRentalStatePermission]
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [HasViewRentalStatePermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'leases'
     @swagger_auto_schema(
     operation_description="Listado de los estados de los arriendos",
     manual_parameters=[rental],
     )
     def get (self, request):
+        set_thread_variable('thread_user', request.user)
         list= State.objects.all().order_by('id')
         states=[]
         for state in list:
@@ -108,15 +108,14 @@ room = openapi.Parameter('room', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER
 class Selected_Product_Calendar_Api(generics.GenericAPIView):
     queryset = Selected_Product.objects.all()
     serializer_class = Selected_ProductSerializer
-    permission_classes = [IsAuthenticated, HasViewSelectedProductPermission]
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [HasViewSelectedProductPermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'leases'
     @swagger_auto_schema(
     operation_description="API de los productos seleccionados para el calendario y por ambiente",
     manual_parameters=[room],
     )
     def get(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
         room = request.GET.get('room', None)
         if room is None:
             date_products = []
@@ -187,17 +186,16 @@ request_body_schema = openapi.Schema(
 class Selected_Product_Detail(generics.GenericAPIView):
     queryset = Selected_Product.objects.all()
     serializer_class = Selected_ProductSerializer
-    permission_classes = [IsAuthenticated, HasViewSelectedProductPermission]
-    def get_permissions(self):
-        if self.request.method == 'PATCH':
-            return [HasChangeSelectedProductPermission()]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'leases'
     def get_selected_product(self, pk):
         try:
             return Selected_Product.objects.get(pk=pk)
         except:
             return None
 
-    def get(self, pk):
+    def get(self, request, pk):
+        set_thread_variable('thread_user', request.user)
         selected_product = self.get_selected_product(pk=pk)
         if selected_product == None:
             return Response({"error":"no se ha encontrado el producto seleccionado"}, status=status.HTTP_404_NOT_FOUND)
@@ -268,10 +266,8 @@ request_body_schema = openapi.Schema(
 )
 
 class Pre_Reserve_Api(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated, HasAddRentalPermission]
-    def get_permissions(self):
-        if self.request.method == 'POST':
-            return [HasAddRentalPermission() ]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'leases'
     @swagger_auto_schema(
     operation_description="Pre reserva de arriendos, si es plan se envian mas de un producto seleccionado",
     request_body=request_body_schema
@@ -348,15 +344,14 @@ class Event_Api(generics.ListAPIView):
 
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Get_state(generics.ListAPIView):
-    permission_classes = [IsAuthenticated, HasViewRentalPermission]
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [HasViewRentalPermission() ]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'leases'
     @swagger_auto_schema(
     operation_description="API del estado de arriendo y siguiente estado",
     manual_parameters=[rental],
     )
     def get(self, request):
+        set_thread_variable('thread_user', request.user)
         rental_id = request.query_params.get('rental')
         if not rental_id:
             return Response({"error": "Parámetro 'rental' faltante en la consulta."}, status=status.HTTP_400_BAD_REQUEST)
@@ -393,10 +388,8 @@ request_body_schema = openapi.Schema(
     }
 )
 class Change_state(generics.ListAPIView):
-    permission_classes = [IsAuthenticated, HasChangeRentalPermission]
-    def get_permissions(self):
-        if self.request.method == 'POST':
-            return [HasChangeRentalPermission() ]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'leases'
     def prereserved(self, rental_id,state,reason):
         if self.validated_state(rental_id, state):
             state_obj = State.objects.get(pk=state)
@@ -515,13 +508,15 @@ request_body_schema = openapi.Schema(
     }
 )
 class Delivery_Form(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'leases'
 
     @swagger_auto_schema(
     operation_description="API  de formulario de entrega y recepción de ambientes, con rental y producto seleccionado",
     request_body=request_body_schema
     )
     def post(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
         rental = int(request.data["rental"])
         selected_product = int(request.data["product"])
         if rental is None:
@@ -543,14 +538,8 @@ request_body_schema = openapi.Schema(
     }
 )
 class Register_additional_hour_applied(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = [IsAuthenticated, HasAddAdditionalHourAppliedPermission,HasViewAdditionalHourAppliedPermission,HasDeleteAdditionalHourAppliedPermission]
-    def get_permissions(self):
-        if self.request.method == 'POST':
-            return [HasAddAdditionalHourAppliedPermission() ]
-        if self.request.method == 'GET':
-            return [HasViewAdditionalHourAppliedPermission() ]
-        if self.request.method == 'DELETE':
-            return [HasDeleteAdditionalHourAppliedPermission() ]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'leases'
     serializer_class = Additional_Hour_Applied
 
     @swagger_auto_schema(
@@ -594,6 +583,7 @@ class Register_additional_hour_applied(generics.RetrieveUpdateDestroyAPIView):
     manual_parameters=[selected_product],
     )
     def get (self, request):
+        set_thread_variable('thread_user', request.user)
         selected_product_id = request.query_params.get('selected_product')
         additional_hour_applieds = Additional_Hour_Applied.objects.filter(selected_product=selected_product_id)
         list_additional_hour_applied=[]
@@ -627,16 +617,15 @@ class Register_additional_hour_applied(generics.RetrieveUpdateDestroyAPIView):
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class List_additional_hour_applied(generics.ListAPIView):
     serializer_class = Additional_Hour_Applied
-    permission_classes = [IsAuthenticated,HasViewAdditionalHourAppliedPermission]
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [HasViewAdditionalHourAppliedPermission() ]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'leases'
 
     @swagger_auto_schema(
     operation_description="Listado de horas adicionales aplicadas",
     manual_parameters=[rental],
     )
     def get (self, request):
+        set_thread_variable('thread_user', request.user)
         rental_id = request.query_params.get('rental')
         list_selected_product = Selected_Product.objects.filter(rental_id=rental_id)
         try:
@@ -667,8 +656,10 @@ class List_additional_hour_applied(generics.ListAPIView):
 class Report_Api(generics.GenericAPIView):
     queryset= Rental.objects.all()
     serializer_class = RentalsSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'leases'
     def post(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
         start_date = request.data.get("start_date", None)
         end_date = request.data.get("end_date", None)
         state = request.data.get("state", None)
@@ -683,11 +674,10 @@ class Report_Api(generics.GenericAPIView):
 class rental_list(generics.GenericAPIView):
     queryset = Rental.objects.all().order_by("id")
     serializer_class = RentalsSerializer
-    permission_classes = [IsAuthenticated, HasViewRentalPermission]
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return [HasViewRentalPermission() ]
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'leases'
     def get(self, request,*args, **kwargs):
+        set_thread_variable('thread_user', request.user)
         query_param = self.request.query_params.get('search', '')
         queryset = Rental.objects.filter(
             Q(state__name__icontains=query_param) |

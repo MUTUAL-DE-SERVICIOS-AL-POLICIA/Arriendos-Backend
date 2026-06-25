@@ -17,7 +17,7 @@ from drf_yasg.utils import swagger_auto_schema
 from django.conf import settings
 from threadlocals.threadlocals import set_thread_variable
 from rest_framework.permissions import IsAuthenticated
-from .permissions import *
+from roles.permissions import HasModulePermission
 import math
 
 request_body_schema = openapi.Schema(
@@ -33,18 +33,13 @@ request_body_schema = openapi.Schema(
 class User_Ldap(APIView):
     serializer_class = UserCustomSerializer
     queryset = User.objects.all()
-    permission_classes = [IsAuthenticated, HasViewUserPermission]
-    def get_permissions(self):
-        set_thread_variable('thread_user', self.request.user)
-        if self.request.method == 'GET':
-            return [HasViewUserPermission()]
-        elif self.request.method == 'POST':
-            return [IsAuthenticated()]
-        return super().get_permissions()
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'users'
     @swagger_auto_schema(
     operation_description="Listado de usuarios",
     )
     def get(self, request):
+        set_thread_variable('thread_user', request.user)
         page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit', 10))
         start_num = (page_num) * limit_num
@@ -93,6 +88,8 @@ class User_Ldap(APIView):
             else:
                 return Response({"status": "fail"}, status=status.HTTP_404_NOT_FOUND)
 class User_Delete(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'users'
     @swagger_auto_schema(
     operation_description="Desactivar usuarios",
     )
@@ -145,10 +142,13 @@ def get_user(request):
 class Assign_Api(generics.GenericAPIView):
     serializer_class = AssignSerializer
     queryset = Assign.objects.all()
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'users'
     @swagger_auto_schema(
     operation_description="Usuarios y ambientes asignados",
     )
     def get(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
         serializer_class = AssignsSerializer
         queryset = Assign.objects.all()
         page_num = int(request.GET.get('page', 0))
@@ -172,6 +172,7 @@ class Assign_Api(generics.GenericAPIView):
     operation_description="Asignación de usuarios y ambientes",
     )
     def post(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
         serializer = self.serializer_class(data=request.data, many=True)
         if serializer.is_valid():
             serializer.save()
@@ -182,6 +183,8 @@ class Assign_Api(generics.GenericAPIView):
 class Assign_Detail(generics.GenericAPIView):
     queryset = Assign.objects.all()
     serializer_class = AssignSerializer
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'users'
 
     def get_assign(self, pk, *args, **kwargs):
         try:
@@ -190,6 +193,7 @@ class Assign_Detail(generics.GenericAPIView):
             return None
 
     def get(self, request, pk, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
         assign = self.get_assign(pk=pk)
         if assign == None:
             return Response({"error": f"Assign with id: {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
@@ -199,6 +203,7 @@ class Assign_Detail(generics.GenericAPIView):
     operation_description="Editar asignación de ambientes a usuarios",
     )
     def patch(self, request, pk):
+        set_thread_variable('thread_user', request.user)
         assign = self.get_assign(pk=pk)
         if assign == None:
             return Response({"error": f"Assign with id: {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
