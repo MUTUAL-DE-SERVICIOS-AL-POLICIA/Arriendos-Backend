@@ -12,6 +12,34 @@ from django.contrib.auth.models import User
 from users.serializers import UserCustomSerializer
 from django.contrib.auth.hashers import make_password
 from drf_yasg.utils import swagger_auto_schema
+from roles.models import UserRole, RolePermission
+
+
+def get_user_permissions(user):
+    """Obtiene los permisos del usuario basado en su rol RBAC"""
+    if user.is_superuser:
+        return 'Administrador', [
+            'products.view', 'products.add', 'products.change', 'products.delete',
+            'rooms.view', 'rooms.add', 'rooms.change', 'rooms.delete',
+            'customers.view', 'customers.add', 'customers.change', 'customers.delete',
+            'leases.view', 'leases.add', 'leases.change', 'leases.delete',
+            'financials.view', 'financials.add', 'financials.change', 'financials.delete',
+            'requirements.view', 'requirements.add', 'requirements.change', 'requirements.delete',
+            'users.view', 'users.add', 'users.change', 'users.delete',
+        ]
+    try:
+        user_role = UserRole.objects.get(user=user)
+        role = user_role.role
+        if not role.is_active:
+            return None, []
+        role_permissions = RolePermission.objects.filter(role=role).select_related('module')
+        permissions = []
+        for rp in role_permissions:
+            for perm in rp.permissions.all():
+                permissions.append(f"{rp.module.codename}.{perm.codename}")
+        return role.name, permissions
+    except UserRole.DoesNotExist:
+        return None, []
 
 def Bind_User_Ldap(user, password):
     ldap_server = settings.LDAP_SERVER
@@ -56,6 +84,9 @@ class Auth(TokenObtainPairView):
                     response.data['username'] = user.username
                     response.data['first_name'] = user.first_name
                     response.data['last_name'] = user.last_name
+                    role_name, permissions = get_user_permissions(user)
+                    response.data['role'] = role_name
+                    response.data['permissions'] = permissions
                     if not user or not user.check_password(request.data['password']):
                         response.data['detail'] = "Credenciales inválidas"
                         response.status_code = status.HTTP_401_UNAUTHORIZED
@@ -69,6 +100,9 @@ class Auth(TokenObtainPairView):
                 response.data['username'] = user.username
                 response.data['first_name'] = user.first_name
                 response.data['last_name'] = user.last_name
+                role_name, permissions = get_user_permissions(user)
+                response.data['role'] = role_name
+                response.data['permissions'] = permissions
                 if not user or not user.check_password(request.data['password']):
                     response.data['detail'] = "Credenciales inválidas"
                     response.status_code = status.HTTP_401_UNAUTHORIZED

@@ -34,10 +34,11 @@ urlpatterns = [
     path('api/customers/', include('customers.urls')),
     path('api/plans/', include('plans.urls')),
     path('api/users/', include('users.urls')),
-    path('api/product/', include('products.urls') ),
+    path('api/product/', include('products.urls')),
     path('api/requirements/', include('requirements.urls')),
     path('api/leases/', include('leases.urls')),
     path('api/financials/', include('financials.urls')),
+    path('api/roles/', include('roles.urls')),
     re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
