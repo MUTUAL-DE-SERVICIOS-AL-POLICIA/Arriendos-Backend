@@ -96,16 +96,31 @@ class User_Delete(generics.GenericAPIView):
     def delete(self, request, pk):
         set_thread_variable('thread_user', request.user)
         if not User.objects.filter(pk=pk).exists():
-            return Response({"status":"fail"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"status":"fail", "message":"Usuario no encontrado"}, status=status.HTTP_404_NOT_FOUND)
         user = User.objects.get(pk=pk)
+        
+        # No permitir desactivar al ultimo administrador
+        if user.is_superuser:
+            return Response({
+                "status": "fail", 
+                "message": "No se puede desactivar al usuario administrador del sistema"
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # No permitir que un usuario se desactive a si mismo
+        if user.pk == request.user.pk:
+            return Response({
+                "status": "fail", 
+                "message": "No puedes desactivar tu propia cuenta"
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
         if user.is_active == True:
             user.is_active= False
             user.save()
-            return Response({"message":"Usuario desactivado"}, status=status.HTTP_200_OK)
+            return Response({"status":"success", "message":"Usuario desactivado"}, status=status.HTTP_200_OK)
         else:
             user.is_active= True
             user.save()
-            return Response({"message":"Usuario activado"}, status=status.HTTP_200_OK)
+            return Response({"status":"success", "message":"Usuario activado"}, status=status.HTTP_200_OK)
 
 
 request_body_schema = openapi.Schema(
