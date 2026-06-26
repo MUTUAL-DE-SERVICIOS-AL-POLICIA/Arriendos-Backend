@@ -11,6 +11,7 @@ from .models import Assign
 from rest_framework import status, generics
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+from django.conf import settings
 from threadlocals.threadlocals import set_thread_variable
 from rest_framework.permissions import IsAuthenticated
 from roles.permissions import HasModulePermission
