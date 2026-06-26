@@ -17,16 +17,6 @@ from roles.models import UserRole, RolePermission
 
 def get_user_permissions(user):
     """Obtiene los permisos del usuario basado en su rol RBAC"""
-    if user.is_superuser:
-        return 'Administrador', [
-            'products.view', 'products.add', 'products.change', 'products.delete',
-            'rooms.view', 'rooms.add', 'rooms.change', 'rooms.delete',
-            'customers.view', 'customers.add', 'customers.change', 'customers.delete',
-            'leases.view', 'leases.add', 'leases.change', 'leases.delete',
-            'financials.view', 'financials.add', 'financials.change', 'financials.delete',
-            'requirements.view', 'requirements.add', 'requirements.change', 'requirements.delete',
-            'users.view', 'users.add', 'users.change', 'users.delete',
-        ]
     try:
         user_role = UserRole.objects.get(user=user)
         role = user_role.role
