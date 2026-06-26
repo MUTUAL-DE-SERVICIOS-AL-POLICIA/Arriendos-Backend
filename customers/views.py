@@ -324,6 +324,8 @@ class Customer_Detail(generics.GenericAPIView):
             return Response({"error": "El cliente no existe."}, status=status.HTTP_400_BAD_REQUEST)
 
 class identify_affiliate(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'customers'
     def get_token_access(self):
         url = f'{settings.MICROSERVICE_API_URL}/auth/login_ext'
         username = settings.MICROSERVICE_API_USERNAME

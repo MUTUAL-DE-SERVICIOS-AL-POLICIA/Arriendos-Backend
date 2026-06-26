@@ -1,3 +1,4 @@
+import os
 from django.core.management.base import BaseCommand
 from roles.models import Module, Permission, Role, RolePermission, UserRole
 from django.contrib.auth.models import User
@@ -108,9 +109,10 @@ class Command(BaseCommand):
             }
         )
         if created:
-            admin_user.set_password('admin123')
+            admin_password = os.environ.get('ADMIN_PASSWORD', 'admin123')
+            admin_user.set_password(admin_password)
             admin_user.save()
-            self.stdout.write(f'  Usuario admin creado (password: admin123)')
+            self.stdout.write(f'  Usuario admin creado')
 
         admin_role = Role.objects.get(name='Administrador')
         UserRole.objects.get_or_create(user=admin_user, defaults={'role': admin_role})

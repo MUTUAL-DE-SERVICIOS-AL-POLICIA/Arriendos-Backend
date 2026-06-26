@@ -150,7 +150,7 @@ class UserRole_Assign_View(generics.GenericAPIView):
     rbac_module = 'users'
 
     def post(self, request, *args, **kwargs):
-        serializer = UserRoleCreateSerializer(data=request.data)
+        serializer = UserRoleCreateSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             user_role = serializer.save()
             return Response({

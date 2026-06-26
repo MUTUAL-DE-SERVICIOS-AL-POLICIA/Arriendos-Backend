@@ -155,6 +155,8 @@ request_body_schema = openapi.Schema(
 )
 class Print_payment(generics.ListAPIView):
     serializer_class = Payment_Serializer
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'financials'
     def get(self,request, rental_id):
         return self.Payment_pdf_generate(rental_id)
     def Payment_pdf_generate(self,rental_id):
@@ -414,6 +416,8 @@ class Register_warranty(generics.ListAPIView):
 
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Print_Warranties(generics.ListAPIView):
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'financials'
     def get(self,request,rental_id):
         return self.Warranties_pdf_generate(rental_id)
     def Warranties_pdf_generate(self,rental_id):

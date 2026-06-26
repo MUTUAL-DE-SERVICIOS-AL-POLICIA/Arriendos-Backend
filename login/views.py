@@ -1,9 +1,6 @@
-from django.shortcuts import render
 from django.conf import settings
 from rest_framework.response import Response
-from django.http import HttpResponse
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from ldap3 import Server, Connection, ALL, SUBTREE
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import status, generics
@@ -13,6 +10,8 @@ from users.serializers import UserCustomSerializer
 from django.contrib.auth.hashers import make_password
 from drf_yasg.utils import swagger_auto_schema
 from roles.models import UserRole, RolePermission
+from rest_framework.permissions import IsAuthenticated
+from roles.permissions import HasModulePermission
 
 
 def get_user_permissions(user):
@@ -77,9 +76,6 @@ class Auth(TokenObtainPairView):
                     role_name, permissions = get_user_permissions(user)
                     response.data['role'] = role_name
                     response.data['permissions'] = permissions
-                    if not user or not user.check_password(request.data['password']):
-                        response.data['detail'] = "Credenciales inválidas"
-                        response.status_code = status.HTTP_401_UNAUTHORIZED
             else:
                  return Response({'error': 'Credenciales LDAP inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
         else:
@@ -93,12 +89,11 @@ class Auth(TokenObtainPairView):
                 role_name, permissions = get_user_permissions(user)
                 response.data['role'] = role_name
                 response.data['permissions'] = permissions
-                if not user or not user.check_password(request.data['password']):
-                    response.data['detail'] = "Credenciales inválidas"
-                    response.status_code = status.HTTP_401_UNAUTHORIZED
         return response
 
 class Users_Ldap(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'users'
     @swagger_auto_schema(
     operation_description="Listado de usuarios LDAP",
     )

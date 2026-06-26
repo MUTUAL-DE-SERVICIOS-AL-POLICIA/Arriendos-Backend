@@ -43,15 +43,3 @@ class HasModulePermission(permissions.BasePermission):
 
         return False
 
-
-class HasRolePermission(permissions.BasePermission):
-    """
-    Permiso que valida si el usuario tiene un rol asignado.
-    """
-    message = "No tienes un rol asignado"
-
-    def has_permission(self, request, view):
-        user = request.user
-        if not user or not user.is_authenticated:
-            return False
-        return UserRole.objects.filter(user=user).exists()

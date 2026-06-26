@@ -1,11 +1,8 @@
-from django.shortcuts import render
 from rest_framework.views import APIView
 from .serializers import UserCustomSerializer
 from .serializers import AssignSerializer, AssignsSerializer
 from rest_framework.response import Response
 from django.http import HttpResponse
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from ldap3 import Server, Connection, ALL, SUBTREE, ALL_ATTRIBUTES
 from ldap3.core.exceptions import LDAPException
@@ -14,7 +11,6 @@ from .models import Assign
 from rest_framework import status, generics
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from django.conf import settings
 from threadlocals.threadlocals import set_thread_variable
 from rest_framework.permissions import IsAuthenticated
 from roles.permissions import HasModulePermission
@@ -80,9 +76,9 @@ class User_Ldap(APIView):
         for entry in connection.entries:
             if (first_name == entry.givenName and last_name == entry.sn and username == entry.uid and email == entry.mail):
                 if User.objects.filter(username=username).exists():
-                    return Response({'error': 'El usuario ya existe'}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({'error': 'El usuario ya existe'}, status=status.HTTP_400_BAD_REQUEST_REQUEST)
                 if User.objects.filter(email=email).exists():
-                    return Response({'error': 'El correo ya existe'}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({'error': 'El correo ya existe'}, status=status.HTTP_400_BAD_REQUEST_REQUEST)
                 user = User.objects.create_user(username=username, email=email, first_name=first_name, last_name=last_name)
                 return Response({"message":"Usuario registrado con exito", "user": user.id, "username": user.username, "email": user.email, "first_name": user.first_name, "last_name": user.last_name}, status=status.HTTP_201_CREATED)
             else:
@@ -104,14 +100,14 @@ class User_Delete(generics.GenericAPIView):
             return Response({
                 "status": "fail", 
                 "message": "No se puede desactivar al usuario administrador del sistema"
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=status.HTTP_400_BAD_REQUEST_REQUEST)
         
         # No permitir que un usuario se desactive a si mismo
         if user.pk == request.user.pk:
             return Response({
                 "status": "fail", 
                 "message": "No puedes desactivar tu propia cuenta"
-            }, status=status.HTTP_400_BAD_REQUEST)
+            }, status=status.HTTP_400_BAD_REQUEST_REQUEST)
         
         if user.is_active == True:
             user.is_active= False
@@ -130,7 +126,6 @@ request_body_schema = openapi.Schema(
     }
 )
 
-@csrf_exempt
 @swagger_auto_schema(
     method='post',
     operation_description="API para obtener datos del usuario",
@@ -193,7 +188,7 @@ class Assign_Api(generics.GenericAPIView):
             serializer.save()
             return Response({"data": {"assigns": serializer.data}}, status=status.HTTP_201_CREATED)
         else:
-            return Response({"error": serializer.errors}, status=status.HTTP_400_BAD)
+            return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 class Assign_Detail(generics.GenericAPIView):
     queryset = Assign.objects.all()
@@ -227,4 +222,4 @@ class Assign_Detail(generics.GenericAPIView):
             serializer.save()
             return Response({"data": {"assign": serializer.data}}, status=status.HTTP_200_OK)
         else:
-            return Response({"error": serializer.errors}, status=status.HTTP_400_BAD)
+            return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

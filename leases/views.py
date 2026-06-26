@@ -22,8 +22,7 @@ from rest_framework.permissions import IsAuthenticated
 from threadlocals.threadlocals import set_thread_variable
 from django.db.models import Q
 import math
-import calendar
-import locale
+
 
 class StateRentalListCreateView(generics.ListCreateAPIView):
     queryset = State.objects.all()
@@ -42,6 +41,8 @@ class StateRentalListCreateView(generics.ListCreateAPIView):
 
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Get_Rental(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'leases'
     @swagger_auto_schema(
     operation_description="API para obtener la información de cada arriendo",
     manual_parameters=[rental],
@@ -341,6 +342,8 @@ class Pre_Reserve_Api(generics.GenericAPIView):
 class Event_Api(generics.ListAPIView):
     queryset = Event_Type.objects.all()
     serializer_class = Event_TypeSerializer
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'leases'
 
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Get_state(generics.ListAPIView):

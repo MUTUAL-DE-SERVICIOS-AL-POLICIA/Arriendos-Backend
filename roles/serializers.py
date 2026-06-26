@@ -98,6 +98,12 @@ class UserRoleCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError("El rol no existe")
         return value
 
+    def validate(self, data):
+        request = self.context.get('request')
+        if request and data.get('user_id') == request.user.id:
+            raise serializers.ValidationError("No puedes asignarte un rol a ti mismo")
+        return data
+
     def create(self, validated_data):
         user_role, created = UserRole.objects.update_or_create(
             user_id=validated_data['user_id'],
