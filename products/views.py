@@ -1,3 +1,26 @@
+"""
+Vistas API para la gestión de productos e historial de precios.
+
+Este módulo contiene las vistas para gestionar:
+- Tarifas (Rate)
+- Rangos de Horas (HourRange)
+- Productos (Product)
+- Precios e Historial de Precios (Price)
+- Precios por Hora Adicional
+- Productos posibles para un tipo de cliente
+
+Todas las vistas utilizan HasModulePermission para validar
+que el usuario tenga los permisos necesarios sobre el módulo 'products'.
+
+Historial de Precios:
+- GET /product/price_history/?product=<id>: Obtiene historial de precios
+- Al crear producto: Se crea precio inicial con valid_from=now
+- Al actualizar precio: Se desactiva el anterior y se crea uno nuevo
+
+Autor: Dilan Torrez
+Fecha: 2026
+"""
+
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from .models import Rate, HourRange, Product, Price, Price_Additional_Hour
@@ -218,7 +241,50 @@ class Price_Retrieve_Update_Destroy_View(generics.RetrieveUpdateDestroyAPIView):
 
 product_param = openapi.Parameter('product', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 
+
 class Price_History_View(generics.GenericAPIView):
+    """
+    Vista para obtener el historial de precios de un producto.
+
+    Retorna todos los precios registrados para un producto específico,
+    ordenados por fecha de creación (más reciente primero).
+
+    Permisos requeridos: products.view (Ver productos)
+    Método HTTP: GET
+
+    Parámetros de consulta:
+    - product: ID del producto (requerido)
+
+    Estructura de respuesta (200 OK):
+    {
+        "status": "success",
+        "prices": [
+            {
+                "id": 1,
+                "mount": 150.0,
+                "is_active": true,
+                "valid_from": "2026-01-15T10:00:00Z",
+                "valid_to": null,
+                "created_at": "2026-01-15T10:00:00Z"
+            },
+            {
+                "id": 2,
+                "mount": 120.0,
+                "is_active": false,
+                "valid_from": "2026-01-01T10:00:00Z",
+                "valid_to": "2026-01-15T10:00:00Z",
+                "created_at": "2026-01-01T10:00:00Z"
+            }
+        ]
+    }
+
+    Error (400 Bad Request):
+    {
+        "error": "Parámetro 'product' requerido"
+    }
+
+    URL: /api/product/price_history/
+    """
     serializer_class = PriceHistorySerializer
     permission_classes = [IsAuthenticated, HasModulePermission]
     rbac_module = 'products'
@@ -228,9 +294,12 @@ class Price_History_View(generics.GenericAPIView):
         manual_parameters=[product_param],
     )
     def get(self, request):
+        """Obtiene el historial de precios de un producto específico."""
         product_id = request.query_params.get('product')
         if not product_id:
             return Response({"error": "Parámetro 'product' requerido"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Obtener precios ordenados por fecha de creación (más reciente primero)
         prices = Price.objects.filter(product_id=product_id).order_by('-created_at')
         serializer = self.serializer_class(prices, many=True)
         return Response({
