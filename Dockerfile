@@ -17,6 +17,7 @@ RUN /bin/bash -c "source venv/bin/activate"
 
 # Instala las dependencias
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir "setuptools<81"
 
 # Copia el contenido del directorio actual al contenedor en /app/
 COPY . /app/
