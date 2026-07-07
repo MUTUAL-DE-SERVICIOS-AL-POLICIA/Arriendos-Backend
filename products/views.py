@@ -382,20 +382,13 @@ class Posible_product(APIView):
             rate_requirement = RateRequirement.objects.filter(customer_type_id=customer_type_id).first()
             if rate_requirement:
                 rate_id = rate_requirement.rate.id
-                products_with_rate = Product.objects.filter(rate=rate_id,room=room_id, is_deleted=False).select_related(
+                products_with_rate = Product.objects.filter(
+                    rate=rate_id, room=room_id, is_deleted=False
+                ).select_related(
                     'rate', 'room', 'room__property', 'hour_range'
                 ).prefetch_related('price_set')
                 serializer = ProductsSerializer(products_with_rate, many=True)
-                products_with_active_prices=[]
-                for product_data in serializer.data:
-                    product_id = product_data.get('id')
-                    product_obj = next((p for p in products_with_rate if p.id == product_id), None)
-                    if product_obj and hasattr(product_obj, '_prefetched_prices'):
-                        active_price = next((p for p in product_obj._prefetched_prices if p.is_active), None)
-                        if active_price:
-                            product_data['mount'] = active_price.mount
-                            products_with_active_prices.append(product_data)
-                return Response({'status': 'success', 'products': products_with_active_prices})
+                return Response({'status': 'success', 'products': serializer.data})
             else:
                 customer=Customer_type.objects.get(pk=customer_type_id)
                 return Response({"error": f"No hay requisitos asociados a la tarifa perteneciente al tipo de cliente: {customer.name}"}, status=status.HTTP_400_BAD_REQUEST)

@@ -65,8 +65,9 @@ class ProductListSerializer(serializers.ModelSerializer):
         fields = ['id', 'rate_name', 'room_name', 'property_name', 'hour_range_time', 'day', 'mount']
 
     def get_mount(self, obj):
-        if hasattr(obj, '_prefetched_prices'):
-            active_price = next((p for p in obj._prefetched_prices if p.is_active), None)
+        cache = getattr(obj, '_prefetched_objects_cache', None)
+        if cache and 'price_set' in cache:
+            active_price = next((p for p in cache['price_set'] if p.is_active), None)
             if active_price:
                 return active_price.mount
         return None
@@ -83,8 +84,9 @@ class ProductsSerializer(serializers.ModelSerializer):
         fields = ['id', 'rate', 'room', 'hour_range', 'day', 'is_deleted', 'created_at', 'updated_at', 'mount']
 
     def get_mount(self, obj):
-        if hasattr(obj, '_prefetched_prices'):
-            active_price = next((p for p in obj._prefetched_prices if p.is_active), None)
+        cache = getattr(obj, '_prefetched_objects_cache', None)
+        if cache and 'price_set' in cache:
+            active_price = next((p for p in cache['price_set'] if p.is_active), None)
             if active_price:
                 return active_price.mount
         return None
