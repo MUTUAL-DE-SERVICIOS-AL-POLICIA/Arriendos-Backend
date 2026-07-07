@@ -11,7 +11,8 @@ Este módulo contiene:
 Flujo de autenticación:
 1. Si LDAP está habilitado (LDAP_STATUS=True):
    - Intenta autenticar contra LDAP
-   - Si LDAP falla, retorna error 401
+   - Si LDAP es exitoso, sincroniza contraseña en BD local (o crea usuario)
+   - Si LDAP falla, fallback a autenticación contra BD local
 2. Si LDAP está deshabilitado:
    - Autentica contra la base de datos local
 3. Si la autenticación es exitosa:
@@ -156,11 +157,13 @@ class Auth(TokenObtainPairView):
     Flujo de autenticación:
     1. Si LDAP está habilitado (LDAP_STATUS=True):
        a. Intenta autenticar contra LDAP
-       b. Si LDAP falla, retorna error 401
-       c. Si LDAP es exitoso, sincroniza contraseña en BD local
+       b. Si LDAP es exitoso:
+          - Sincroniza contraseña en BD local (o crea usuario si no existe)
+       c. Si LDAP falla:
+          - Fallback a autenticación contra BD local
     2. Si LDAP está deshabilitado:
        a. Autentica contra la base de datos local
-    3. Si la autenticación es exitosa:
+    3. Si la autenticación es exitosa (LDAP o local):
        a. Genera tokens JWT (access y refresh)
        b. Retorna datos del usuario y permisos RBAC
 
@@ -178,7 +181,7 @@ class Auth(TokenObtainPairView):
 
     Estructura de error (401 Unauthorized):
     {
-        "error": "Credenciales LDAP inválidas"
+        "error": "Credenciales inválidas"
     }
 
     URL: /api/login/auth/
@@ -186,47 +189,52 @@ class Auth(TokenObtainPairView):
     """
 
     def post(self, request, *args, **kwargs):
-        user = request.data.get('username')
+        username = request.data.get('username')
         password = request.data.get('password')
+        ldap_ok = False
 
         # Si LDAP está habilitado, intentar autenticación LDAP
         if settings.LDAP_STATUS == True:
-            if Bind_User_Ldap(user, password):
-                # LDAP exitoso: sincronizar contraseña en BD local
-                user = User.objects.get(username=user)
-                user.password = make_password(password)
-                user.save()
+            try:
+                ldap_ok = Bind_User_Ldap(username, password)
+            except Exception:
+                ldap_ok = False
 
-                # Generar tokens JWT
-                response = super().post(request, *args, **kwargs)
-                if response.status_code == status.HTTP_200_OK:
-                    user = User.objects.filter(username=request.data['username']).first()
-                    response.data['user_id'] = user.id
-                    response.data['username'] = user.username
-                    response.data['first_name'] = user.first_name
-                    response.data['last_name'] = user.last_name
+            if ldap_ok:
+                # LDAP exitoso: crear o sincronizar usuario en BD local
+                try:
+                    user = User.objects.get(username=username)
+                    user.password = make_password(password)
+                    user.save()
+                except User.DoesNotExist:
+                    # Usuario no existe en DB local, crearlo
+                    user = User.objects.create_user(
+                        username=username,
+                        password=make_password(password),
+                        first_name=username,
+                    )
 
-                    # Obtener permisos RBAC del usuario
-                    role_name, permissions = get_user_permissions(user)
-                    response.data['role'] = role_name
-                    response.data['permissions'] = permissions
-            else:
-                # LDAP falló: retornar error de credenciales
-                return Response({'error': 'Credenciales LDAP inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
-        else:
-            # LDAP deshabilitado: autenticar contra BD local
+        # Si LDAP no está habilitado o LDAP falló, intentar autenticación local
+        if not ldap_ok:
             response = super().post(request, *args, **kwargs)
-            if response.status_code == status.HTTP_200_OK:
-                user = User.objects.filter(username=request.data['username']).first()
-                response.data['user_id'] = user.id
-                response.data['username'] = user.username
-                response.data['first_name'] = user.first_name
-                response.data['last_name'] = user.last_name
+            if response.status_code != status.HTTP_200_OK:
+                return response
+            user = User.objects.filter(username=username).first()
+            if user is None:
+                return Response({'error': 'Credenciales inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
 
-                # Obtener permisos RBAC del usuario
-                role_name, permissions = get_user_permissions(user)
-                response.data['role'] = role_name
-                response.data['permissions'] = permissions
+        # Autenticación exitosa (LDAP o local): generar tokens JWT
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == status.HTTP_200_OK:
+            response.data['user_id'] = user.id
+            response.data['username'] = user.username
+            response.data['first_name'] = user.first_name
+            response.data['last_name'] = user.last_name
+
+            # Obtener permisos RBAC del usuario
+            role_name, permissions = get_user_permissions(user)
+            response.data['role'] = role_name
+            response.data['permissions'] = permissions
 
         return response
 
