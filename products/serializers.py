@@ -43,6 +43,27 @@ class ProductPrice(serializers.ModelSerializer):
     Product=ProductSerializer()
     Price=PriceSerializer()
 
+class ProductListSerializer(serializers.ModelSerializer):
+    """Serializador optimizado para listar productos"""
+    rate_name = serializers.CharField(source='rate.name', read_only=True)
+    room_name = serializers.CharField(source='room.name', read_only=True)
+    property_name = serializers.CharField(source='room.property.name', read_only=True)
+    hour_range_time = serializers.IntegerField(source='hour_range.time', read_only=True)
+    mount = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = ['id', 'rate_name', 'room_name', 'property_name', 'hour_range_time', 'day', 'mount']
+
+    def get_mount(self, obj):
+        """Obtiene el precio activo del producto"""
+        if hasattr(obj, '_prefetched_prices'):
+            active_price = next((p for p in obj._prefetched_prices if p.is_active), None)
+            if active_price:
+                return active_price.mount
+        return None
+
+
 class ProductsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product

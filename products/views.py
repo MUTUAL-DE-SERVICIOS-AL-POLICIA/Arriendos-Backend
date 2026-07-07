@@ -390,6 +390,32 @@ class Posible_product(APIView):
         except Customer_type.DoesNotExist:
             return Response({"error": "Tipo de cliente no encontrado"}, status=status.HTTP_400_BAD_REQUEST)
 
+class Product_Filter_Options(generics.GenericAPIView):
+    """Endpoint para obtener las opciones de filtro (tarifas, inmuebles, rangos de horas, días)"""
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'products'
+
+    def get(self, request):
+        from rooms.models import Room, Property
+        rates = list(Rate.objects.values('id', 'name'))
+        properties = list(Property.objects.values('id', 'name'))
+        rooms = list(Room.objects.filter(is_active=True).values('id', 'name', 'property_id'))
+        hour_ranges = list(HourRange.objects.values('id', 'time'))
+        # Días disponibles (extraídos de la BD)
+        all_days = set()
+        for d in Product.objects.values_list('day', flat=True):
+            all_days.update(d)
+        days = sorted(all_days)
+        return Response({
+            "status": "success",
+            "rates": rates,
+            "properties": properties,
+            "rooms": rooms,
+            "hour_ranges": hour_ranges,
+            "days": days
+        })
+
+
 class Product_Filter(generics.ListAPIView):
     serializer_class = ProductsSerializer
     permission_classes = [IsAuthenticated, HasModulePermission]
@@ -397,15 +423,50 @@ class Product_Filter(generics.ListAPIView):
 
     def get_queryset(self):
         try:
+            # Búsqueda por texto
             query_param = self.request.query_params.get('search', '')
-            queryset = Product.objects.filter(
-                is_deleted=False
-            ).filter(
-                Q(id__icontains=query_param) |
-                Q(rate_id__name__icontains=query_param) |
-                Q(room_id__name__icontains=query_param) |
-                Q(room_id__property__name__icontains=query_param)
-            )
+            # Filtros por columna
+            rate_id = self.request.query_params.get('rate_id', '')
+            property_id = self.request.query_params.get('property_id', '')
+            room_id = self.request.query_params.get('room_id', '')
+            hour_range_id = self.request.query_params.get('hour_range_id', '')
+            day = self.request.query_params.get('day', '')
+
+            queryset = Product.objects.filter(is_deleted=False).select_related(
+                'rate', 'room', 'room__property', 'hour_range'
+            ).prefetch_related('price_set')
+
+            # Aplicar búsqueda por texto
+            if query_param:
+                queryset = queryset.filter(
+                    Q(id__icontains=query_param) |
+                    Q(rate_id__name__icontains=query_param) |
+                    Q(room_id__name__icontains=query_param) |
+                    Q(room_id__property__name__icontains=query_param)
+                )
+
+            # Aplicar filtro por tarifa
+            if rate_id:
+                queryset = queryset.filter(rate_id=rate_id)
+
+            # Aplicar filtro por inmueble
+            if property_id:
+                queryset = queryset.filter(room_id__property_id=property_id)
+
+            # Aplicar filtro por ambiente
+            if room_id:
+                queryset = queryset.filter(room_id=room_id)
+
+            # Aplicar filtro por rango de horas
+            if hour_range_id:
+                queryset = queryset.filter(hour_range_id=hour_range_id)
+
+            # Aplicar filtro por día (el campo day es un array, case-insensitive)
+            if day:
+                # Convertir a mayúsculas para coincidir con la BD
+                days = [d.strip().upper() for d in day.split(',') if d.strip()]
+                queryset = queryset.filter(day__overlap=days)
+
             return queryset
         except ValueError:
             return Product.objects.none()
@@ -414,23 +475,35 @@ class Product_Filter(generics.ListAPIView):
         try:
             queryset = self.get_queryset()
             page_num = int(request.GET.get('page', 0))
-            limit_num = int(request.GET.get('limit', queryset.count()))
-            start_num = page_num * limit_num
-            end_num = limit_num * (page_num + 1)
+            limit_num = int(request.GET.get('limit', 10))
             total_products = queryset.count()
-            serializer = self.serializer_class(queryset, many=True)
+            
+            # Si limit es -1, mostrar todos
+            if limit_num == -1:
+                paginated_products = queryset
+            else:
+                # Paginar ANTES de serializar
+                start_num = page_num * limit_num
+                end_num = limit_num * (page_num + 1)
+                paginated_products = queryset[start_num:end_num]
+            
+            # Serializar solo los productos paginados
+            serializer = ProductsSerializer(paginated_products, many=True)
             serialized_data = serializer.data
-            for i, product_data in enumerate(serialized_data):
-                active_price_data = ProductSerializer.get_active_price(queryset[i])
-                if active_price_data:
-                    product_data['mount'] = active_price_data.get("mount")
-            paginated_data = serialized_data[start_num:end_num]
+            
+            # Obtener precios activos de forma optimizada
+            for product_data in serialized_data:
+                product_id = product_data.get('id')
+                active_price = Price.objects.filter(product_id=product_id, is_active=True).first()
+                if active_price:
+                    product_data['mount'] = active_price.mount
+            
             response_data = {
                 "status": "success",
                 "total": total_products,
                 "page": page_num,
                 "last_page": math.ceil(total_products / limit_num) if limit_num > 0 else 0,
-                "products": paginated_data
+                "products": serialized_data
             }
             return Response(response_data, status=status.HTTP_200_OK)
         except ValueError:

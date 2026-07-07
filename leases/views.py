@@ -304,7 +304,7 @@ class Pre_Reserve_Api(generics.GenericAPIView):
         initial_total = 0
         for selected_product in selected_products:
             product_id = selected_product.get("product")
-            product_price = Price.objects.get(product_id = product_id)
+            product_price = Price.objects.get(product_id=product_id, is_active=True)
             product_price = product_price.mount
             initial_total = initial_total + product_price
         productos_plan = len(selected_products)
@@ -317,7 +317,7 @@ class Pre_Reserve_Api(generics.GenericAPIView):
         for selected_product in selected_products:
             event_type = selected_product.get("event_type")
             product_id = selected_product.get("product")
-            product_price = Price.objects.get(product_id = product_id)
+            product_price = Price.objects.get(product_id=product_id, is_active=True)
             product_price = product_price.mount
             if Event_Type.objects.filter(name=event_type).exists():
                 event = Event_Type.objects.get(name=event_type)
