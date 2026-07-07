@@ -81,7 +81,8 @@ class Get_Rental(generics.ListCreateAPIView):
                 'start_time': start_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
                 'end_time': end_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
                 "detail":selected_product.detail,
-                "event":selected_product.event_type.name
+                "event":selected_product.event_type.name,
+                "product_price": selected_product.product_price
             }
             products.append(product_data)
         return Response({"customer":customer, "products":products})
