@@ -695,7 +695,7 @@ class rental_list(generics.GenericAPIView):
         queryset = Rental.objects.select_related(
             'state', 'customer', 'customer__customer_type', 'plan'
         ).prefetch_related(
-            Prefetch('selected_products', queryset=Selected_Product.objects.select_related(
+            Prefetch('selected_product_set', queryset=Selected_Product.objects.select_related(
                 'product', 'product__room', 'product__room__property',
                 'product__hour_range', 'product__rate', 'event_type'
             ).prefetch_related('additional_hour_applied_set')),
@@ -723,7 +723,7 @@ class rental_list(generics.GenericAPIView):
             state=item["state"]
             can_edit=False
             date = str(item["created_at"])
-            date_object = timezone.datetime.strptime(date, "%Y-%m-%d %H:%M:%S.%f%z")
+            date_object = timezone.datetime.fromisoformat(date)
             date_formated = date_object.strftime("%d de %B de %Y %I:%M %p")
             customer_name= item["customer"]["institution_name"]
             selected_products_list=[]

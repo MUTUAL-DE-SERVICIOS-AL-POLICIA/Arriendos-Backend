@@ -112,8 +112,9 @@ class RentalsSerializer(serializers.ModelSerializer):
         model = Rental
         fields = '__all__'
     def get_selected_products(self, obj):
-        if hasattr(obj, '_prefetched_selected_products'):
-            return Selected_ProductsSerializer(obj._prefetched_selected_products, many=True).data
+        cache = getattr(obj, '_prefetched_objects_cache', None)
+        if cache and 'selected_product_set' in cache:
+            return Selected_ProductsSerializer(cache['selected_product_set'], many=True).data
         selected_products = Selected_Product.objects.filter(rental_id = obj).select_related(
             'product', 'product__room', 'product__room__property',
             'product__hour_range', 'product__rate', 'event_type'
@@ -121,14 +122,16 @@ class RentalsSerializer(serializers.ModelSerializer):
         selected_product_serializer = Selected_ProductsSerializer(selected_products, many=True)
         return selected_product_serializer.data
     def get_payments(self, obj):
-        if hasattr(obj, '_prefetched_payments'):
-            return Payment_Serializer(obj._prefetched_payments, many=True).data
+        cache = getattr(obj, '_prefetched_objects_cache', None)
+        if cache and 'payment_set' in cache:
+            return Payment_Serializer(cache['payment_set'], many=True).data
         payments = Payment.objects.filter(rental_id = obj)
         payment_serializer = Payment_Serializer(payments, many=True)
         return payment_serializer.data
     def get_warranty_movements(self, obj):
-        if hasattr(obj, '_prefetched_warranty_movements'):
-            return Warranty_Movement_Serializer(obj._prefetched_warranty_movements, many=True).data
+        cache = getattr(obj, '_prefetched_objects_cache', None)
+        if cache and 'warranty_movement_set' in cache:
+            return Warranty_Movement_Serializer(cache['warranty_movement_set'], many=True).data
         warranty_movements = Warranty_Movement.objects.filter(rental_id = obj)
         warranty_movement_serializer = Warranty_Movement_Serializer(warranty_movements, many=True)
         return warranty_movement_serializer.data
