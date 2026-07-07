@@ -121,17 +121,21 @@ class Role_List_Create_View(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', self.queryset.count()))
+        limit_num = int(request.GET.get('limit', 10))
         search_param = request.GET.get('search', '')
-        start_num = page_num * limit_num
-        end_num = limit_num * (page_num + 1)
 
-        roles = Role.objects.all()
+        roles = Role.objects.prefetch_related('role_permissions__permissions', 'userrole_set')
         if search_param:
             roles = roles.filter(name__icontains=search_param)
 
         total = roles.count()
-        serializer = RoleSerializer(roles[start_num:end_num], many=True)
+        if limit_num == -1:
+            paginated = roles
+        else:
+            start_num = page_num * limit_num
+            end_num = limit_num * (page_num + 1)
+            paginated = roles[start_num:end_num]
+        serializer = RoleSerializer(paginated, many=True)
 
         return Response({
             "status": "success",

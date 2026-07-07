@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from threadlocals.threadlocals import set_thread_variable
+from django.db.models import Prefetch
 class PropertyListCreateView(generics.ListCreateAPIView):
     queryset = Property.objects.all()
     serializer_class = PropertySerializer
@@ -62,7 +63,11 @@ class List_Properties_with_Rooms(generics.GenericAPIView):
     )
     def get(self, request):
         set_thread_variable('thread_user', request.user)
-        properties = Property.objects.all()
+        properties = Property.objects.prefetch_related(
+            Prefetch('room_set', queryset=Room.objects.prefetch_related(
+                Prefetch('sub_room_set', queryset=Sub_Room.objects.all())
+            ))
+        ).all()
         response_data = []
         for property in properties:
             property_data = {
@@ -73,9 +78,9 @@ class List_Properties_with_Rooms(generics.GenericAPIView):
                 'photo': request.build_absolute_uri(property.photo.url),
                 'rooms': []
             }
-            rooms = Room.objects.filter(property=property)
+            rooms = property.room_set.all()
             for room in rooms:
-                sub_rooms = Sub_Room.objects.filter(room_id = room.id)
+                sub_rooms = room.sub_room_set.all()
                 sub_room_data = []
                 for sub_room in sub_rooms:
                     sub_room_rooms = {
@@ -114,7 +119,13 @@ class Sub_Room_Api(generics.GenericAPIView):
         end_num = limit_num * (page_num + 1)
         sub_rooms = Sub_Room.objects.all()
         total_sub_rooms = sub_rooms.count()
-        serializer = serializer_class(sub_rooms[start_num:end_num], many=True)
+        if limit_num == -1:
+            paginated = sub_rooms
+        else:
+            start_num = (page_num) * limit_num
+            end_num = limit_num * (page_num + 1)
+            paginated = sub_rooms[start_num:end_num]
+        serializer = serializer_class(paginated, many=True)
         return Response({
             "status": "success",
             "total": total_sub_rooms,

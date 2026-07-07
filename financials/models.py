@@ -12,6 +12,11 @@ class Payment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['rental']),
+        ]
+
 class Warranty_Movement (models.Model):
     rental = models.ForeignKey(Rental, on_delete=models.CASCADE)
     voucher_number= models.CharField(max_length=255)
@@ -22,6 +27,11 @@ class Warranty_Movement (models.Model):
     detail = models.CharField(max_length=255, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['rental']),
+        ]
 
 class Event_Damage (models.Model):
     selected_product = models.ForeignKey(Selected_Product, on_delete=models.CASCADE)

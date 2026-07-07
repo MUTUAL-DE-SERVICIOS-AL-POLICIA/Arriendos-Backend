@@ -50,20 +50,24 @@ class Rate_Api(generics.GenericAPIView):
     )
     def get(self, request, *args, **kwargs):
         page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', self.queryset.count()))
-        start_num = (page_num) * limit_num
-        end_num = limit_num * (page_num + 1)
+        limit_num = int(request.GET.get('limit', 10))
         search_param = request.GET.get('search')
         rates = Rate.objects.all()
-        total_rates = rates.count()
         if search_param:
             rates = rates.filter(title__icontains=search_param)
-        serializer = self.serializer_class(rates[start_num:end_num], many=True)
+        total_rates = rates.count()
+        if limit_num == -1:
+            paginated = rates
+        else:
+            start_num = page_num * limit_num
+            end_num = limit_num * (page_num + 1)
+            paginated = rates[start_num:end_num]
+        serializer = self.serializer_class(paginated, many=True)
         return Response({
             "status": "success",
             "total": total_rates,
             "page": page_num,
-            "last_page": math.ceil(total_rates/ limit_num),
+            "last_page": math.ceil(total_rates/ limit_num) if limit_num > 0 else 0,
             "rates": serializer.data
         })
 
@@ -96,29 +100,34 @@ class Product_Api(generics.GenericAPIView):
     operation_description="Lista de productos y precio",
     )
     def get(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        serializer = ProductsSerializer(queryset, many=True)
+        queryset = Product.objects.filter(is_deleted=False).select_related(
+            'rate', 'room', 'room__property', 'hour_range'
+        ).prefetch_related('price_set')
         page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', self.queryset.count()))
-        start_num = page_num * limit_num
-        end_num = limit_num * (page_num + 1)
+        limit_num = int(request.GET.get('limit', 10))
         total_products = queryset.count()
-        products_with_active_prices = []
-        for product in queryset:
-            active_price_data = ProductSerializer.get_active_price(product)
-            queryset_list = list(queryset)
-            product_data = serializer.data[queryset_list.index(product)]
-            if active_price_data:
-                product_data['mount'] = active_price_data.get("mount")
-            products_with_active_prices.append(product_data)
-        paged_products = products_with_active_prices[start_num:end_num]
+        if limit_num == -1:
+            paginated_products = queryset
+        else:
+            start_num = page_num * limit_num
+            end_num = limit_num * (page_num + 1)
+            paginated_products = queryset[start_num:end_num]
+        serializer = ProductsSerializer(paginated_products, many=True)
+        serialized_data = serializer.data
+        for product_data in serialized_data:
+            product_id = product_data.get('id')
+            product_obj = next((p for p in paginated_products if p.id == product_id), None)
+            if product_obj and hasattr(product_obj, '_prefetched_prices'):
+                active_price = next((p for p in product_obj._prefetched_prices if p.is_active), None)
+                if active_price:
+                    product_data['mount'] = active_price.mount
 
         return Response({
         "status": "success",
         "total": total_products,
         "page": page_num,
-        "last_page": math.ceil(total_products/ limit_num),
-        "products": paged_products
+        "last_page": math.ceil(total_products/ limit_num) if limit_num > 0 else 0,
+        "products": serialized_data
         })
 
     @swagger_auto_schema(
@@ -373,16 +382,19 @@ class Posible_product(APIView):
             rate_requirement = RateRequirement.objects.filter(customer_type_id=customer_type_id).first()
             if rate_requirement:
                 rate_id = rate_requirement.rate.id
-                products_with_rate = Product.objects.filter(rate=rate_id,room=room_id)
+                products_with_rate = Product.objects.filter(rate=rate_id,room=room_id, is_deleted=False).select_related(
+                    'rate', 'room', 'room__property', 'hour_range'
+                ).prefetch_related('price_set')
                 serializer = ProductsSerializer(products_with_rate, many=True)
                 products_with_active_prices=[]
-                for product in products_with_rate:
-                    active_price_data = ProductSerializer.get_active_price(product)
-                    product_list = list(products_with_rate)
-                    product_data = serializer.data[product_list.index(product)]
-                    if active_price_data:
-                        product_data['mount'] = active_price_data.get("mount")
-                        products_with_active_prices.append(product_data)
+                for product_data in serializer.data:
+                    product_id = product_data.get('id')
+                    product_obj = next((p for p in products_with_rate if p.id == product_id), None)
+                    if product_obj and hasattr(product_obj, '_prefetched_prices'):
+                        active_price = next((p for p in product_obj._prefetched_prices if p.is_active), None)
+                        if active_price:
+                            product_data['mount'] = active_price.mount
+                            products_with_active_prices.append(product_data)
                 return Response({'status': 'success', 'products': products_with_active_prices})
             else:
                 customer=Customer_type.objects.get(pk=customer_type_id)
@@ -491,12 +503,18 @@ class Product_Filter(generics.ListAPIView):
             serializer = ProductsSerializer(paginated_products, many=True)
             serialized_data = serializer.data
             
-            # Obtener precios activos de forma optimizada
+            # Obtener precios activos de forma optimizada (una sola query)
+            product_ids = [p.get('id') for p in serialized_data]
+            active_prices = Price.objects.filter(
+                product_id__in=product_ids, is_active=True
+            ).values('product_id', 'mount')
+            price_map = {p['product_id']: p['mount'] for p in active_prices}
+            
             for product_data in serialized_data:
                 product_id = product_data.get('id')
-                active_price = Price.objects.filter(product_id=product_id, is_active=True).first()
-                if active_price:
-                    product_data['mount'] = active_price.mount
+                mount = price_map.get(product_id)
+                if mount is not None:
+                    product_data['mount'] = mount
             
             response_data = {
                 "status": "success",

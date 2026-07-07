@@ -12,6 +12,11 @@ class Customer(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['customer_type']),
+        ]
+
 class Contact(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     degree = models.CharField(max_length=50, null=True)
@@ -23,3 +28,8 @@ class Contact(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['customer', 'is_active']),
+        ]

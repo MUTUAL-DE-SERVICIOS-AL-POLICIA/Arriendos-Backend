@@ -9,6 +9,12 @@ class Assign(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['user']),
+            models.Index(fields=['room']),
+        ]
+
 class Record (models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     action = models.TextField()
@@ -16,3 +22,9 @@ class Record (models.Model):
     detail = models.TextField()
     instance_id = models.IntegerField(null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'timestamp']),
+            models.Index(fields=['timestamp']),
+        ]

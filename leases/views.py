@@ -20,7 +20,7 @@ from .function import Make_Delivery_Form, Make_Overtime_Form, Make_Rental_Report
 from roles.permissions import HasModulePermission
 from rest_framework.permissions import IsAuthenticated
 from threadlocals.threadlocals import set_thread_variable
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 import math
 
 
@@ -49,9 +49,9 @@ class Get_Rental(generics.ListCreateAPIView):
     )
     def get(sel, request):
         rental_id = request.GET.get('rental', None)
-        rental=Rental.objects.get(pk=rental_id)
+        rental=Rental.objects.select_related('customer', 'customer__customer_type').get(pk=rental_id)
         customer=rental.customer
-        customer_contacts=Contact.objects.filter(customer_id=customer.id)
+        customer_contacts=Contact.objects.filter(customer_id=customer.id, is_active=True)
         contacts=[]
         for customer_contact in customer_contacts:
             customer_contact_data = {
@@ -65,7 +65,10 @@ class Get_Rental(generics.ListCreateAPIView):
             "nit":customer.nit,
             "contacts":contacts
         }
-        selected_products = Selected_Product.objects.filter(rental=rental_id)
+        selected_products = Selected_Product.objects.select_related(
+            'product', 'product__room', 'product__room__property',
+            'product__hour_range', 'event_type'
+        ).filter(rental=rental_id)
         products=[]
         for selected_product in selected_products:
             product=selected_product.product
@@ -121,16 +124,17 @@ class Selected_Product_Calendar_Api(generics.GenericAPIView):
         room = request.GET.get('room', None)
         if room is None:
             date_products = []
-            selected_products = Selected_Product.objects.all()
+            selected_products = Selected_Product.objects.select_related(
+                'rental', 'rental__customer', 'rental__state',
+                'product', 'product__room', 'event_type'
+            ).prefetch_related('rental__customer__contact_set').all()
             for product in selected_products:
                 if product.rental.state_id < 5:
-                    customer = Customer.objects.get(pk=product.rental.customer_id)
+                    customer = product.rental.customer
                     name_state=product.rental.state.name
-                    customer_serializer = CustomersSerializer(customer)
-                    serialized_customer_data = customer_serializer.data
-                    contacts = serialized_customer_data.get("contacts")
                     start_time = timezone.localtime(product.start_time)
                     end_time = timezone.localtime(product.end_time)
+                    contacts = list(Contact.objects.filter(customer_id=customer.id, is_active=True).values('name', 'ci_nit', 'phone'))
                     product_data = {
                         'selected_product_id': product.id,
                         'room_id': product.product.room_id,
@@ -140,8 +144,8 @@ class Selected_Product_Calendar_Api(generics.GenericAPIView):
                         'end_time': end_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
                         'rental': product.rental.id,
                         'customer_id': product.rental.customer_id,
-                        'institution_name': serialized_customer_data["institution_name"],
-                        'nit': serialized_customer_data["nit"],
+                        'institution_name': customer.institution_name,
+                        'nit': customer.nit,
                         'contacts': contacts,
                         'event_type_name': product.event_type.name,
                         'name_state': name_state
@@ -149,17 +153,18 @@ class Selected_Product_Calendar_Api(generics.GenericAPIView):
                     date_products.append(product_data)
             return Response(date_products)
         else:
-            selected_products = Selected_Product.objects.filter(product__room_id=room)
+            selected_products = Selected_Product.objects.select_related(
+                'rental', 'rental__customer', 'rental__state',
+                'product', 'product__room', 'event_type'
+            ).filter(product__room_id=room)
             date_products = []
             for product in selected_products:
                 if product.rental.state_id < 5:
-                    customer = Customer.objects.get(pk=product.rental.customer_id)
-                    customer_serializer = CustomersSerializer(customer)
+                    customer = product.rental.customer
                     name_state=product.rental.state.name
-                    serialized_customer_data = customer_serializer.data
-                    contacts = serialized_customer_data.get("contacts")
                     start_time = timezone.localtime(product.start_time)
                     end_time = timezone.localtime(product.end_time)
+                    contacts = list(Contact.objects.filter(customer_id=customer.id, is_active=True).values('name', 'ci_nit', 'phone'))
                     product_data = {
                         'selected_product_id': product.id,
                         'room_id': product.product.room_id,
@@ -169,8 +174,8 @@ class Selected_Product_Calendar_Api(generics.GenericAPIView):
                         'end_time': end_time.strftime('%Y-%m-%dT%H:%M:%SZ'),
                         'rental': product.rental.id,
                         'customer_id': product.rental.customer_id,
-                        'institution_name': serialized_customer_data["institution_name"],
-                        'nit': serialized_customer_data["nit"],
+                        'institution_name': customer.institution_name,
+                        'nit': customer.nit,
                         'contacts': contacts,
                         'event_type_name': product.event_type.name,
                         'name_state': name_state
@@ -633,7 +638,9 @@ class List_additional_hour_applied(generics.ListAPIView):
     def get (self, request):
         set_thread_variable('thread_user', request.user)
         rental_id = request.query_params.get('rental')
-        list_selected_product = Selected_Product.objects.filter(rental_id=rental_id)
+        list_selected_product = Selected_Product.objects.select_related(
+            'product', 'product__room', 'product__room__property', 'event_type'
+        ).prefetch_related('additional_hour_applied_set').filter(rental_id=rental_id)
         try:
             list_additional_hour_applied=[]
             for selected_product in list_selected_product:
@@ -641,8 +648,7 @@ class List_additional_hour_applied(generics.ListAPIView):
                 property =  selected_product.product.room.property.name
                 event = selected_product.event_type.name
                 date = selected_product.start_time
-                additional_hour_applieds = Additional_Hour_Applied.objects.filter(selected_product=selected_product)
-                for additional_hour_applied in additional_hour_applieds:
+                for additional_hour_applied in selected_product.additional_hour_applied_set.all():
                     additional_hour_applied_data = {
                     'selected_product': additional_hour_applied.selected_product_id,
                     'number': additional_hour_applied.number,
@@ -686,24 +692,37 @@ class rental_list(generics.GenericAPIView):
     def get(self, request,*args, **kwargs):
         set_thread_variable('thread_user', request.user)
         query_param = self.request.query_params.get('search', '')
-        queryset = Rental.objects.filter(
+        queryset = Rental.objects.select_related(
+            'state', 'customer', 'customer__customer_type', 'plan'
+        ).prefetch_related(
+            Prefetch('selected_products', queryset=Selected_Product.objects.select_related(
+                'product', 'product__room', 'product__room__property',
+                'product__hour_range', 'product__rate', 'event_type'
+            ).prefetch_related('additional_hour_applied_set')),
+            Prefetch('payment_set'),
+            Prefetch('warranty_movement_set'),
+        ).filter(
             Q(state__name__icontains=query_param) |
             Q(customer__institution_name__icontains=query_param) |
             Q(customer__contact__name__icontains=query_param)
         ).order_by("id").distinct()
         page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', self.queryset.count()))
-        start_num = page_num * limit_num
-        end_num = limit_num * (page_num + 1)
-        serializer_instance = self.serializer_class(queryset, many=True)
+        limit_num = int(request.GET.get('limit', 10))
+        total = queryset.count()
+        if limit_num == -1:
+            paginated_qs = queryset
+        else:
+            start_num = page_num * limit_num
+            end_num = limit_num * (page_num + 1)
+            paginated_qs = queryset[start_num:end_num]
+        serializer_instance = self.serializer_class(paginated_qs, many=True)
         rental_list=[]
         count=0
         for item in serializer_instance.data:
             count =count+1
             state=item["state"]
             can_edit=False
-            rental=Rental.objects.get(id=item["id"])
-            date = str(rental.created_at)
+            date = str(item["created_at"])
             date_object = timezone.datetime.strptime(date, "%Y-%m-%d %H:%M:%S.%f%z")
             date_formated = date_object.strftime("%d de %B de %Y %I:%M %p")
             customer_name= item["customer"]["institution_name"]
@@ -733,9 +752,9 @@ class rental_list(generics.GenericAPIView):
             rental_list.append(data)
         response_data = {
                 "status": "success",
-                "total": queryset.count(),
+                "total": total,
                 "page": page_num,
-                "last_page": math.ceil(queryset.count()/ limit_num),
-                "rentals": rental_list[start_num:end_num]
+                "last_page": math.ceil(total/ limit_num),
+                "rentals": rental_list
             }
         return Response(response_data)

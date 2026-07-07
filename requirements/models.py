@@ -14,6 +14,12 @@ class Requirement_Delivered(models.Model):
     requirement = models.ForeignKey(Requirement, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['rental']),
+        ]
+
 class RateRequirement(models.Model):
     requirement = models.ForeignKey(Requirement, on_delete=models.CASCADE)
     rate = models.ForeignKey(Rate, on_delete=models.CASCADE)
@@ -21,3 +27,8 @@ class RateRequirement(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['rate', 'customer_type', 'is_active']),
+        ]

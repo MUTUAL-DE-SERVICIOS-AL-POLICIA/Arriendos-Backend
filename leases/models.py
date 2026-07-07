@@ -20,6 +20,12 @@ class Rental(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['state', 'customer']),
+            models.Index(fields=['customer', 'state']),
+        ]
+
 class Event_Type(models.Model):
     name = models.CharField(max_length=50)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -36,6 +42,11 @@ class Selected_Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['rental', 'product']),
+        ]
+
 class Additional_Hour_Applied(models.Model):
     selected_product = models.ForeignKey(Selected_Product, on_delete=models.CASCADE)
     number = models.IntegerField()
@@ -46,3 +57,8 @@ class Additional_Hour_Applied(models.Model):
     description = models.CharField(max_length=255, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['selected_product']),
+        ]

@@ -15,6 +15,7 @@ from django.conf import settings
 from threadlocals.threadlocals import set_thread_variable
 from rest_framework.permissions import IsAuthenticated
 from roles.permissions import HasModulePermission
+from roles.models import UserRole
 import math
 
 request_body_schema = openapi.Schema(
@@ -39,19 +40,25 @@ class User_Ldap(APIView):
         set_thread_variable('thread_user', request.user)
         page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit', 10))
-        start_num = (page_num) * limit_num
-        end_num = limit_num * (page_num + 1)
         search_param = request.GET.get('search')
-        users = User.objects.all().order_by('id')
+        users = User.objects.prefetch_related(
+            'user_role', 'user_role__role'
+        ).order_by('id')
         total_users = users.count()
         if search_param:
             users = users.filter(first_name__icontains=search_param)
-        serializer = self.serializer_class(users[start_num:end_num], many=True)
+        if limit_num == -1:
+            paginated = users
+        else:
+            start_num = page_num * limit_num
+            end_num = limit_num * (page_num + 1)
+            paginated = users[start_num:end_num]
+        serializer = self.serializer_class(paginated, many=True)
         return Response({
             "status": "success",
             "total": total_users,
             "page": page_num,
-            "last_page": math.ceil(total_users/ limit_num),
+            "last_page": math.ceil(total_users/ limit_num) if limit_num > 0 else 0,
             "users": serializer.data
         })
     @swagger_auto_schema(
@@ -164,19 +171,25 @@ class Assign_Api(generics.GenericAPIView):
         queryset = Assign.objects.all()
         page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit', 10))
-        start_num = (page_num) * limit_num
-        end_num = limit_num * (page_num + 1)
         search_param = request.GET.get('search')
-        assigns = Assign.objects.all()
+        assigns = Assign.objects.select_related('user', 'room', 'room__property').prefetch_related(
+            'user__user_role', 'user__user_role__role'
+        )
         total_assigns = assigns.count()
         if search_param:
             assigns = assigns.filter(user__icontains=search_param)
-        serializer = serializer_class(assigns[start_num:end_num], many=True)
+        if limit_num == -1:
+            paginated = assigns
+        else:
+            start_num = page_num * limit_num
+            end_num = limit_num * (page_num + 1)
+            paginated = assigns[start_num:end_num]
+        serializer = serializer_class(paginated, many=True)
         return Response({
             "status": "success",
             "total": total_assigns,
             "page": page_num,
-            "last_page": math.ceil(total_assigns/ limit_num),
+            "last_page": math.ceil(total_assigns/ limit_num) if limit_num > 0 else 0,
             "assigns": serializer.data
             })
     @swagger_auto_schema(

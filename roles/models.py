@@ -176,6 +176,10 @@ class UserRole(models.Model):
     class Meta:
         verbose_name = "Rol de Usuario"
         verbose_name_plural = "Roles de Usuarios"
+        indexes = [
+            models.Index(fields=['user']),
+            models.Index(fields=['role']),
+        ]
 
     def __str__(self):
         return f"{self.user.username} - {self.role.name}"

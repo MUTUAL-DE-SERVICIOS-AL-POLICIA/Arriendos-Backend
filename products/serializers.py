@@ -2,11 +2,18 @@ from rest_framework import serializers
 from .models import Rate, HourRange, Product, Price, Price_Additional_Hour
 from customers.models import Customer_type
 from customers.serializer import Customer_typeSerializer
+from rooms.serializers import RoomLightSerializer
 
 class RateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rate
         fields = '__all__'
+
+class HourRangeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HourRange
+        fields = '__all__'
+
 class PriceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Price
@@ -23,6 +30,7 @@ class PriceHistorySerializer(serializers.ModelSerializer):
         if obj.product:
             return f"{obj.product.room.name} - {obj.product.rate.name}"
         return None
+
 class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
@@ -39,6 +47,7 @@ class ProductSerializer(serializers.ModelSerializer):
             }
         else:
             return None
+
 class ProductPrice(serializers.ModelSerializer):
     Product=ProductSerializer()
     Price=PriceSerializer()
@@ -56,7 +65,6 @@ class ProductListSerializer(serializers.ModelSerializer):
         fields = ['id', 'rate_name', 'room_name', 'property_name', 'hour_range_time', 'day', 'mount']
 
     def get_mount(self, obj):
-        """Obtiene el precio activo del producto"""
         if hasattr(obj, '_prefetched_prices'):
             active_price = next((p for p in obj._prefetched_prices if p.is_active), None)
             if active_price:
@@ -65,14 +73,22 @@ class ProductListSerializer(serializers.ModelSerializer):
 
 
 class ProductsSerializer(serializers.ModelSerializer):
+    room = RoomLightSerializer()
+    rate = RateSerializer()
+    hour_range = HourRangeSerializer()
+    mount = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
-        fields = '__all__'
-        depth = 2
-class HourRangeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = HourRange
-        fields = '__all__'
+        fields = ['id', 'rate', 'room', 'hour_range', 'day', 'is_deleted', 'created_at', 'updated_at', 'mount']
+
+    def get_mount(self, obj):
+        if hasattr(obj, '_prefetched_prices'):
+            active_price = next((p for p in obj._prefetched_prices if p.is_active), None)
+            if active_price:
+                return active_price.mount
+        return None
+
 class PriceAdditionalHourSerializer(serializers.ModelSerializer):
     class Meta:
         model = Price_Additional_Hour

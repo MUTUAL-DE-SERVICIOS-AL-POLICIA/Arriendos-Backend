@@ -90,6 +90,10 @@ class Product(models.Model):
 
     class Meta:
         ordering = ['id']
+        indexes = [
+            models.Index(fields=['rate', 'room', 'is_deleted']),
+            models.Index(fields=['room', 'is_deleted']),
+        ]
 
 
 class Price(models.Model):
@@ -128,6 +132,11 @@ class Price(models.Model):
     valid_from = models.DateTimeField(null=True, blank=True)
     valid_to = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['product', 'is_active']),
+        ]
 
 
 class Price_Additional_Hour(models.Model):

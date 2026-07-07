@@ -97,6 +97,8 @@ class Selected_ProductsSerializer(serializers.ModelSerializer):
         return CustomDateTimeField().get_hour_only(obj.end_time)
 
      def get_additional_hour_applieds(self, obj):
+        if hasattr(obj, '_prefetched_additional_hours'):
+            return Additional_hour_AppliedSerializer(obj._prefetched_additional_hours, many=True).data
         additional_hour_applieds = Additional_Hour_Applied.objects.filter(selected_product_id=obj).order_by('id')
         serializer = Additional_hour_AppliedSerializer(additional_hour_applieds, many=True)
         return serializer.data
@@ -110,14 +112,23 @@ class RentalsSerializer(serializers.ModelSerializer):
         model = Rental
         fields = '__all__'
     def get_selected_products(self, obj):
-        selected_products = Selected_Product.objects.filter(rental_id = obj)
+        if hasattr(obj, '_prefetched_selected_products'):
+            return Selected_ProductsSerializer(obj._prefetched_selected_products, many=True).data
+        selected_products = Selected_Product.objects.filter(rental_id = obj).select_related(
+            'product', 'product__room', 'product__room__property',
+            'product__hour_range', 'product__rate', 'event_type'
+        ).prefetch_related('additional_hour_applied_set')
         selected_product_serializer = Selected_ProductsSerializer(selected_products, many=True)
         return selected_product_serializer.data
     def get_payments(self, obj):
+        if hasattr(obj, '_prefetched_payments'):
+            return Payment_Serializer(obj._prefetched_payments, many=True).data
         payments = Payment.objects.filter(rental_id = obj)
         payment_serializer = Payment_Serializer(payments, many=True)
         return payment_serializer.data
     def get_warranty_movements(self, obj):
+        if hasattr(obj, '_prefetched_warranty_movements'):
+            return Warranty_Movement_Serializer(obj._prefetched_warranty_movements, many=True).data
         warranty_movements = Warranty_Movement.objects.filter(rental_id = obj)
         warranty_movement_serializer = Warranty_Movement_Serializer(warranty_movements, many=True)
         return warranty_movement_serializer.data

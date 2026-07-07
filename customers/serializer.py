@@ -21,6 +21,8 @@ class CustomersSerializer(serializers.ModelSerializer):
         model = Customer
         fields = '__all__'
     def get_contacts(self, obj):
+        if hasattr(obj, '_prefetched_contacts'):
+            return ContactSerializer(obj._prefetched_contacts, many=True).data
         contacts = Contact.objects.filter(customer_id=obj, is_active=True).order_by('id')
         contact_serializer = ContactSerializer(contacts, many=True)
         return contact_serializer.data

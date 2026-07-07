@@ -5,7 +5,7 @@ from .models import Customer, Customer_type, Contact
 from leases.models import Rental
 import math
 from rest_framework import status, generics
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from roles.permissions import HasModulePermission
@@ -23,20 +23,24 @@ class Customer_Type_Api(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         set_thread_variable('thread_user', request.user)
         page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', self.queryset.count()))
-        start_num = (page_num) * limit_num
-        end_num = limit_num * (page_num + 1)
+        limit_num = int(request.GET.get('limit', 10))
         search_param = request.GET.get('search')
         customers = Customer_type.objects.all().order_by('id')
-        total_customers = customers.count()
         if search_param:
             customers = customers.filter(name__icontains=search_param)
-        serializer = self.serializer_class(customers[start_num:end_num], many=True)
+        total_customers = customers.count()
+        if limit_num == -1:
+            paginated = customers
+        else:
+            start_num = (page_num) * limit_num
+            end_num = limit_num * (page_num + 1)
+            paginated = customers[start_num:end_num]
+        serializer = self.serializer_class(paginated, many=True)
         return Response({
             "status": "success",
             "total": total_customers,
             "page": page_num,
-            "last_page": math.ceil(total_customers/ limit_num),
+            "last_page": math.ceil(total_customers/ limit_num) if limit_num > 0 else 0,
             "customer_type": serializer.data
         })
     def post(self, request, *args, **kwargs):
@@ -126,38 +130,37 @@ class Customer_Api(generics.GenericAPIView):
         set_thread_variable('thread_user', request.user)
         serializer_class = CustomersSerializer
         page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', self.queryset.count()))
-        start_num = (page_num) * limit_num
-        end_num = limit_num * (page_num + 1)
+        limit_num = int(request.GET.get('limit', 10))
         search_param = request.GET.get('search')
         if search_param:
-            customers = Customer.objects.all()
+            customers = Customer.objects.select_related('customer_type').prefetch_related(
+                Prefetch('contact_set', queryset=Contact.objects.filter(is_active=True).order_by('id'))
+            )
             customers = customers.filter(
                 Q(contact__name__icontains=search_param) |
                 Q(contact__ci_nit__icontains=search_param) |
                 Q(institution_name__icontains=search_param) |
                 Q(nit__icontains=search_param)
             ).distinct()
-            total_customers = customers.count()
-            serializer = serializer_class(customers[start_num:end_num], many=True)
-            return Response({
-            "status": "success",
-            "total": total_customers,
-            "page": page_num,
-            "last_page": math.ceil(total_customers/ limit_num),
-            "customers": serializer.data
-            })
         else:
-            customers = Customer.objects.all().order_by('id')
-            total_customers = customers.count()
-            serializer = serializer_class(customers[start_num:end_num], many=True)
-            return Response({
+            customers = Customer.objects.select_related('customer_type').prefetch_related(
+                Prefetch('contact_set', queryset=Contact.objects.filter(is_active=True).order_by('id'))
+            ).order_by('id')
+        total_customers = customers.count()
+        if limit_num == -1:
+            paginated = customers
+        else:
+            start_num = (page_num) * limit_num
+            end_num = limit_num * (page_num + 1)
+            paginated = customers[start_num:end_num]
+        serializer = serializer_class(paginated, many=True)
+        return Response({
             "status": "success",
             "total": total_customers,
             "page": page_num,
-            "last_page": math.ceil(total_customers/ limit_num),
+            "last_page": math.ceil(total_customers/ limit_num) if limit_num > 0 else 0,
             "customers": serializer.data
-            })
+        })
 
     @swagger_auto_schema(
     operation_description="Se envia customer o institution segun el tipo de cliente",

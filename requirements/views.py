@@ -28,20 +28,24 @@ class Requirement_Api(generics.GenericAPIView):
     def get(self, request, *args, **kw):
         set_thread_variable('thread_user', request.user)
         page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', self.queryset.count()))
-        start_num = (page_num) * limit_num
-        end_num = limit_num * (page_num + 1)
+        limit_num = int(request.GET.get('limit', 10))
         search_param = request.GET.get('search')
         requirements = Requirement.objects.filter(is_active = True).order_by('id')
-        total_requirements = requirements.count()
         if search_param:
             requirements = requirements.filter(requirement_name__icontains=search_param)
-        serializer = self.serializer_class(requirements[start_num:end_num], many=True)
+        total_requirements = requirements.count()
+        if limit_num == -1:
+            paginated = requirements
+        else:
+            start_num = page_num * limit_num
+            end_num = limit_num * (page_num + 1)
+            paginated = requirements[start_num:end_num]
+        serializer = self.serializer_class(paginated, many=True)
         return Response({
             "status": "success",
             "total": total_requirements,
             "page": page_num,
-            "last_page": math.ceil(total_requirements/ limit_num),
+            "last_page": math.ceil(total_requirements/ limit_num) if limit_num > 0 else 0,
            'requirements': serializer.data,
         })
     @swagger_auto_schema(
@@ -103,12 +107,18 @@ class RateWithRelatedDataView(generics.ListAPIView):
     def get(self, request):
         set_thread_variable('thread_user', request.user)
         page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit',self.queryset.count()))
-        start_num = (page_num) * limit_num
-        end_num = limit_num * (page_num + 1)
-        rates = Rate.objects.all().order_by('id')
+        limit_num = int(request.GET.get('limit', 10))
+        rates = Rate.objects.prefetch_related(
+            'raterequirement_set', 'raterequirement_set__requirement', 'raterequirement_set__customer_type'
+        ).order_by('id')
         total_rates = rates.count()
-        serializer = self.serializer_class(rates[start_num:end_num], many=True)
+        if limit_num == -1:
+            paginated = rates
+        else:
+            start_num = page_num * limit_num
+            end_num = limit_num * (page_num + 1)
+            paginated = rates[start_num:end_num]
+        serializer = self.serializer_class(paginated, many=True)
         return Response({
             "status":"success",
             "total": total_rates,
