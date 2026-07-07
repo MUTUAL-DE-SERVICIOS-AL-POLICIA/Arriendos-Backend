@@ -18,6 +18,8 @@ class Command(BaseCommand):
             {'name': 'Finanzas', 'codename': 'financials', 'description': 'Gestion de pagos y garantias'},
             {'name': 'Requisitos', 'codename': 'requirements', 'description': 'Gestion de requisitos'},
             {'name': 'Usuarios', 'codename': 'users', 'description': 'Gestion de usuarios y roles del sistema'},
+            {'name': 'Registros', 'codename': 'records', 'description': 'Consulta de registros de cambios del sistema'},
+            {'name': 'Documentos', 'codename': 'documents', 'description': 'Acceso a documentos PDF, Excel y reportes'},
         ]
 
         permissions_data = [

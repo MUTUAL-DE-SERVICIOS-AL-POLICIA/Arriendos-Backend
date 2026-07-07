@@ -39,6 +39,7 @@ urlpatterns = [
     path('api/leases/', include('leases.urls')),
     path('api/financials/', include('financials.urls')),
     path('api/roles/', include('roles.urls')),
+    path('api/records/', include('records.urls')),
     re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

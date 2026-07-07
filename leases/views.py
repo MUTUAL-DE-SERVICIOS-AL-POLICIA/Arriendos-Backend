@@ -513,6 +513,7 @@ request_body_schema = openapi.Schema(
 class Delivery_Form(generics.GenericAPIView):
     permission_classes = [IsAuthenticated, HasModulePermission]
     rbac_module = 'leases'
+    rbac_export = True
 
     @swagger_auto_schema(
     operation_description="API  de formulario de entrega y recepción de ambientes, con rental y producto seleccionado",
@@ -543,6 +544,7 @@ request_body_schema = openapi.Schema(
 class Register_additional_hour_applied(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, HasModulePermission]
     rbac_module = 'leases'
+    rbac_export = True
     serializer_class = Additional_Hour_Applied
 
     @swagger_auto_schema(
@@ -661,6 +663,7 @@ class Report_Api(generics.GenericAPIView):
     serializer_class = RentalsSerializer
     permission_classes = [IsAuthenticated, HasModulePermission]
     rbac_module = 'leases'
+    rbac_export = True
     def post(self, request, *args, **kwargs):
         set_thread_variable('thread_user', request.user)
         start_date = request.data.get("start_date", None)

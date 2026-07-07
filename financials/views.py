@@ -156,7 +156,7 @@ request_body_schema = openapi.Schema(
 class Print_payment(generics.ListAPIView):
     serializer_class = Payment_Serializer
     permission_classes = [IsAuthenticated, HasModulePermission]
-    rbac_module = 'financials'
+    rbac_module = 'documents'
     def get(self,request, rental_id):
         return self.Payment_pdf_generate(rental_id)
     def Payment_pdf_generate(self,rental_id):
@@ -417,7 +417,7 @@ class Register_warranty(generics.ListAPIView):
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Print_Warranties(generics.ListAPIView):
     permission_classes = [IsAuthenticated, HasModulePermission]
-    rbac_module = 'financials'
+    rbac_module = 'documents'
     def get(self,request,rental_id):
         return self.Warranties_pdf_generate(rental_id)
     def Warranties_pdf_generate(self,rental_id):
@@ -472,7 +472,7 @@ class Edit_warranty(generics.UpdateAPIView):
         return Response(response_data)
 class Warranty_Return_Request(generics.GenericAPIView):
     permission_classes = [IsAuthenticated, HasModulePermission]
-    rbac_module = 'financials'
+    rbac_module = 'documents'
     @swagger_auto_schema(
     operation_description="Solicitud de devolución de garantía",
     manual_parameters=[rental],
@@ -509,6 +509,7 @@ class Discount_warranty(generics.ListAPIView):
     serializer_class = Warranty_Movement_Serializer
     permission_classes = [IsAuthenticated, HasModulePermission]
     rbac_module = 'financials'
+    rbac_export = True
     @swagger_auto_schema(
     operation_description="API para registro de descuentos por daños",
     request_body=request_body_schema
@@ -644,7 +645,7 @@ class Warranty_Returned(generics.GenericAPIView):
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Return_Warranty_Form(generics.GenericAPIView):
     permission_classes = [IsAuthenticated, HasModulePermission]
-    rbac_module = 'financials'
+    rbac_module = 'documents'
     @swagger_auto_schema(
     operation_description="Formulario de conformidad de devolución de garantía",
     manual_parameters=[rental],

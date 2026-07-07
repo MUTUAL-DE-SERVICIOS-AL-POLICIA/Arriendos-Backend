@@ -289,6 +289,7 @@ class ExtractNumber(Func):
 class Register_delivered_requirement(generics.ListAPIView):
         permission_classes = [IsAuthenticated, HasModulePermission]
         rbac_module = 'requirements'
+        rbac_export = True
         @swagger_auto_schema(
         operation_description="Registro de requisitos entregados",
         request_body=request_body_schema

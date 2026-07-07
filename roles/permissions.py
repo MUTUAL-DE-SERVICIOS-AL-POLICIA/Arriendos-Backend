@@ -75,15 +75,20 @@ class HasModulePermission(permissions.BasePermission):
         # Mapear el metodo HTTP a la accion requerida
         # GET -> view (Ver), POST -> add (Crear), PUT/PATCH -> change (Editar),
         # DELETE -> delete (Eliminar)
+        # Si la vista tiene rbac_export=True, usar permiso 'export' en vez de 'add' para POST
         method = request.method
-        action_map = {
-            'GET': 'view',
-            'POST': 'add',
-            'PUT': 'change',
-            'PATCH': 'change',
-            'DELETE': 'delete',
-        }
-        required_action = action_map.get(method, 'view')
+        if getattr(view, 'rbac_export', False) and method == 'POST':
+            required_action = 'view'
+            rbac_module = 'documents'
+        else:
+            action_map = {
+                'GET': 'view',
+                'POST': 'add',
+                'PUT': 'change',
+                'PATCH': 'change',
+                'DELETE': 'delete',
+            }
+            required_action = action_map.get(method, 'view')
 
         # Buscar los permisos del rol para el modulo especifico
         role_perms = RolePermission.objects.filter(role=role, module__codename=rbac_module)
