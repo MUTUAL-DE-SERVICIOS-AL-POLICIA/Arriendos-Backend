@@ -43,6 +43,9 @@ class Rate(models.Model):
     name = models.CharField(max_length=250)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return self.name
+
 
 class HourRange(models.Model):
     """
@@ -55,6 +58,9 @@ class HourRange(models.Model):
         - time: Cantidad de horas
     """
     time = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.time}h"
 
 
 class Product(models.Model):
@@ -87,6 +93,9 @@ class Product(models.Model):
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.rate} - {self.room} - {self.hour_range}"
 
     class Meta:
         ordering = ['id']
@@ -133,6 +142,10 @@ class Price(models.Model):
     valid_to = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        estado = "vigente" if self.is_active else "inactivo"
+        return f"{self.product} - {self.mount}Bs ({estado})"
+
     class Meta:
         indexes = [
             models.Index(fields=['product', 'is_active']),
@@ -160,3 +173,6 @@ class Price_Additional_Hour(models.Model):
     state = models.BooleanField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.room} / {self.hourRange} - {self.mount}Bs"

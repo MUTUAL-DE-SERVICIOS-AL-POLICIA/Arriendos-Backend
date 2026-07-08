@@ -12,6 +12,9 @@ class Payment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return f"Pago #{self.voucher_number} - {self.business_name}"
+
     class Meta:
         indexes = [
             models.Index(fields=['rental']),
@@ -28,6 +31,9 @@ class Warranty_Movement (models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return f"Garantía #{self.voucher_number} - {self.balance}Bs"
+
     class Meta:
         indexes = [
             models.Index(fields=['rental']),
@@ -39,3 +45,6 @@ class Event_Damage (models.Model):
     mount = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Daño - {self.mount}Bs"

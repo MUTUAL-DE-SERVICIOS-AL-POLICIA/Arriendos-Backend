@@ -5,12 +5,21 @@ class Customer_type(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_institution = models.BooleanField(default=True)
     is_police = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name
+
 class Customer(models.Model):
     customer_type = models.ForeignKey(Customer_type, related_name="customer_types", on_delete=models.CASCADE)
     institution_name = models.CharField(max_length=255, null=True)
     nit = models.CharField(max_length=50, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        nombre = self.institution_name or 'Sin institución'
+        nit = self.nit or 'S/N'
+        return f"{nombre} ({nit})"
 
     class Meta:
         indexes = [
@@ -28,6 +37,10 @@ class Contact(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        ci = self.ci_nit or ''
+        return f"{self.name} ({ci})" if ci else self.name
 
     class Meta:
         indexes = [

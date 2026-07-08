@@ -8,6 +8,9 @@ class State(models.Model):
     name = models.CharField(max_length=50)
     next_state = ArrayField(models.IntegerField(), default=list)
 
+    def __str__(self):
+        return self.name
+
 class Rental(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
     state = models.ForeignKey(State, on_delete=models.CASCADE)
@@ -20,6 +23,11 @@ class Rental(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        if self.contract_number:
+            return f"Contrato {self.contract_number}"
+        return f"Arriendo #{self.id}"
+
     class Meta:
         indexes = [
             models.Index(fields=['state', 'customer']),
@@ -31,6 +39,9 @@ class Event_Type(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return self.name
+
 class Selected_Product(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     rental = models.ForeignKey(Rental, on_delete=models.CASCADE)
@@ -41,6 +52,9 @@ class Selected_Product(models.Model):
     product_price = models.FloatField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.product} - {self.event_type}"
 
     class Meta:
         indexes = [
@@ -57,6 +71,9 @@ class Additional_Hour_Applied(models.Model):
     description = models.CharField(max_length=255, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Hora extra #{self.number} - {self.total}Bs"
 
     class Meta:
         indexes = [

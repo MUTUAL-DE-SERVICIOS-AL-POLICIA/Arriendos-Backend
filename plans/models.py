@@ -8,3 +8,6 @@ class Plan(models.Model):
     rooms_max = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.plan_name} ({self.rooms_min}-{self.rooms_max} ambientes)"

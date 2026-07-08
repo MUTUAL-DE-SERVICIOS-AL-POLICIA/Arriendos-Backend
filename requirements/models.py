@@ -9,11 +9,17 @@ class Requirement(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return self.requirement_name
+
 class Requirement_Delivered(models.Model):
     rental = models.ForeignKey(Rental, on_delete=models.CASCADE)
     requirement = models.ForeignKey(Requirement, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.requirement} → Arriendo #{self.rental_id}"
 
     class Meta:
         indexes = [
@@ -27,6 +33,9 @@ class RateRequirement(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.requirement} / {self.rate} / {self.customer_type}"
 
     class Meta:
         indexes = [
