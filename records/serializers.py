@@ -58,13 +58,16 @@ class RecordSerializer(serializers.ModelSerializer):
         model = Record
         fields = ['id', 'user', 'username', 'user_full_name', 'action', 'action_display', 'model', 'model_display', 'detail', 'description', 'instance_id', 'timestamp']
 
-    def get_user_full_name(self, obj):
-        if obj.user:
-            first = obj.user.first_name or ''
-            last = obj.user.last_name or ''
+    def _get_user_name(self, user):
+        if user:
+            first = user.first_name or ''
+            last = user.last_name or ''
             full = f"{first} {last}".strip()
-            return full if full else obj.user.username
+            return full if full else user.username
         return 'Sistema'
+
+    def get_user_full_name(self, obj):
+        return self._get_user_name(obj.user)
 
     def get_action_display(self, obj):
         return ACTION_TRANSLATIONS.get(obj.action, obj.action)
@@ -74,7 +77,7 @@ class RecordSerializer(serializers.ModelSerializer):
 
     def get_description(self, obj):
         detail = obj.detail or ''
-        user_name = self.get_user_full_name(obj.user)
+        user_name = self._get_user_name(obj.user)
 
         if detail.startswith('El usuario:'):
             parts = detail.split(' ', 3)
