@@ -117,6 +117,15 @@ request_body_schema = openapi.Schema(
         'institution': institution_schema,
     }
 )
+class Customer_Filter_Options(generics.GenericAPIView):
+    """Endpoint para obtener las opciones de filtro de clientes (tipos de cliente)"""
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'customers'
+    def get(self, request):
+        customer_types = list(Customer_type.objects.values('id', 'name').order_by('id'))
+        return Response({"status": "success", "customer_types": customer_types})
+
+
 class Customer_Api(generics.GenericAPIView):
     serializer_class = CustomersSerializer
     queryset = Customer.objects.all()
@@ -132,20 +141,37 @@ class Customer_Api(generics.GenericAPIView):
         page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit', 10))
         search_param = request.GET.get('search')
+        search_nit = request.GET.get('search_nit', '')
+        search_name = request.GET.get('search_name', '')
+        customer_type_id = request.GET.get('customer_type_id', '')
+        contact_search = request.GET.get('contact_search', '')
+        customers = Customer.objects.select_related('customer_type').prefetch_related(
+            Prefetch('contact_set', queryset=Contact.objects.filter(is_active=True).order_by('id'))
+        )
         if search_param:
-            customers = Customer.objects.select_related('customer_type').prefetch_related(
-                Prefetch('contact_set', queryset=Contact.objects.filter(is_active=True).order_by('id'))
-            )
             customers = customers.filter(
                 Q(contact__name__icontains=search_param) |
                 Q(contact__ci_nit__icontains=search_param) |
                 Q(institution_name__icontains=search_param) |
                 Q(nit__icontains=search_param)
             ).distinct()
-        else:
-            customers = Customer.objects.select_related('customer_type').prefetch_related(
-                Prefetch('contact_set', queryset=Contact.objects.filter(is_active=True).order_by('id'))
-            ).order_by('id')
+        if search_nit:
+            customers = customers.filter(
+                Q(contact__ci_nit__icontains=search_nit) |
+                Q(nit__icontains=search_nit)
+            ).distinct()
+        if search_name:
+            customers = customers.filter(
+                Q(contact__name__icontains=search_name) |
+                Q(institution_name__icontains=search_name)
+            ).distinct()
+        if customer_type_id:
+            customers = customers.filter(customer_type_id=customer_type_id)
+        if contact_search:
+            customers = customers.filter(
+                Q(contact__phone__icontains=contact_search)
+            ).distinct()
+        customers = customers.order_by('id')
         total_customers = customers.count()
         if limit_num == -1:
             paginated = customers

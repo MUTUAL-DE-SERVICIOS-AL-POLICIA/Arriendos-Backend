@@ -684,6 +684,15 @@ class Report_Api(generics.GenericAPIView):
             end_date = datetime.strptime(end_date, '%Y-%m-%dT%H:%M:%S.%fZ')
             end_date = pytz.timezone('America/La_Paz').localize(end_date)
         return Make_Rental_Report(request, start_date, end_date, state)
+class Rental_Filter_Options(generics.GenericAPIView):
+    """Endpoint para obtener las opciones de filtro de arriendos (estados)"""
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'leases'
+    def get(self, request):
+        states = list(State.objects.values('id', 'name').order_by('id'))
+        return Response({"status": "success", "states": states})
+
+
 class rental_list(generics.GenericAPIView):
     queryset = Rental.objects.all().order_by("id")
     serializer_class = RentalsSerializer
@@ -692,6 +701,9 @@ class rental_list(generics.GenericAPIView):
     def get(self, request,*args, **kwargs):
         set_thread_variable('thread_user', request.user)
         query_param = self.request.query_params.get('search', '')
+        state_id = self.request.query_params.get('state_id', '')
+        date_from = self.request.query_params.get('date_from', '')
+        date_to = self.request.query_params.get('date_to', '')
         queryset = Rental.objects.select_related(
             'state', 'customer', 'customer__customer_type', 'plan'
         ).prefetch_related(
@@ -701,11 +713,19 @@ class rental_list(generics.GenericAPIView):
             ).prefetch_related('additional_hour_applied_set')),
             Prefetch('payment_set'),
             Prefetch('warranty_movement_set'),
-        ).filter(
-            Q(state__name__icontains=query_param) |
-            Q(customer__institution_name__icontains=query_param) |
-            Q(customer__contact__name__icontains=query_param)
-        ).order_by("id").distinct()
+        )
+        if query_param:
+            queryset = queryset.filter(
+                Q(customer__institution_name__icontains=query_param) |
+                Q(customer__contact__name__icontains=query_param)
+            )
+        if state_id:
+            queryset = queryset.filter(state_id=state_id)
+        if date_from:
+            queryset = queryset.filter(created_at__date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(created_at__date__lte=date_to)
+        queryset = queryset.order_by("id").distinct()
         page_num = int(request.GET.get('page', 0))
         limit_num = int(request.GET.get('limit', 10))
         total = queryset.count()

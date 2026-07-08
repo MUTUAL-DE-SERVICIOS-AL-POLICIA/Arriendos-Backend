@@ -7,5 +7,6 @@ urlpatterns = [
     path('<str:pk>', Customer_Detail.as_view()),
     path('type/', Customer_Type_Api.as_view()),
     path('type/<str:pk>', Customer_Type_Detail.as_view()),
+    path('filter_options/', Customer_Filter_Options.as_view()),
     path('identify_police/<str:id_card>/', identify_affiliate.as_view(), name='consumir_microservicio'),
 ]
