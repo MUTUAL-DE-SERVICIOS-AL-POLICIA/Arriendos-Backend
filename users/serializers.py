@@ -19,7 +19,7 @@ class UserCustomSerializer(serializers.ModelSerializer):
                 'id': user_role.role.id,
                 'name': user_role.role.name,
             }
-        except:
+        except UserRole.DoesNotExist:
             return None
 
 

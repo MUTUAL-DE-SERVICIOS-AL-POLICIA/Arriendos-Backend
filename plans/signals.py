@@ -14,7 +14,10 @@ def log_create_plan(sender, instance, created, **kwargs):
     if created:
         detail=f"El usuario: {user} creó el registro {instance}"
         action="create"
-        Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
+        try:
+            Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
+        except Exception as e:
+            business_logger.error(f"[PLAN] Audit record failed: {e}")
         business_logger.info(f"[PLAN] CREATE: {instance} creado (user={user}, id={instance.id})")
 
 @receiver(pre_save, sender=Plan)
@@ -28,7 +31,10 @@ def log_edit_plan(sender, instance, **kwargs):
             new_value = getattr(instance, field.name)
             user = get_thread_variable('thread_user')
             if old_value != new_value:
-                Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
+                try:
+                    Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
+                except Exception as e:
+                    business_logger.error(f"[PLAN] Audit record failed: {e}")
                 business_logger.info(f"[PLAN] UPDATE: Campo '{field.name}' de '{old_value}' a '{new_value}' en {instance} (user={user})")
 
 @receiver(post_delete, sender=Plan)
@@ -36,5 +42,8 @@ def log_delete_plan(sender, instance, **kwargs):
     model="Plan"
     user = get_thread_variable('thread_user')
     action="delete"
-    Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
+    try:
+        Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
+    except Exception as e:
+        business_logger.error(f"[PLAN] Audit record failed: {e}")
     business_logger.info(f"[PLAN] DELETE: {instance} eliminado (user={user}, id={instance.id})")

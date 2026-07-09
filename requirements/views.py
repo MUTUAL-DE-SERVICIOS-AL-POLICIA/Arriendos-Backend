@@ -16,6 +16,9 @@ from drf_yasg.utils import swagger_auto_schema
 from roles.permissions import HasModulePermission
 from rest_framework.permissions import IsAuthenticated
 from threadlocals.threadlocals import set_thread_variable
+import logging
+
+logger = logging.getLogger('business')
 
 class Requirement_Api(generics.GenericAPIView):
     serializer_class = RequirementSerializer
@@ -68,7 +71,7 @@ class Requirement_Detail(generics.GenericAPIView):
     def get_requirement(self, pk, *args, **kw):
         try:
             return Requirement.objects.get(pk=pk)
-        except:
+        except Requirement.DoesNotExist:
             return None
 
     def patch(self, request, pk, *args, **kw):
@@ -195,7 +198,7 @@ class RateRequirement_Detail(generics.GenericAPIView):
     def get_raterequirement(self, pk, *args, **kw):
         try:
             return RateRequirement.objects.get(pk=pk)
-        except:
+        except RateRequirement.DoesNotExist:
             return None
 
     def get(self, request, pk, *args, **kw):
@@ -237,7 +240,8 @@ class RateRequirement_Detail(generics.GenericAPIView):
                     else:
                         try:
                             requirement = RateRequirement.objects.create(requirement_id=rate_requirement, customer_type_id=customer_type, rate_id=pk)
-                        except:
+                        except Exception as e:
+                            logger.warning(f"RATE_REQUIREMENT_CREATE_ERROR: rate={pk} customer_type={customer_type} error={str(e)}")
                             return Response({"error":"No se pudo agregar el cliente y tarifa"}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 for rate_requirement in rate_requirements:

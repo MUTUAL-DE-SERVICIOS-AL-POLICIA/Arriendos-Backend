@@ -22,6 +22,9 @@ from rest_framework.permissions import IsAuthenticated
 from threadlocals.threadlocals import set_thread_variable
 from django.db.models import Q, Prefetch
 import math
+import logging
+
+logger = logging.getLogger('business')
 
 
 class StateRentalListCreateView(generics.ListCreateAPIView):
@@ -198,7 +201,7 @@ class Selected_Product_Detail(generics.GenericAPIView):
     def get_selected_product(self, pk):
         try:
             return Selected_Product.objects.get(pk=pk)
-        except:
+        except Selected_Product.DoesNotExist:
             return None
 
     def get(self, request, pk):
@@ -284,7 +287,7 @@ class Pre_Reserve_Api(generics.GenericAPIView):
         customer = request.data["customer"]
         try:
             Customer.objects.get(pk=customer)
-        except:
+        except Customer.DoesNotExist:
             return Response({"error": "Cliente no encontrado"}, status=status.HTTP_404_NOT_FOUND)
         selected_products = request.data["selected_products"]
         for selected_product in selected_products:
@@ -292,7 +295,7 @@ class Pre_Reserve_Api(generics.GenericAPIView):
             if event_type != "":
                 try:
                     event = Event_Type.objects.filter(name=event_type)
-                except:
+                except Exception:
                     return Response({"error":f"El tipo de evento no es válido"}, status=status.HTTP_404_NOT_FOUND)
             else:
                 return Response({"error": "El tipo de evento no es válido"}, status=status.HTTP_404_NOT_FOUND)
@@ -305,7 +308,7 @@ class Pre_Reserve_Api(generics.GenericAPIView):
                     start_time = datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%fZ')
                     if (start_time.year > first_year):
                         return Response({"error":"Las fechas no estan en la misma gestión"}, status=status.HTTP_404_NOT_FOUND)
-                except:
+                except (Product.DoesNotExist, ValueError):
                     return Response({"error":"el producto no es válido o la fecha no es correcta"}, status=status.HTTP_404_NOT_FOUND)
         initial_total = 0
         for selected_product in selected_products:
@@ -551,7 +554,7 @@ class Register_additional_hour_applied(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, HasModulePermission]
     rbac_module = 'leases'
     rbac_export = True
-    serializer_class = Additional_Hour_Applied
+    serializer_class = Additional_hour_AppliedSerializer
 
     @swagger_auto_schema(
     operation_description="Registrar hora adicional al producto seleccionado",
@@ -562,7 +565,7 @@ class Register_additional_hour_applied(generics.RetrieveUpdateDestroyAPIView):
         selected_product_id = request.data.get('selected_product')
         try:
             rental = Selected_Product.objects.get(pk=selected_product_id)
-        except:
+        except Selected_Product.DoesNotExist:
             return Response({"error":"El producto seleccionado no existe"}, status=status.HTTP_404_NOT_FOUND)
         rental = rental.rental_id
         number = request.data.get('number')
@@ -627,7 +630,7 @@ class Register_additional_hour_applied(generics.RetrieveUpdateDestroyAPIView):
             return Response({"error": "El producto seleccionado no existe."}, status=status.HTTP_400_BAD_REQUEST)
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class List_additional_hour_applied(generics.ListAPIView):
-    serializer_class = Additional_Hour_Applied
+    serializer_class = Additional_hour_AppliedSerializer
     permission_classes = [IsAuthenticated, HasModulePermission]
     rbac_module = 'leases'
 

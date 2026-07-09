@@ -54,7 +54,7 @@ class Rate_Api(generics.GenericAPIView):
         search_param = request.GET.get('search')
         rates = Rate.objects.all()
         if search_param:
-            rates = rates.filter(title__icontains=search_param)
+            rates = rates.filter(name__icontains=search_param)
         total_rates = rates.count()
         if limit_num == -1:
             paginated = rates
@@ -93,7 +93,7 @@ class Product_Api(generics.GenericAPIView):
     def get_product(self, pk):
         try:
             return Product.objects.get(pk=pk, is_deleted=False)
-        except:
+        except Product.DoesNotExist:
             return None
 
     @swagger_auto_schema(

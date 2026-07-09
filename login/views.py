@@ -120,7 +120,7 @@ def Bind_User_Ldap(user, password):
         # Intentar autenticar al usuario con su contraseña
         with Connection(server, user_dn, password, auto_bind=True):
             return True
-    except:
+    except Exception:
         return None
 
 
@@ -145,7 +145,7 @@ def Connect_Ldap(request):
     try:
         with connection:
             return JsonResponse({"estado":"conectado"}, status=202)
-    except:
+    except Exception:
         return JsonResponse({"error":"falló la conexión"}, status=404)
 
 User = get_user_model()

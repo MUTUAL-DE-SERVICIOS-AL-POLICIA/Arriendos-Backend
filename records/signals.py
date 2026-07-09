@@ -28,13 +28,16 @@ def get_current_user():
 
 def create_record(user, action, model, instance_id, detail):
     from users.models import Record
-    Record.objects.create(
-        user=user,
-        action=action,
-        model=model,
-        detail=detail,
-        instance_id=instance_id
-    )
+    try:
+        Record.objects.create(
+            user=user,
+            action=action,
+            model=model,
+            detail=detail,
+            instance_id=instance_id
+        )
+    except Exception as e:
+        business_logger.error(f"[RECORD] Audit record failed: {e}")
 
 
 @receiver(post_save, sender=Role)

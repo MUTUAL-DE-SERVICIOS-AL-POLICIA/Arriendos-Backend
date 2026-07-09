@@ -14,7 +14,10 @@ def log_create_state(sender, instance, created, **kwargs):
     if created:
         detail=f"El usuario: {user} creó el registro {instance}"
         action="create"
-        Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
+        try:
+            Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
+        except Exception as e:
+            business_logger.error(f"[STATE] Audit record failed: {e}")
         business_logger.info(f"[STATE] CREATE: {instance} creado (user={user}, id={instance.id})")
 
 @receiver(pre_save, sender=State)
@@ -28,7 +31,10 @@ def log_edit_state(sender, instance, **kwargs):
             new_value = getattr(instance, field.name)
             user = get_thread_variable('thread_user')
             if old_value != new_value:
-                Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
+                try:
+                    Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
+                except Exception as e:
+                    business_logger.error(f"[STATE] Audit record failed: {e}")
                 business_logger.info(f"[STATE] UPDATE: Campo '{field.name}' de '{old_value}' a '{new_value}' en {instance} (user={user})")
 
 @receiver(post_delete, sender=State)
@@ -36,7 +42,10 @@ def log_delete_state(sender, instance, **kwargs):
     model="State"
     user = get_thread_variable('thread_user')
     action="delete"
-    Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
+    try:
+        Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
+    except Exception as e:
+        business_logger.error(f"[STATE] Audit record failed: {e}")
     business_logger.info(f"[STATE] DELETE: {instance} eliminado (user={user}, id={instance.id})")
 
 @receiver(post_save, sender=Rental)
@@ -46,7 +55,10 @@ def log_create_rental(sender, instance, created, **kwargs):
     if created:
         detail=f"El usuario: {user} creó el registro {instance}"
         action="create"
-        Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
+        try:
+            Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
+        except Exception as e:
+            business_logger.error(f"[RENTAL] Audit record failed: {e}")
         business_logger.info(f"[RENTAL] CREATE: {instance} creado (user={user}, id={instance.id})")
 
 @receiver(pre_save, sender=Rental)
@@ -60,7 +72,10 @@ def log_edit_rental(sender, instance, **kwargs):
             new_value = getattr(instance, field.name)
             user = get_thread_variable('thread_user')
             if old_value != new_value:
-                Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
+                try:
+                    Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
+                except Exception as e:
+                    business_logger.error(f"[RENTAL] Audit record failed: {e}")
                 business_logger.info(f"[RENTAL] UPDATE: Campo '{field.name}' de '{old_value}' a '{new_value}' en {instance} (user={user})")
 
 @receiver(post_delete, sender=Rental)
@@ -68,7 +83,10 @@ def log_delete_rental(sender, instance, **kwargs):
     model="Rental"
     user = get_thread_variable('thread_user')
     action="delete"
-    Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
+    try:
+        Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
+    except Exception as e:
+        business_logger.error(f"[RENTAL] Audit record failed: {e}")
     business_logger.info(f"[RENTAL] DELETE: {instance} eliminado (user={user}, id={instance.id})")
 
 @receiver(post_save, sender=Event_Type)
@@ -78,7 +96,10 @@ def log_create_event_type(sender, instance, created, **kwargs):
     if created:
         detail=f"El usuario: {user} creó el registro {instance}"
         action="create"
-        Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
+        try:
+            Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
+        except Exception as e:
+            business_logger.error(f"[EVENT_TYPE] Audit record failed: {e}")
         business_logger.info(f"[EVENT_TYPE] CREATE: {instance} creado (user={user}, id={instance.id})")
 
 @receiver(pre_save, sender=Event_Type)
@@ -92,7 +113,10 @@ def log_edit_event_type(sender, instance, **kwargs):
             new_value = getattr(instance, field.name)
             user = get_thread_variable('thread_user')
             if old_value != new_value:
-                Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
+                try:
+                    Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
+                except Exception as e:
+                    business_logger.error(f"[EVENT_TYPE] Audit record failed: {e}")
                 business_logger.info(f"[EVENT_TYPE] UPDATE: Campo '{field.name}' de '{old_value}' a '{new_value}' en {instance} (user={user})")
 
 @receiver(post_delete, sender=Event_Type)
@@ -100,7 +124,10 @@ def log_delete_event_type(sender, instance, **kwargs):
     model="Event_Type"
     user = get_thread_variable('thread_user')
     action="delete"
-    Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
+    try:
+        Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
+    except Exception as e:
+        business_logger.error(f"[EVENT_TYPE] Audit record failed: {e}")
     business_logger.info(f"[EVENT_TYPE] DELETE: {instance} eliminado (user={user}, id={instance.id})")
 
 @receiver(post_save, sender=Selected_Product)
@@ -110,7 +137,10 @@ def log_create_selected_product(sender, instance, created, **kwargs):
     if created:
         detail=f"El usuario: {user} creó el registro {instance}"
         action="create"
-        Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
+        try:
+            Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
+        except Exception as e:
+            business_logger.error(f"[SELECTED_PRODUCT] Audit record failed: {e}")
         business_logger.info(f"[SELECTED_PRODUCT] CREATE: {instance} creado (user={user}, id={instance.id})")
 
 @receiver(pre_save, sender=Selected_Product)
@@ -124,7 +154,10 @@ def log_edit_selected_product(sender, instance, **kwargs):
             new_value = getattr(instance, field.name)
             user = get_thread_variable('thread_user')
             if old_value != new_value:
-                Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
+                try:
+                    Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
+                except Exception as e:
+                    business_logger.error(f"[SELECTED_PRODUCT] Audit record failed: {e}")
                 business_logger.info(f"[SELECTED_PRODUCT] UPDATE: Campo '{field.name}' de '{old_value}' a '{new_value}' en {instance} (user={user})")
 
 @receiver(post_delete, sender=Selected_Product)
@@ -132,7 +165,10 @@ def log_delete_selected_product(sender, instance, **kwargs):
     model="Selected_Product"
     user = get_thread_variable('thread_user')
     action="delete"
-    Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
+    try:
+        Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
+    except Exception as e:
+        business_logger.error(f"[SELECTED_PRODUCT] Audit record failed: {e}")
     business_logger.info(f"[SELECTED_PRODUCT] DELETE: {instance} eliminado (user={user}, id={instance.id})")
 
 @receiver(post_save, sender=Additional_Hour_Applied)
@@ -142,7 +178,10 @@ def log_create_additional_hour_applied(sender, instance, created, **kwargs):
     if created:
         detail=f"El usuario: {user} creó el registro {instance}"
         action="create"
-        Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
+        try:
+            Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
+        except Exception as e:
+            business_logger.error(f"[ADDITIONAL_HOUR] Audit record failed: {e}")
         business_logger.info(f"[ADDITIONAL_HOUR] CREATE: {instance} creado (user={user}, id={instance.id})")
 
 @receiver(pre_save, sender=Additional_Hour_Applied)
@@ -156,7 +195,10 @@ def log_edit_additional_hour_applied(sender, instance, **kwargs):
             new_value = getattr(instance, field.name)
             user = get_thread_variable('thread_user')
             if old_value != new_value:
-                Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
+                try:
+                    Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
+                except Exception as e:
+                    business_logger.error(f"[ADDITIONAL_HOUR] Audit record failed: {e}")
                 business_logger.info(f"[ADDITIONAL_HOUR] UPDATE: Campo '{field.name}' de '{old_value}' a '{new_value}' en {instance} (user={user})")
 
 @receiver(post_delete, sender=Additional_Hour_Applied)
@@ -164,5 +206,8 @@ def log_delete_additional_hour_applied(sender, instance, **kwargs):
     model="Additional_Hour_Applied"
     user = get_thread_variable('thread_user')
     action="delete"
-    Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
+    try:
+        Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
+    except Exception as e:
+        business_logger.error(f"[ADDITIONAL_HOUR] Audit record failed: {e}")
     business_logger.info(f"[ADDITIONAL_HOUR] DELETE: {instance} eliminado (user={user}, id={instance.id})")

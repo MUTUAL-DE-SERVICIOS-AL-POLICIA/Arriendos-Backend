@@ -19,6 +19,9 @@ from django.shortcuts import get_object_or_404
 from Arriendos_Backend import util
 from customers import views
 from leases.serializer import RentalsSerializer
+import logging
+
+logger = logging.getLogger('business')
 
 request_body_schema = openapi.Schema(
     type=openapi.TYPE_OBJECT,
@@ -484,7 +487,7 @@ class Warranty_Return_Request(generics.GenericAPIView):
             return Response({"error": "No se ha enviado rental"}, status=status.HTTP_404_NOT_FOUND)
         try:
             warranty=Warranty_Movement.objects.filter(rental_id=rental).latest('id')
-        except:
+        except Warranty_Movement.DoesNotExist:
             return Response({"error": "No hay garantías registradas del alquiler"}, status=status.HTTP_400_BAD_REQUEST)
         rental_state = Rental.objects.get(pk=rental)
         rental_state = rental_state.state_id
@@ -529,7 +532,8 @@ class Discount_warranty(generics.ListAPIView):
                 if rental_id is None and product is None:
                     return Response(error_message, status=400)
                 return Make_Damage_Warranty_Form(request, rental_id, product)
-            except:
+            except Exception as e:
+                logger.warning(f"DISCOUNT_WARRANTY_ERROR: rental={request.data.get('rental')} error={str(e)}")
                 return Response(error_message, status=400)
         rental_id = request.data["rental"]
         product = request.data["product"]
@@ -543,7 +547,7 @@ class Discount_warranty(generics.ListAPIView):
                 selected_product = Selected_Product.objects.get(rental_id = rental_id, pk = product)
                 if selected_product is None:
                     return Response({'error': 'No se ha podido obtener el producto'}, status=status.HTTP_400_BAD_REQUEST)
-            except:
+            except Selected_Product.DoesNotExist:
                 return Response({'error': 'No se encuentra el producto relacionado al arriendo'}, status=status.HTTP_400_BAD_REQUEST)
             warranty= Warranty_Movement.objects.filter(rental_id=rental.id)
             if (warranty.exists()):
@@ -652,7 +656,10 @@ class Return_Warranty_Form(generics.GenericAPIView):
     )
     def get(self, request, *args, **kwargs):
         set_thread_variable('thread_user', request.user)
-        rental = int(request.GET.get('rental', None))
+        rental_param = request.GET.get('rental')
+        if rental_param is None:
+            return Response({"error": "No se ha enviado rental"}, status=status.HTTP_400_BAD_REQUEST)
+        rental = int(rental_param)
         warranty= Warranty_Movement.objects.filter(rental_id=rental)
         if rental is None:
             return Response({"error": "No se ha enviado rental"}, status=status.HTTP_404_NOT_FOUND)

@@ -14,6 +14,9 @@ from threadlocals.threadlocals import set_thread_variable
 import requests
 from django.conf import settings
 import re
+import logging
+
+logger = logging.getLogger('business')
 
 class Customer_Type_Api(generics.GenericAPIView):
     serializer_class = Customer_typeSerializer
@@ -60,7 +63,7 @@ class Customer_Type_Detail(generics.GenericAPIView):
     def get_customer_type(self, pk, *args, **kwargs):
         try:
             return Customer_type.objects.get(pk=pk)
-        except:
+        except Customer_type.DoesNotExist:
             return None
     def get(self,request, pk, *args, **kwargs):
         set_thread_variable('thread_user', request.user)
@@ -197,7 +200,7 @@ class Customer_Api(generics.GenericAPIView):
         try:
             customer_type_req = request.data["customer_type"]
             customer_type = Customer_type.objects.get(pk=customer_type_req)
-        except:
+        except Customer_type.DoesNotExist:
             return Response({"error":"Customer type no válido"},status=status.HTTP_404_NOT_FOUND)
         if customer_type is not None:
             customer_type_id = customer_type.id
@@ -281,7 +284,7 @@ class Customer_Detail(generics.GenericAPIView):
     def get_customer(self, pk, **kwargs):
         try:
             return Customer.objects.get(pk=pk)
-        except:
+        except Customer.DoesNotExist:
             return None
     @swagger_auto_schema(
     operation_description="Para editar clientes se envia customer o institution segun el tipo de cliente, en contactos el id es opcional",

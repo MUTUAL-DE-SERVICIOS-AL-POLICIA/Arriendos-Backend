@@ -153,7 +153,7 @@ class Sub_Room_Detail(generics.GenericAPIView):
     def get_sub_room(self, pk):
         try:
             return Sub_Room.objects.get(pk=pk)
-        except:
+        except Sub_Room.DoesNotExist:
             return None
     def get(self, request, pk):
         set_thread_variable('thread_user', request.user)
