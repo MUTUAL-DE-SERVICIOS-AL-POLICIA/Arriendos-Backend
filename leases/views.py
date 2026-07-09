@@ -13,6 +13,13 @@ from rest_framework import status, generics
 from django.utils import timezone
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+
+MONTHS_SPANISH = {
+    'January': 'Enero', 'February': 'Febrero', 'March': 'Marzo',
+    'April': 'Abril', 'May': 'Mayo', 'June': 'Junio',
+    'July': 'Julio', 'August': 'Agosto', 'September': 'Septiembre',
+    'October': 'Octubre', 'November': 'Noviembre', 'December': 'Diciembre',
+}
 from Arriendos_Backend.util import required_fields
 from .function import Make_Delivery_Form, Make_Overtime_Form, Make_Rental_Report
 
@@ -746,7 +753,7 @@ class rental_list(generics.GenericAPIView):
             can_edit=False
             date = str(item["created_at"])
             date_object = timezone.datetime.fromisoformat(date)
-            date_formated = date_object.strftime("%d de %B de %Y %I:%M %p")
+            date_formated = date_object.strftime("%d de ") + MONTHS_SPANISH[date_object.strftime('%B')] + date_object.strftime(" de %Y %I:%M %p")
             customer_name= item["customer"]["institution_name"]
             selected_products_list=[]
             if customer_name is None:
