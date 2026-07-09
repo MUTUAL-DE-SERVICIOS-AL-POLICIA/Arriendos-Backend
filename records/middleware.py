@@ -11,8 +11,8 @@ Fecha: 2026
 import logging
 import time
 
-access_logger = logging.getLogger('django.request')
-error_logger = logging.getLogger('django.request')
+access_logger = logging.getLogger('records.access')
+error_logger = logging.getLogger('records.error')
 
 
 class RequestLoggingMiddleware:

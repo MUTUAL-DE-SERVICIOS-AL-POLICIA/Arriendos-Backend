@@ -1,8 +1,12 @@
+import logging
 from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from users.models import Record
 from .models import Rate, HourRange, Product, Price, Price_Additional_Hour
 from threadlocals.threadlocals import get_thread_variable
+
+business_logger = logging.getLogger('business')
+
 @receiver(post_save, sender=Rate)
 def log_create_rate(sender, instance, created, **kwargs):
     model="Rate"
@@ -10,13 +14,9 @@ def log_create_rate(sender, instance, created, **kwargs):
     if created:
         detail=f"El usuario: {user} creó el registro {instance}"
         action="create"
-        Record.objects.create(
-            user=user,
-            action=action,
-            model=model,
-            detail=detail,
-            instance_id =instance.id
-        )
+        Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
+        business_logger.info(f"[RATE] CREATE: {instance} creado (user={user}, id={instance.id})")
+
 @receiver(pre_save, sender=Rate)
 def log_edit_rate(sender, instance, **kwargs):
     action="update"
@@ -28,25 +28,17 @@ def log_edit_rate(sender, instance, **kwargs):
             new_value = getattr(instance, field.name)
             user = get_thread_variable('thread_user')
             if old_value != new_value:
-                Record.objects.create(
-                    user=user,
-                    action=action,
-                    model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
-                    instance_id =instance.id
-                )
+                Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
+                business_logger.info(f"[RATE] UPDATE: Campo '{field.name}' de '{old_value}' a '{new_value}' en {instance} (user={user})")
+
 @receiver(post_delete, sender=Rate)
 def log_delete_rate(sender, instance, **kwargs):
     model="Rate"
     user = get_thread_variable('thread_user')
     action="delete"
-    Record.objects.create(
-        user=user,
-        action=action,
-        model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}",
-        instance_id =instance.id
-    )
+    Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
+    business_logger.info(f"[RATE] DELETE: {instance} eliminado (user={user}, id={instance.id})")
+
 @receiver(post_save, sender=HourRange)
 def log_create_hour_range(sender, instance, created, **kwargs):
     model="HourRange"
@@ -54,13 +46,9 @@ def log_create_hour_range(sender, instance, created, **kwargs):
     if created:
         detail=f"El usuario: {user} creó el registro {instance}"
         action="create"
-        Record.objects.create(
-            user=user,
-            action=action,
-            model=model,
-            detail=detail,
-            instance_id =instance.id
-        )
+        Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
+        business_logger.info(f"[HOUR_RANGE] CREATE: {instance} creado (user={user}, id={instance.id})")
+
 @receiver(pre_save, sender=HourRange)
 def log_edit_hour_range(sender, instance, **kwargs):
     action="update"
@@ -72,25 +60,17 @@ def log_edit_hour_range(sender, instance, **kwargs):
             new_value = getattr(instance, field.name)
             user = get_thread_variable('thread_user')
             if old_value != new_value:
-                Record.objects.create(
-                    user=user,
-                    action=action,
-                    model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
-                    instance_id =instance.id
-                )
+                Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
+                business_logger.info(f"[HOUR_RANGE] UPDATE: Campo '{field.name}' de '{old_value}' a '{new_value}' en {instance} (user={user})")
+
 @receiver(post_delete, sender=HourRange)
 def log_delete_hour_range(sender, instance, **kwargs):
     model="HourRange"
     user = get_thread_variable('thread_user')
     action="delete"
-    Record.objects.create(
-        user=user,
-        action=action,
-        model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}",
-        instance_id =instance.id
-    )
+    Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
+    business_logger.info(f"[HOUR_RANGE] DELETE: {instance} eliminado (user={user}, id={instance.id})")
+
 @receiver(post_save, sender=Product)
 def log_create_product(sender, instance, created, **kwargs):
     model="Product"
@@ -98,13 +78,9 @@ def log_create_product(sender, instance, created, **kwargs):
     if created:
         detail=f"El usuario: {user} creó el registro {instance}"
         action="create"
-        Record.objects.create(
-            user=user,
-            action=action,
-            model=model,
-            detail=detail,
-            instance_id =instance.id
-        )
+        Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
+        business_logger.info(f"[PRODUCT] CREATE: {instance} creado (user={user}, id={instance.id})")
+
 @receiver(pre_save, sender=Product)
 def log_edit_product(sender, instance, **kwargs):
     action="update"
@@ -116,25 +92,17 @@ def log_edit_product(sender, instance, **kwargs):
             new_value = getattr(instance, field.name)
             user = get_thread_variable('thread_user')
             if old_value != new_value:
-                Record.objects.create(
-                    user=user,
-                    action=action,
-                    model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
-                    instance_id =instance.id
-                )
+                Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
+                business_logger.info(f"[PRODUCT] UPDATE: Campo '{field.name}' de '{old_value}' a '{new_value}' en {instance} (user={user})")
+
 @receiver(post_delete, sender=Product)
 def log_delete_product(sender, instance, **kwargs):
     model="Product"
     user = get_thread_variable('thread_user')
     action="delete"
-    Record.objects.create(
-        user=user,
-        action=action,
-        model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}",
-        instance_id =instance.id
-    )
+    Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
+    business_logger.info(f"[PRODUCT] DELETE: {instance} eliminado (user={user}, id={instance.id})")
+
 @receiver(post_save, sender=Price)
 def log_create_price(sender, instance, created, **kwargs):
     model="Price"
@@ -142,13 +110,9 @@ def log_create_price(sender, instance, created, **kwargs):
     if created:
         detail=f"El usuario: {user} creó el registro {instance}"
         action="create"
-        Record.objects.create(
-            user=user,
-            action=action,
-            model=model,
-            detail=detail,
-            instance_id =instance.id
-        )
+        Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
+        business_logger.info(f"[PRICE] CREATE: {instance} creado (user={user}, id={instance.id})")
+
 @receiver(pre_save, sender=Price)
 def log_edit_price(sender, instance, **kwargs):
     action="update"
@@ -160,25 +124,17 @@ def log_edit_price(sender, instance, **kwargs):
             new_value = getattr(instance, field.name)
             user = get_thread_variable('thread_user')
             if old_value != new_value:
-                Record.objects.create(
-                    user=user,
-                    action=action,
-                    model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
-                    instance_id =instance.id
-                )
+                Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
+                business_logger.info(f"[PRICE] UPDATE: Campo '{field.name}' de '{old_value}' a '{new_value}' en {instance} (user={user})")
+
 @receiver(post_delete, sender=Price)
 def log_delete_price(sender, instance, **kwargs):
     model="Price"
     user = get_thread_variable('thread_user')
     action="delete"
-    Record.objects.create(
-        user=user,
-        action=action,
-        model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}",
-        instance_id =instance.id
-    )
+    Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
+    business_logger.info(f"[PRICE] DELETE: {instance} eliminado (user={user}, id={instance.id})")
+
 @receiver(post_save, sender=Price_Additional_Hour)
 def log_create_price_additional_hour(sender, instance, created, **kwargs):
     model="Price_Additional_Hour"
@@ -186,13 +142,9 @@ def log_create_price_additional_hour(sender, instance, created, **kwargs):
     if created:
         detail=f"El usuario: {user} creó el registro {instance}"
         action="create"
-        Record.objects.create(
-            user=user,
-            action=action,
-            model=model,
-            detail=detail,
-            instance_id =instance.id
-        )
+        Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
+        business_logger.info(f"[PRICE_ADDITIONAL_HOUR] CREATE: {instance} creado (user={user}, id={instance.id})")
+
 @receiver(pre_save, sender=Price_Additional_Hour)
 def log_edit_price_additional_hour(sender, instance, **kwargs):
     action="update"
@@ -204,22 +156,13 @@ def log_edit_price_additional_hour(sender, instance, **kwargs):
             new_value = getattr(instance, field.name)
             user = get_thread_variable('thread_user')
             if old_value != new_value:
-                Record.objects.create(
-                    user=user,
-                    action=action,
-                    model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
-                    instance_id =instance.id
-                )
+                Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
+                business_logger.info(f"[PRICE_ADDITIONAL_HOUR] UPDATE: Campo '{field.name}' de '{old_value}' a '{new_value}' en {instance} (user={user})")
+
 @receiver(post_delete, sender=Price_Additional_Hour)
 def log_delete_price_additional_hour(sender, instance, **kwargs):
     model="Price_Additional_Hour"
     user = get_thread_variable('thread_user')
     action="delete"
-    Record.objects.create(
-        user=user,
-        action=action,
-        model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}",
-        instance_id =instance.id
-    )
+    Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
+    business_logger.info(f"[PRICE_ADDITIONAL_HOUR] DELETE: {instance} eliminado (user={user}, id={instance.id})")

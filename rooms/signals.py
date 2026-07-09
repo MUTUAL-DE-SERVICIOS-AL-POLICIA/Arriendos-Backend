@@ -1,8 +1,11 @@
+import logging
 from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from users.models import Record
 from threadlocals.threadlocals import get_thread_variable
 from .models import *
+
+business_logger = logging.getLogger('business')
 
 @receiver(post_save, sender=Room)
 def log_create_room(sender, instance, created, **kwargs):
@@ -11,15 +14,11 @@ def log_create_room(sender, instance, created, **kwargs):
     if created:
         detail=f"El usuario: {user} creó el registro {instance}"
         action="create"
-        Record.objects.create(
-            user=user,
-            action=action,
-            model=model,
-            detail=detail,
-            instance_id=instance.id
-        )
+        Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
+        business_logger.info(f"[ROOM] CREATE: {instance} creado (user={user}, id={instance.id})")
+
 @receiver(pre_save, sender=Room)
-def log_edit_user(sender, instance, **kwargs):
+def log_edit_room(sender, instance, **kwargs):
     action="update"
     model="Room"
     if instance.pk is not None:
@@ -29,25 +28,16 @@ def log_edit_user(sender, instance, **kwargs):
             new_value = getattr(instance, field.name)
             user = get_thread_variable('thread_user')
             if old_value != new_value:
-                Record.objects.create(
-                    user=user,
-                    action=action,
-                    model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
-                    instance_id=instance.id
-                )
+                Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
+                business_logger.info(f"[ROOM] UPDATE: Campo '{field.name}' de '{old_value}' a '{new_value}' en {instance} (user={user})")
+
 @receiver(post_delete, sender=Room)
 def log_delete_room(sender, instance, **kwargs):
     model="Room"
     user = get_thread_variable('thread_user')
     action="delete"
-    Record.objects.create(
-        user=user,
-        action=action,
-        model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}",
-        instance_id=instance.id
-    )
+    Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
+    business_logger.info(f"[ROOM] DELETE: {instance} eliminado (user={user}, id={instance.id})")
 
 @receiver(post_save, sender=Property)
 def log_create_property(sender, instance, created, **kwargs):
@@ -56,13 +46,9 @@ def log_create_property(sender, instance, created, **kwargs):
     if created:
         detail=f"El usuario: {user} creó el registro {instance}"
         action="create"
-        Record.objects.create(
-            user=user,
-            action=action,
-            model=model,
-            detail=detail,
-            instance_id=instance.id
-        )
+        Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
+        business_logger.info(f"[PROPERTY] CREATE: {instance} creado (user={user}, id={instance.id})")
+
 @receiver(pre_save, sender=Property)
 def log_edit_property(sender, instance, **kwargs):
     action="update"
@@ -74,25 +60,16 @@ def log_edit_property(sender, instance, **kwargs):
             new_value = getattr(instance, field.name)
             user = get_thread_variable('thread_user')
             if old_value != new_value:
-                Record.objects.create(
-                    user=user,
-                    action=action,
-                    model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
-                    instance_id=instance.id
-                )
+                Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
+                business_logger.info(f"[PROPERTY] UPDATE: Campo '{field.name}' de '{old_value}' a '{new_value}' en {instance} (user={user})")
+
 @receiver(post_delete, sender=Property)
 def log_delete_property(sender, instance, **kwargs):
     model="Property"
     user = get_thread_variable('thread_user')
     action="delete"
-    Record.objects.create(
-        user=user,
-        action=action,
-        model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}",
-        instance_id=instance.id
-    )
+    Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
+    business_logger.info(f"[PROPERTY] DELETE: {instance} eliminado (user={user}, id={instance.id})")
 
 @receiver(post_save, sender=Sub_Room)
 def log_create_sub_room(sender, instance, created, **kwargs):
@@ -101,13 +78,9 @@ def log_create_sub_room(sender, instance, created, **kwargs):
     if created:
         detail=f"El usuario: {user} creó el registro {instance}"
         action="create"
-        Record.objects.create(
-            user=user,
-            action=action,
-            model=model,
-            detail=detail,
-            instance_id=instance.id
-        )
+        Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
+        business_logger.info(f"[SUB_ROOM] CREATE: {instance} creado (user={user}, id={instance.id})")
+
 @receiver(pre_save, sender=Sub_Room)
 def log_edit_sub_room(sender, instance, **kwargs):
     action="update"
@@ -119,22 +92,13 @@ def log_edit_sub_room(sender, instance, **kwargs):
             new_value = getattr(instance, field.name)
             user = get_thread_variable('thread_user')
             if old_value != new_value:
-                Record.objects.create(
-                    user=user,
-                    action=action,
-                    model=model,
-                    detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
-                    instance_id=instance.id
-                )
+                Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
+                business_logger.info(f"[SUB_ROOM] UPDATE: Campo '{field.name}' de '{old_value}' a '{new_value}' en {instance} (user={user})")
+
 @receiver(post_delete, sender=Sub_Room)
 def log_delete_sub_room(sender, instance, **kwargs):
     model="Sub_Room"
     user = get_thread_variable('thread_user')
     action="delete"
-    Record.objects.create(
-        user=user,
-        action=action,
-        model=model,
-        detail=f"El usuario: {user} eliminó el registro {instance}",
-        instance_id=instance.id
-    )
+    Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
+    business_logger.info(f"[SUB_ROOM] DELETE: {instance} eliminado (user={user}, id={instance.id})")

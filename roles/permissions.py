@@ -23,6 +23,9 @@ Fecha: 2026
 
 from rest_framework import permissions
 from .models import UserRole, RolePermission
+import logging
+
+security_logger = logging.getLogger('security')
 
 
 class HasModulePermission(permissions.BasePermission):
@@ -67,9 +70,11 @@ class HasModulePermission(permissions.BasePermission):
             role = user_role.role
             # Verificar que el rol este activo
             if not role.is_active:
+                security_logger.warning(f"ACCESS_DENY: usuario={user.username} modulo={rbac_module} razon=rol_inactivo")
                 return False
         except UserRole.DoesNotExist:
             # Si el usuario no tiene rol, denegar acceso
+            security_logger.warning(f"ACCESS_DENY: usuario={user.username} modulo={rbac_module} razon=sin_rol")
             return False
 
         # Mapear el metodo HTTP a la accion requerida
@@ -99,5 +104,6 @@ class HasModulePermission(permissions.BasePermission):
                 return True
 
         # Si no tiene el permiso, denegar acceso
+        security_logger.warning(f"ACCESS_DENY: usuario={user.username} modulo={rbac_module} accion={required_action} razon=sin_permiso")
         return False
 

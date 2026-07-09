@@ -37,6 +37,10 @@ from drf_yasg.utils import swagger_auto_schema
 from roles.models import UserRole, RolePermission
 from rest_framework.permissions import IsAuthenticated
 from roles.permissions import HasModulePermission
+from users.models import Record
+import logging
+
+security_logger = logging.getLogger('security')
 
 
 def get_user_permissions(user):
@@ -188,17 +192,27 @@ class Auth(TokenObtainPairView):
     Método HTTP: POST
     """
 
+    def _get_client_ip(self, request):
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            return x_forwarded_for.split(',')[0].strip()
+        return request.META.get('REMOTE_ADDR', '0.0.0.0')
+
     def post(self, request, *args, **kwargs):
         username = request.data.get('username')
         password = request.data.get('password')
-        ldap_ok = False
+        ip = self._get_client_ip(request)
+        response = None
+        user = None
 
         # Si LDAP está habilitado, intentar autenticación LDAP
         if settings.LDAP_STATUS == True:
+            ldap_ok = False
             try:
                 ldap_ok = Bind_User_Ldap(username, password)
-            except Exception:
+            except Exception as e:
                 ldap_ok = False
+                security_logger.warning(f"LDAP_ERROR: usuario={username} error={str(e)}")
 
             if ldap_ok:
                 # LDAP exitoso: crear o sincronizar usuario en BD local
@@ -215,16 +229,55 @@ class Auth(TokenObtainPairView):
                     )
 
         # Si LDAP no está habilitado o LDAP falló, intentar autenticación local
-        if not ldap_ok:
-            response = super().post(request, *args, **kwargs)
+        if user is None:
+            try:
+                response = super().post(request, *args, **kwargs)
+            except Exception as e:
+                security_logger.warning(f"LOGIN_FAIL: usuario={username} ip={ip} error={str(e)}")
+                Record.objects.create(
+                    user=None,
+                    action="LOGIN_FAIL",
+                    model="User",
+                    detail=f"Intento de login fallido para usuario {username} (excepción: {str(e)})",
+                    instance_id=None,
+                )
+                return Response({'error': 'Credenciales inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
             if response.status_code != status.HTTP_200_OK:
+                security_logger.warning(f"LOGIN_FAIL: usuario={username} ip={ip}")
+                Record.objects.create(
+                    user=None,
+                    action="LOGIN_FAIL",
+                    model="User",
+                    detail=f"Intento de login fallido para usuario {username}",
+                    instance_id=None,
+                )
                 return response
             user = User.objects.filter(username=username).first()
             if user is None:
+                security_logger.warning(f"LOGIN_FAIL: usuario={username} ip={ip}")
+                Record.objects.create(
+                    user=None,
+                    action="LOGIN_FAIL",
+                    model="User",
+                    detail=f"Intento de login fallido para usuario {username} (no existe)",
+                    instance_id=None,
+                )
                 return Response({'error': 'Credenciales inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
 
         # Autenticación exitosa (LDAP o local): generar tokens JWT
-        response = super().post(request, *args, **kwargs)
+        if response is None:
+            try:
+                response = super().post(request, *args, **kwargs)
+            except Exception as e:
+                security_logger.warning(f"LOGIN_FAIL: usuario={username} ip={ip} error={str(e)}")
+                Record.objects.create(
+                    user=None,
+                    action="LOGIN_FAIL",
+                    model="User",
+                    detail=f"Intento de login fallido para usuario {username} (excepción: {str(e)})",
+                    instance_id=None,
+                )
+                return Response({'error': 'Credenciales inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
         if response.status_code == status.HTTP_200_OK:
             response.data['user_id'] = user.id
             response.data['username'] = user.username
@@ -235,6 +288,15 @@ class Auth(TokenObtainPairView):
             role_name, permissions = get_user_permissions(user)
             response.data['role'] = role_name
             response.data['permissions'] = permissions
+
+            security_logger.info(f"LOGIN_OK: usuario={username} ip={ip}")
+            Record.objects.create(
+                user=user,
+                action="LOGIN",
+                model="User",
+                detail=f"Login exitoso para usuario {username}",
+                instance_id=user.id,
+            )
 
         return response
 
