@@ -1,7 +1,8 @@
 import os
 from django.core.management.base import BaseCommand
 from roles.models import Module, Permission, Role, RolePermission, UserRole
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 
 class Command(BaseCommand):

@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework import status, generics
 from financials.models import Payment, Warranty_Movement, Event_Damage

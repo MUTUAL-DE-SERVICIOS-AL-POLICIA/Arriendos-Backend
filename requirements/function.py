@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from requirements.models import Requirement
 from customers.models import Customer
 from leases.models import Rental

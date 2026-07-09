@@ -6,7 +6,8 @@ from django.http import HttpResponse
 from rest_framework.decorators import api_view
 from ldap3 import Server, Connection, ALL, SUBTREE, ALL_ATTRIBUTES
 from ldap3.core.exceptions import LDAPException
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+User = get_user_model()
 from .models import Assign
 from rest_framework import status, generics
 from drf_yasg import openapi

@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from rest_framework.response import Response
 from .serializer import Event_TypeSerializer, Selected_ProductSerializer, StateSerializer, Additional_hour_AppliedSerializer, RentalsSerializer
 from .models import State, Rental, Event_Type, Selected_Product, Additional_Hour_Applied

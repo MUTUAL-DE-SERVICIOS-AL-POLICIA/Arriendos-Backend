@@ -30,7 +30,6 @@ from ldap3 import Server, Connection, ALL, SUBTREE
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import status, generics
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import User
 from users.serializers import UserCustomSerializer
 from django.contrib.auth.hashers import make_password
 from drf_yasg.utils import swagger_auto_schema

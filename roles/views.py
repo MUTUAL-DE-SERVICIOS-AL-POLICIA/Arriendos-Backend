@@ -18,7 +18,8 @@ Fecha: 2026
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+User = get_user_model()
 from .models import Module, Permission, Role, RolePermission, UserRole
 from .serializers import (
     ModuleSerializer, PermissionSerializer,

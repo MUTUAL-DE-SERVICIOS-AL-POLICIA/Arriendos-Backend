@@ -20,7 +20,8 @@ Fecha: 2026
 
 from rest_framework import serializers
 from .models import Module, Permission, Role, RolePermission, UserRole
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 
 class ModuleSerializer(serializers.ModelSerializer):
