@@ -46,41 +46,63 @@ class HasModulePermission(permissions.BasePermission):
             rbac_module = 'products'
 
     Si el usuario no tiene permiso, retorna HTTP 403 Forbidden con el mensaje:
-    "No tienes permisos para realizar esta accion"
+    "No tienes permiso de [accion] en el modulo [modulo]"
     """
+    # Traducción de módulos del sistema (codename → nombre en español)
+    MODULE_NAMES = {
+        'products': 'Productos',
+        'rooms': 'Ambientes',
+        'customers': 'Clientes',
+        'leases': 'Arriendos',
+        'financials': 'Finanzas',
+        'requirements': 'Requisitos',
+        'users': 'Usuarios',
+        'records': 'Registros',
+        'documents': 'Documentos',
+        'plans': 'Planes',
+    }
+
+    # Traducción de acciones (codename → nombre en español)
+    ACTION_NAMES = {
+        'view': 'ver',
+        'add': 'crear',
+        'change': 'editar',
+        'delete': 'eliminar',
+        'export': 'exportar',
+    }
+
     message = "No tienes permisos para realizar esta accion"
 
+    def _get_module_name(self, codename):
+        return self.MODULE_NAMES.get(codename, codename)
+
+    def _get_action_name(self, codename):
+        return self.ACTION_NAMES.get(codename, codename)
+
     def has_permission(self, request, view):
-        # Obtener el usuario de la peticion
         user = request.user
 
-        # Verificar que el usuario este autenticado
         if not user or not user.is_authenticated:
             return False
 
-        # Obtener el modulo configurado en la vista
-        # Si no tiene rbac_module, permitir acceso (para vistas publicas)
         rbac_module = getattr(view, 'rbac_module', None)
         if not rbac_module:
             return True
 
-        # Buscar el rol asignado al usuario
         try:
             user_role = UserRole.objects.get(user=user)
             role = user_role.role
-            # Verificar que el rol este activo
             if not role.is_active:
+                module_name = self._get_module_name(rbac_module)
+                self.message = f"No tienes permisos para acceder al módulo '{module_name}'"
                 security_logger.warning(f"ACCESS_DENY: usuario={user.username} modulo={rbac_module} razon=rol_inactivo")
                 return False
         except UserRole.DoesNotExist:
-            # Si el usuario no tiene rol, denegar acceso
+            module_name = self._get_module_name(rbac_module)
+            self.message = f"No tienes permisos para acceder al módulo '{module_name}'"
             security_logger.warning(f"ACCESS_DENY: usuario={user.username} modulo={rbac_module} razon=sin_rol")
             return False
 
-        # Mapear el metodo HTTP a la accion requerida
-        # GET -> view (Ver), POST -> add (Crear), PUT/PATCH -> change (Editar),
-        # DELETE -> delete (Eliminar)
-        # Si la vista tiene rbac_export=True, usar permiso 'export' en vez de 'add' para POST
         method = request.method
         if getattr(view, 'rbac_export', False) and method == 'POST':
             required_action = 'view'
@@ -95,15 +117,15 @@ class HasModulePermission(permissions.BasePermission):
             }
             required_action = action_map.get(method, 'view')
 
-        # Buscar los permisos del rol para el modulo especifico
         role_perms = RolePermission.objects.filter(role=role, module__codename=rbac_module)
 
-        # Verificar si el rol tiene el permiso requerido
         for rp in role_perms:
             if rp.permissions.filter(codename=required_action).exists():
                 return True
 
-        # Si no tiene el permiso, denegar acceso
+        module_name = self._get_module_name(rbac_module)
+        action_name = self._get_action_name(required_action)
+        self.message = f"No tienes permiso de '{action_name}' en el módulo '{module_name}'"
         security_logger.warning(f"ACCESS_DENY: usuario={user.username} modulo={rbac_module} accion={required_action} razon=sin_permiso")
         return False
 
