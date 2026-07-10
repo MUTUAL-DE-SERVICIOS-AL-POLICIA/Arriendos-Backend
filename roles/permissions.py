@@ -85,6 +85,9 @@ class HasModulePermission(permissions.BasePermission):
         if not user or not user.is_authenticated:
             return False
 
+        if user.is_superuser:
+            return True
+
         rbac_module = getattr(view, 'rbac_module', None)
         if not rbac_module:
             return True
