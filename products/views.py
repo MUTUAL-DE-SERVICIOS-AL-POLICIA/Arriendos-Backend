@@ -117,8 +117,10 @@ class Product_Api(generics.GenericAPIView):
         for product_data in serialized_data:
             product_id = product_data.get('id')
             product_obj = next((p for p in paginated_products if p.id == product_id), None)
-            if product_obj and hasattr(product_obj, '_prefetched_prices'):
-                active_price = next((p for p in product_obj._prefetched_prices if p.is_active), None)
+            if product_obj:
+                cache = getattr(product_obj, '_prefetched_objects_cache', {})
+                prices = cache.get('price_set', [])
+                active_price = next((p for p in prices if p.is_active), None)
                 if active_price:
                     product_data['mount'] = active_price.mount
 
@@ -163,8 +165,8 @@ class Product_Api(generics.GenericAPIView):
     def patch(self,request, pk ):
         set_thread_variable('thread_user', request.user)
         product = self.get_product(pk=pk)
-        if product == None:
-            return Response({"status": "success", "message": f"Product with id {pk} not found"}, status=status.HTTP_404_NOT_FOUND)
+        if product is None:
+            return Response({"status": "fail", "message": f"Producto con id {pk} no encontrado"}, status=status.HTTP_404_NOT_FOUND)
         if 'mount' in request.data:
             mount_value = request.data['mount']
             now = timezone.now()
@@ -183,6 +185,8 @@ class Product_Api(generics.GenericAPIView):
             if price_serialized.is_valid():
                 price_serialized.save()
                 price_response=price_serialized.data
+            else:
+                return Response({"status": "fail", "message": price_serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
             product_serialized = ProductSerializer(product, data=request.data, partial=True)
             if product_serialized.is_valid():
                 product_serialized.save()

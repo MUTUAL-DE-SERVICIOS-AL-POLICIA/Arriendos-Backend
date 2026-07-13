@@ -111,41 +111,42 @@ def Bind_User_Ldap(user, password):
     ldap_user = settings.LDAP_USER
     ldap_password = settings.LDAP_PASSWORD
     server = Server(ldap_server, get_info=ALL)
-    # Conexión inicial con credenciales de servicio
-    connection = Connection(server, ldap_user, ldap_password, auto_bind=True)
-    # Construir DN del usuario: uid=usuario,ou=users,dc=...
-    user_dn = f"uid={user}, {settings.LDAP_USER_DN}"
+    connection = None
     try:
+        # Conexión inicial con credenciales de servicio
+        connection = Connection(server, ldap_user, ldap_password, auto_bind=True)
+        # Construir DN del usuario: uid=usuario,ou=users,dc=...
+        user_dn = f"uid={user}, {settings.LDAP_USER_DN}"
         # Intentar autenticar al usuario con su contraseña
         with Connection(server, user_dn, password, auto_bind=True):
             return True
     except Exception:
         return None
+    finally:
+        if connection:
+            try:
+                connection.unbind()
+            except Exception:
+                pass
 
 
 def Connect_Ldap(request):
-    """
-    Prueba la conexión al servidor LDAP.
-
-    Utilizada para verificar que la configuración LDAP sea correcta
-    y el servidor esté accesible.
-
-    Retorna:
-        - 202: {"estado": "conectado"} si la conexión fue exitosa
-        - 404: {"error": "falló la conexión"} si falló
-
-    URL: /api/login/ldap/connect/
-    """
     ldap_server = settings.LDAP_SERVER
     ldap_user = settings.LDAP_USER
     ldap_password = settings.LDAP_PASSWORD
     server = Server(ldap_server, get_info=ALL)
-    connection = Connection(server, ldap_user, ldap_password, auto_bind=True)
+    connection = None
     try:
-        with connection:
-            return JsonResponse({"estado":"conectado"}, status=202)
+        connection = Connection(server, ldap_user, ldap_password, auto_bind=True)
+        return JsonResponse({"estado":"conectado"}, status=status.HTTP_200_OK)
     except Exception:
-        return JsonResponse({"error":"falló la conexión"}, status=404)
+        return JsonResponse({"error":"falló la conexión"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    finally:
+        if connection:
+            try:
+                connection.unbind()
+            except Exception:
+                pass
 
 User = get_user_model()
 
@@ -351,29 +352,39 @@ class Users_Ldap(generics.GenericAPIView):
         ldap_server = settings.LDAP_SERVER
         ldap_password = settings.LDAP_PASSWORD
         server = Server(ldap_server, get_info=ALL)
-        connection = Connection(server, settings.LDAP_USER, ldap_password, auto_bind=True)
+        connection = None
+        try:
+            connection = Connection(server, settings.LDAP_USER, ldap_password, auto_bind=True)
 
-        # Buscar usuarios en el directorio LDAP
-        connection.search(settings.LDAP_BASE, settings.LDAP_FILTER, SUBTREE, attributes=settings.ATTRIBUTES)
+            # Buscar usuarios en el directorio LDAP
+            connection.search(settings.LDAP_BASE, settings.LDAP_FILTER, SUBTREE, attributes=settings.ATTRIBUTES)
 
-        # Obtener usuarios de la BD local para comparar
-        data = []
-        users_dba = User.objects.all()
-        user_to_compare = []
-        for user_dba in users_dba:
-            user_list = user_dba.username
-            user_to_compare.append(user_list)
+            # Obtener usuarios de la BD local para comparar
+            data = []
+            users_dba = User.objects.all()
+            user_to_compare = []
+            for user_dba in users_dba:
+                user_list = user_dba.username
+                user_to_compare.append(user_list)
 
-        # Filtrar usuarios que NO existen en la BD local
-        for entry in connection.entries:
-            if not entry.uid in user_to_compare:
-                user = {
-                    "username": f"{entry.uid}",
-                    "first_name": f"{entry.givenName}",
-                    "last_name": f"{entry.sn}",
-                    "email": f"{entry.mail}"
-                }
-                data.append(user)
+            # Filtrar usuarios que NO existen en la BD local
+            for entry in connection.entries:
+                if not entry.uid in user_to_compare:
+                    user = {
+                        "username": str(entry.uid) if entry.uid else '',
+                        "first_name": str(entry.givenName) if entry.givenName else '',
+                        "last_name": str(entry.sn) if entry.sn else '',
+                        "email": str(entry.mail) if entry.mail else ''
+                    }
+                    data.append(user)
 
-        response_data = {"message": "List of users LDAP", "users": data}
-        return JsonResponse(response_data, safe=False, status=status.HTTP_202_ACCEPTED)
+            response_data = {"message": "List of users LDAP", "users": data}
+            return JsonResponse(response_data, safe=False, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": f"Error de conexión LDAP: {str(e)}"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        finally:
+            if connection:
+                try:
+                    connection.unbind()
+                except Exception:
+                    pass

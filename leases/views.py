@@ -56,9 +56,14 @@ class Get_Rental(generics.ListCreateAPIView):
     operation_description="API para obtener la información de cada arriendo",
     manual_parameters=[rental],
     )
-    def get(sel, request):
+    def get(self, request):
         rental_id = request.GET.get('rental', None)
-        rental=Rental.objects.select_related('customer', 'customer__customer_type').get(pk=rental_id)
+        if rental_id is None:
+            return Response({"error": "Parámetro 'rental' requerido"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            rental=Rental.objects.select_related('customer', 'customer__customer_type').get(pk=rental_id)
+        except Rental.DoesNotExist:
+            return Response({"error": "El alquiler no existe"}, status=status.HTTP_404_NOT_FOUND)
         customer=rental.customer
         customer_contacts=Contact.objects.filter(customer_id=customer.id, is_active=True)
         contacts=[]
@@ -413,7 +418,7 @@ class Change_state(generics.ListAPIView):
             state_obj = State.objects.get(pk=state)
             self.save_state(rental_id,state_obj,reason)
             response_data = {
-                "message": f"cambio de estado a {state_obj.name} exitosamentasdade",
+                "message": f"cambio de estado a {state_obj.name} exitosamente",
                 "name_state": state_obj.name
             }
             return Response(response_data, status=status.HTTP_200_OK)

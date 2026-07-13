@@ -18,6 +18,10 @@ from rest_framework.permissions import IsAuthenticated
 from roles.permissions import HasModulePermission
 from roles.models import UserRole
 import math
+import re
+import logging
+
+logger = logging.getLogger('business')
 
 request_body_schema = openapi.Schema(
     type=openapi.TYPE_OBJECT,
@@ -77,21 +81,34 @@ class User_Ldap(APIView):
         ldap_user = settings.LDAP_USER
         ldap_password = settings.LDAP_PASSWORD
         server = Server(ldap_server, get_info=ALL)
-        connection = Connection(server, ldap_user, ldap_password, auto_bind=True)
-        search_base = settings.LDAP_BASE
-        search_filter = f"(uid={user})"
-        search_attributes = settings.ATTRIBUTES
-        connection.search(search_base, search_filter, SUBTREE, attributes=search_attributes)
-        for entry in connection.entries:
-            if (first_name == entry.givenName and last_name == entry.sn and username == entry.uid and email == entry.mail):
-                if User.objects.filter(username=username).exists():
-                    return Response({'error': 'El usuario ya existe'}, status=status.HTTP_400_BAD_REQUEST)
-                if User.objects.filter(email=email).exists():
-                    return Response({'error': 'El correo ya existe'}, status=status.HTTP_400_BAD_REQUEST)
-                user = User.objects.create_user(username=username, email=email, first_name=first_name, last_name=last_name)
-                return Response({"message":"Usuario registrado con exito", "user": user.id, "username": user.username, "email": user.email, "first_name": user.first_name, "last_name": user.last_name}, status=status.HTTP_201_CREATED)
-            else:
-                return Response({"status": "fail"}, status=status.HTTP_404_NOT_FOUND)
+        connection = None
+        try:
+            connection = Connection(server, ldap_user, ldap_password, auto_bind=True)
+            search_base = settings.LDAP_BASE
+            safe_user = re.escape(str(user)) if user else ''
+            search_filter = f"(uid={safe_user})"
+            search_attributes = settings.ATTRIBUTES
+            connection.search(search_base, search_filter, SUBTREE, attributes=search_attributes)
+            for entry in connection.entries:
+                if (first_name == entry.givenName and last_name == entry.sn and username == entry.uid and email == entry.mail):
+                    if User.objects.filter(username=username).exists():
+                        return Response({'error': 'El usuario ya existe'}, status=status.HTTP_400_BAD_REQUEST)
+                    if User.objects.filter(email=email).exists():
+                        return Response({'error': 'El correo ya existe'}, status=status.HTTP_400_BAD_REQUEST)
+                    user = User.objects.create_user(username=username, email=email, first_name=first_name, last_name=last_name)
+                    return Response({"message":"Usuario registrado con exito", "user": user.id, "username": user.username, "email": user.email, "first_name": user.first_name, "last_name": user.last_name}, status=status.HTTP_201_CREATED)
+                else:
+                    return Response({"status": "fail"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Usuario no encontrado en LDAP"}, status=status.HTTP_404_NOT_FOUND)
+        except LDAPException as e:
+            logger.error(f"LDAP_ERROR: {str(e)}")
+            return Response({"error": "Error de conexión con LDAP"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        finally:
+            if connection:
+                try:
+                    connection.unbind()
+                except Exception:
+                    pass
 class User_Delete(generics.GenericAPIView):
     permission_classes = [IsAuthenticated, HasModulePermission]
     rbac_module = 'users'
@@ -147,16 +164,27 @@ def get_user(request):
     ldap_user = settings.LDAP_USER
     ldap_password = settings.LDAP_PASSWORD
     server = Server(ldap_server, get_info=ALL)
-    connection = Connection(server, ldap_user, ldap_password, auto_bind=True)
-    search_base = settings.LDAP_BASE
-    search_filter = f"(uid={user})"
-    search_attributes = settings.ATTRIBUTES
-    connection.search(search_base, search_filter, SUBTREE, attributes=search_attributes)
-    data = []
-    for entry in connection.entries:
-        user = [{'first_name': entry.givenName, 'last_name': entry.sn, 'email': entry.mail, 'username': entry.uid }]
-        data.append(user)
-    return HttpResponse(data, status=200)
+    connection = None
+    try:
+        connection = Connection(server, ldap_user, ldap_password, auto_bind=True)
+        search_base = settings.LDAP_BASE
+        safe_user = re.escape(str(user)) if user else ''
+        search_filter = f"(uid={safe_user})"
+        search_attributes = settings.ATTRIBUTES
+        connection.search(search_base, search_filter, SUBTREE, attributes=search_attributes)
+        data = []
+        for entry in connection.entries:
+            user_data = {'first_name': str(entry.givenName) if entry.givenName else '', 'last_name': str(entry.sn) if entry.sn else '', 'email': str(entry.mail) if entry.mail else '', 'username': str(entry.uid) if entry.uid else ''}
+            data.append(user_data)
+        return Response(data, status=200)
+    except LDAPException as e:
+        return Response({"error": f"Error de conexión LDAP: {str(e)}"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+    finally:
+        if connection:
+            try:
+                connection.unbind()
+            except Exception:
+                pass
 
 class Assign_Api(generics.GenericAPIView):
     serializer_class = AssignSerializer
@@ -178,7 +206,7 @@ class Assign_Api(generics.GenericAPIView):
         )
         total_assigns = assigns.count()
         if search_param:
-            assigns = assigns.filter(user__icontains=search_param)
+            assigns = assigns.filter(user__username__icontains=search_param)
         if limit_num == -1:
             paginated = assigns
         else:
@@ -214,7 +242,7 @@ class Assign_Detail(generics.GenericAPIView):
     def get_assign(self, pk, *args, **kwargs):
         try:
             return Assign.objects.get(pk=pk)
-        except:
+        except Assign.DoesNotExist:
             return None
 
     def get(self, request, pk, *args, **kwargs):

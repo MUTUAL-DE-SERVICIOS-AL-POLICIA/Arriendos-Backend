@@ -13,7 +13,6 @@ from .function import Make_Damage_Warranty_Form, Make_Warranty_Form, Make_Return
 from roles.permissions import HasModulePermission
 from rest_framework.permissions import IsAuthenticated
 from threadlocals.threadlocals import set_thread_variable
-from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404
 from Arriendos_Backend import util
 from customers import views
@@ -32,7 +31,7 @@ request_body_schema = openapi.Schema(
     }
 )
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
-class Register_payment(generics.ListAPIView):
+class Register_payment(generics.GenericAPIView):
     serializer_class = Payment_Serializer
     permission_classes = [IsAuthenticated, HasModulePermission]
     rbac_module = 'financials'
@@ -45,7 +44,10 @@ class Register_payment(generics.ListAPIView):
         rental_id = request.query_params.get('rental')
         if not rental_id:
             return Response({"error": "Parámetro 'rental' faltante en la consulta."}, status=status.HTTP_400_BAD_REQUEST)
-        return Response(self.list_payment(rental_id))
+        try:
+            return Response(self.list_payment(rental_id))
+        except Rental.DoesNotExist:
+            return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
     def list_payment(self,rental_id):
         total_mount=Rental.objects.get(pk=rental_id).initial_total
         payment = Payment.objects.filter(rental_id=rental_id).order_by("id")
@@ -226,7 +228,7 @@ class Edit_payment(generics.RetrieveUpdateAPIView):
                     "message":"El pago se ha editado exitosamente"
                     }
             return Response(response_data)
-class Register_total_payment(generics.ListAPIView):
+class Register_total_payment(generics.GenericAPIView):
     serializer_class = Payment_Serializer
     permission_classes = [IsAuthenticated, HasModulePermission]
     rbac_module = 'financials'
@@ -295,7 +297,7 @@ request_body_schema = openapi.Schema(
         'detail': openapi.Schema(type=openapi.TYPE_STRING)
     }
 )
-class Register_warranty(generics.ListAPIView):
+class Register_warranty(generics.GenericAPIView):
     serializer_class = Warranty_Movement_Serializer
     permission_classes = [IsAuthenticated, HasModulePermission]
     rbac_module = 'financials'
@@ -359,12 +361,16 @@ class Register_warranty(generics.ListAPIView):
         rental_id = request.query_params.get('rental')
         if not rental_id:
             return Response({"error": "Parámetro 'rental' faltante en la consulta."}, status=status.HTTP_400_BAD_REQUEST)
-        rental=Rental.objects.get(pk=rental_id)
+        try:
+            rental=Rental.objects.get(pk=rental_id)
+        except Rental.DoesNotExist:
+            return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
         plan=rental.plan
+        warranty_mount=0
         if plan is None:
-            warranty_mount=Selected_Product.objects.filter(rental=rental).first().product.room.warranty
-        else:
-            warranty_mount=0
+            sp = Selected_Product.objects.filter(rental=rental).first()
+            if sp is not None and sp.product and sp.product.room:
+                warranty_mount=sp.product.room.warranty
         response_data={
             "state":"success",
             "warranty_movements":self.List_Warranties(rental_id),
@@ -407,8 +413,11 @@ class Register_warranty(generics.ListAPIView):
             if (exist_warranty):
                 last_warranty = Warranty_Movement.objects.filter(rental_id=rental_id).latest('id')
                 if last_warranty.discount >0:
-                    event_damage = Event_Damage.objects.filter(warranty_movement=last_warranty).latest('id')
-                    event_damage.delete()
+                    try:
+                        event_damage = Event_Damage.objects.filter(warranty_movement=last_warranty).latest('id')
+                        event_damage.delete()
+                    except Event_Damage.DoesNotExist:
+                        pass
                 last_warranty.delete()
                 return Response({'mensaje': 'Registro eliminado exitosamente'})
             else:
@@ -417,7 +426,7 @@ class Register_warranty(generics.ListAPIView):
             return Response({"error": "El Arriendo no existe."}, status=status.HTTP_400_BAD_REQUEST)
 
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
-class Print_Warranties(generics.ListAPIView):
+class Print_Warranties(generics.GenericAPIView):
     permission_classes = [IsAuthenticated, HasModulePermission]
     rbac_module = 'documents'
     def get(self,request,rental_id):
@@ -438,7 +447,7 @@ class Print_Warranties(generics.ListAPIView):
             'selected_products':selected_products_data
         }
         return util.generate_pdf('warranties.html',params)
-class Edit_warranty(generics.UpdateAPIView):
+class Edit_warranty(generics.RetrieveUpdateAPIView):
     queryset = Warranty_Movement.objects.all()
     serializer_class = Warranty_Movement_Serializer
     permission_classes = [IsAuthenticated, HasModulePermission]
@@ -507,7 +516,7 @@ request_body_schema = openapi.Schema(
         'product': openapi.Schema(type=openapi.TYPE_INTEGER)
     }
 )
-class Discount_warranty(generics.ListAPIView):
+class Discount_warranty(generics.GenericAPIView):
     serializer_class = Warranty_Movement_Serializer
     permission_classes = [IsAuthenticated, HasModulePermission]
     rbac_module = 'financials'
@@ -521,19 +530,7 @@ class Discount_warranty(generics.ListAPIView):
         validated_fields = ["rental","product", "detail","discount"]
         error_message = required_fields(request, validated_fields)
         if error_message:
-            try:
-                rental_id = request.data["rental"]
-                product = request.data["product"]
-                rental_state = Rental.objects.get(pk=rental_id)
-                rental_state = rental_state.state_id
-                if rental_state == 4:
-                    return Response({"error": "Ya se ha retornado la garantía"}, status=status.HTTP_404_NOT_FOUND)
-                if rental_id is None and product is None:
-                    return Response(error_message, status=400)
-                return Make_Damage_Warranty_Form(request, rental_id, product)
-            except Exception as e:
-                logger.warning(f"DISCOUNT_WARRANTY_ERROR: rental={request.data.get('rental')} error={str(e)}")
-                return Response(error_message, status=400)
+            return Response(error_message, status=400)
         rental_id = request.data["rental"]
         product = request.data["product"]
         detail = request.data["detail"]
@@ -542,10 +539,11 @@ class Discount_warranty(generics.ListAPIView):
             return Response({"error":"el monto ingresado es 0 no se registra el descuento"}, status=status.HTTP_400_BAD_REQUEST)
         try:
             rental = Rental.objects.get(pk=rental_id)
+            rental_state = rental.state_id
+            if rental_state == 4:
+                return Response({"error": "Ya se ha retornado la garantía"}, status=status.HTTP_400_BAD_REQUEST)
             try:
                 selected_product = Selected_Product.objects.get(rental_id = rental_id, pk = product)
-                if selected_product is None:
-                    return Response({'error': 'No se ha podido obtener el producto'}, status=status.HTTP_400_BAD_REQUEST)
             except Selected_Product.DoesNotExist:
                 return Response({'error': 'No se encuentra el producto relacionado al arriendo'}, status=status.HTTP_400_BAD_REQUEST)
             warranty= Warranty_Movement.objects.filter(rental_id=rental.id)
@@ -566,11 +564,11 @@ class Discount_warranty(generics.ListAPIView):
                 serializer = self.serializer_class(data=warranty_data)
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
-                last_warranty= warranty.latest('id').id
+                new_warranty = Warranty_Movement.objects.latest('id')
                 event_damaged_data= {
                     "mount": discount,
                     "selected_product": product,
-                    "warranty_movement":last_warranty
+                    "warranty_movement":new_warranty.id
                 }
                 event_damaged_serialized = Event_Damage_Serializer(data=event_damaged_data)
                 event_damaged_serialized.is_valid(raise_exception=True)
@@ -616,8 +614,8 @@ class Warranty_Returned(generics.GenericAPIView):
                     return_date_str = request.data["return_date"]
                     return_date = datetime.strptime(return_date_str, '%Y-%m-%dT%H:%M:%S.%fZ')
                     return_date = pytz.timezone('America/La_Paz').localize(return_date)
-                except ValueError:
-                    return HttpResponseBadRequest("Error de formato de la fecha")
+                except (ValueError, KeyError):
+                    return Response({"error": "Formato de fecha inválido. Use YYYY-MM-DDTHH:MM:SS.sssZ"}, status=status.HTTP_400_BAD_REQUEST)
 
                 
                 rental_date = get_object_or_404(Rental, pk=rental_id)
@@ -658,10 +656,11 @@ class Return_Warranty_Form(generics.GenericAPIView):
         rental_param = request.GET.get('rental')
         if rental_param is None:
             return Response({"error": "No se ha enviado rental"}, status=status.HTTP_400_BAD_REQUEST)
-        rental = int(rental_param)
+        try:
+            rental = int(rental_param)
+        except (ValueError, TypeError):
+            return Response({"error": "El parámetro 'rental' debe ser un número"}, status=status.HTTP_400_BAD_REQUEST)
         warranty= Warranty_Movement.objects.filter(rental_id=rental)
-        if rental is None:
-            return Response({"error": "No se ha enviado rental"}, status=status.HTTP_404_NOT_FOUND)
         if Warranty_Movement.objects.filter(rental_id=rental).exists():
             warranty_balance=warranty.latest('id').balance
         else:

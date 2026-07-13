@@ -291,14 +291,22 @@ class Customer_Detail(generics.GenericAPIView):
     )
     def patch(self, request, pk, **kwargs):
         set_thread_variable('thread_user', request.user)
-        customer = Customer.objects.get(pk=pk)
-        customer_type = Customer_type.objects.get(pk=customer.customer_type_id)
+        try:
+            customer = Customer.objects.get(pk=pk)
+        except Customer.DoesNotExist:
+            return Response({"error": "Cliente no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            customer_type = Customer_type.objects.get(pk=customer.customer_type_id)
+        except Customer_type.DoesNotExist:
+            return Response({"error": "Tipo de cliente no válido"}, status=status.HTTP_404_NOT_FOUND)
         if customer_type.is_institution == True:
-            institutions_data = request.data["institution"]
+            institutions_data = request.data.get("institution")
+            if institutions_data is None:
+                return Response({"error": "Datos de institución requeridos"}, status=status.HTTP_400_BAD_REQUEST)
             institution_name = institutions_data.get("name")
             institution_nit = institutions_data.get("nit")
-            contacts = institutions_data.get("contacts")
-            institution = Customer.objects.get(pk=pk)
+            contacts = institutions_data.get("contacts", [])
+            institution = customer
             institution.institution_name = institution_name
             institution.nit = institution_nit
             institution.save()
@@ -317,7 +325,10 @@ class Customer_Detail(generics.GenericAPIView):
                 if contact_id is None:
                     Contact.objects.create(degree=degree, name=name, ci_nit=ci_nit, phone=phone, customer_id=institution.id, nup=nup, is_customer=False)
                 else:
-                    contact_data = Contact.objects.get(pk=contact_id)
+                    try:
+                        contact_data = Contact.objects.get(pk=contact_id)
+                    except Contact.DoesNotExist:
+                        return Response({"error": f"Contacto con id {contact_id} no encontrado"}, status=status.HTTP_404_NOT_FOUND)
                     contact_data.name = name
                     contact_data.ci_nit = ci_nit
                     contact_data.phone = phone
@@ -327,13 +338,18 @@ class Customer_Detail(generics.GenericAPIView):
                     contact_data.save()
             return Response({"message": "Institución actualizada"}, status=status.HTTP_200_OK)
         else:
-            customers = request.data["customer"]
+            customers = request.data.get("customer")
+            if customers is None:
+                return Response({"error": "Datos del cliente requeridos"}, status=status.HTTP_400_BAD_REQUEST)
             degree = customers.get("degree", None)
             name = customers.get("name")
             phone = customers.get("phone", None)
             ci_nit = customers.get("ci_nit")
             nup = customers.get("nup", None)
-            customer_data = Contact.objects.get(customer_id =customer.id)
+            try:
+                customer_data = Contact.objects.get(customer_id=customer.id)
+            except Contact.DoesNotExist:
+                return Response({"error": "Contacto del cliente no encontrado"}, status=status.HTTP_404_NOT_FOUND)
             customer_data.name = name
             customer_data.ci_nit = ci_nit
             customer_data.phone = phone
@@ -467,10 +483,13 @@ class identify_affiliate(generics.GenericAPIView):
 def customer_data(rental_id):
     rental= Rental.objects.get(pk=rental_id)
     customer=rental.customer
-    contact=Contact.objects.get(pk=customer.id)
-    name = contact.name
-    nit = contact.ci_nit
-    nup=contact.nup
+    try:
+        contact=Contact.objects.get(customer_id=customer.id)
+    except Contact.DoesNotExist:
+        contact=None
+    name = contact.name if contact else ""
+    nit = contact.ci_nit if contact else ""
+    nup=contact.nup if contact else ""
     institution_name=""
     institution_nit=""
     if customer.institution_name is not None:
