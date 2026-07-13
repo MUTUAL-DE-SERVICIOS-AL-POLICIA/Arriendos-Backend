@@ -96,3 +96,61 @@ class TestCustomerAPI:
         customer = Customer.objects.create(institution_name='ToDelete', nit='2222222', customer_type=self.institution_ct)
         response = self.client.delete(f'/api/customers/{customer.id}')
         assert response.status_code == 200
+
+    def test_customer_type_create(self):
+        data = {'name': 'Nuevo Tipo', 'is_institution': False, 'is_police': False}
+        response = self.client.post('/api/customers/type/', data, format='json')
+        assert response.status_code == 201
+
+    def test_customer_type_detail(self):
+        ct = Customer_type.objects.create(name='Test Type')
+        response = self.client.get(f'/api/customers/type/{ct.id}')
+        assert response.status_code == 200
+
+    def test_customer_type_detail_not_found(self):
+        response = self.client.get('/api/customers/type/9999')
+        assert response.status_code == 404
+
+    def test_customer_type_update(self):
+        ct = Customer_type.objects.create(name='Old Name')
+        response = self.client.patch(f'/api/customers/type/{ct.id}', {'name': 'New Name'}, format='json')
+        assert response.status_code == 200
+        ct.refresh_from_db()
+        assert ct.name == 'New Name'
+
+    def test_customer_type_update_not_found(self):
+        response = self.client.patch('/api/customers/type/9999', {'name': 'X'}, format='json')
+        assert response.status_code == 404
+
+    def test_customer_type_list_search(self):
+        Customer_type.objects.create(name='Policial Activo')
+        Customer_type.objects.create(name='Publico')
+        response = self.client.get('/api/customers/type/?search=Policial')
+        assert response.status_code == 200
+
+    def test_customer_type_list_limit_all(self):
+        Customer_type.objects.create(name='Type1')
+        response = self.client.get('/api/customers/type/?limit=-1')
+        assert response.status_code == 200
+
+    def test_customer_type_list_limit_all(self):
+        Customer_type.objects.create(name='Type1')
+        response = self.client.get('/api/customers/type/?limit=-1')
+        assert response.status_code == 200
+
+    def test_customer_list_limit_all(self):
+        Customer.objects.create(institution_name='C1', nit='111', customer_type=self.regular_ct)
+        response = self.client.get('/api/customers/?limit=-1')
+        assert response.status_code == 200
+
+    def test_customer_create_non_institution(self):
+        data = {
+            'customer_type': self.regular_ct.id,
+            'customer': {
+                'name': 'Juan Perez',
+                'ci_nit': '12345678',
+                'phone': '70000001'
+            }
+        }
+        response = self.client.post('/api/customers/', data, format='json')
+        assert response.status_code == 201

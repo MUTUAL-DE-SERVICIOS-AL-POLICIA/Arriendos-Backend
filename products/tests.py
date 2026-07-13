@@ -98,3 +98,18 @@ class TestProductAPI:
     def test_product_filter_options(self):
         response = self.client.get('/api/product/product_filter_options/')
         assert response.status_code == 200
+
+    def test_price_history(self):
+        product = Product.objects.create(day=['LUNES'], rate=self.rate, room=self.room, hour_range=self.hr)
+        Price.objects.create(mount=500, product=product, is_active=True)
+        response = self.client.get(f'/api/product/price_history/?product={product.id}')
+        assert response.status_code == 200
+
+    def test_product_filter(self):
+        Product.objects.create(day=['LUNES'], rate=self.rate, room=self.room, hour_range=self.hr)
+        response = self.client.get('/api/product/product_filter/')
+        assert response.status_code == 200
+
+    def test_additional_hour_list(self):
+        response = self.client.get('/api/product/additional_hour/')
+        assert response.status_code == 200
