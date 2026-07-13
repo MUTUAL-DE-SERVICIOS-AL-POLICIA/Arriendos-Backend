@@ -133,11 +133,6 @@ class TestCustomerAPI:
         response = self.client.get('/api/customers/type/?limit=-1')
         assert response.status_code == 200
 
-    def test_customer_type_list_limit_all(self):
-        Customer_type.objects.create(name='Type1')
-        response = self.client.get('/api/customers/type/?limit=-1')
-        assert response.status_code == 200
-
     def test_customer_list_limit_all(self):
         Customer.objects.create(institution_name='C1', nit='111', customer_type=self.regular_ct)
         response = self.client.get('/api/customers/?limit=-1')

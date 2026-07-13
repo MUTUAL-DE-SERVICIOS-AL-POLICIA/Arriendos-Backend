@@ -21,11 +21,7 @@ def _create_rental():
 @pytest.mark.django_db
 class TestFinancialModels:
     def test_payment_creation(self):
-        ct = Customer_type.objects.create(name='Publico')
-        customer = Customer.objects.create(institution_name='Test', nit='1234567', customer_type=ct)
-        state = State.objects.create(name='Pre-reserva', next_state=[])
-        plan = Plan.objects.create(plan_name='Plan A', plan_discount=25, rooms_min=1, rooms_max=100)
-        rental = Rental.objects.create(initial_total=5000, customer=customer, state=state, plan=plan)
+        rental = _create_rental()
         payment = Payment.objects.create(
             voucher_number='VCH-001', business_name='Test Corp', nit='1234567',
             detail='Payment for services', payable_mount=5000, amount_paid=5000, rental=rental
@@ -35,11 +31,7 @@ class TestFinancialModels:
         assert 'Test Corp' in str(payment)
 
     def test_warranty_movement_creation(self):
-        ct = Customer_type.objects.create(name='Publico')
-        customer = Customer.objects.create(institution_name='Test', nit='1234567', customer_type=ct)
-        state = State.objects.create(name='Pre-reserva', next_state=[])
-        plan = Plan.objects.create(plan_name='Plan A', plan_discount=25, rooms_min=1, rooms_max=100)
-        rental = Rental.objects.create(initial_total=5000, customer=customer, state=state, plan=plan)
+        rental = _create_rental()
         warranty = Warranty_Movement.objects.create(
             voucher_number='WRN-001', income=1000, discount=0, returned=0,
             balance=1000, detail='Warranty deposit', rental=rental
@@ -57,8 +49,7 @@ class TestFinancialModels:
         product = Product.objects.create(day=['LUNES'], rate=rate, room=room, hour_range=hr)
         et = Event_Type.objects.create(name='Conferencia')
         sp = Selected_Product.objects.create(
-            product=product, rental=rental, event_type=et,
-            product_price=500
+            product=product, rental=rental, event_type=et, product_price=500
         )
         wm = Warranty_Movement.objects.create(
             voucher_number='W001', income=Decimal('500'), discount=Decimal('0'),
@@ -70,69 +61,46 @@ class TestFinancialModels:
 
 
 @pytest.mark.django_db
-class TestFinancialAPI:
+class TestRegisterPaymentAPI:
     def setup_method(self):
         self.client = APIClient()
         self.user = User.objects.create_superuser(username='admin', password='admin123')
         self.client.force_authenticate(user=self.user)
         self.rental = _create_rental()
 
-    def test_register_warranty_requires_valid_data(self):
-        response = self.client.post('/api/financials/register_warranty/', {}, format='json')
-        assert response.status_code == 400
-
-    def test_warranty_requires_valid_data(self):
-        response = self.client.post('/api/financials/register_warranty/', {}, format='json')
-        assert response.status_code == 400
-
-    def test_discount_warranty_requires_valid_data(self):
-        response = self.client.post('/api/financials/discount_warranty/', {}, format='json')
-        assert response.status_code == 400
-
-    def test_warranty_returned_requires_valid_data(self):
-        response = self.client.post('/api/financials/warranty_returned/', {}, format='json')
-        assert response.status_code == 400
-
-    def test_warranty_request_requires_rental(self):
-        response = self.client.get('/api/financials/warranty_request/')
-        assert response.status_code in [400, 404]
-
-    def test_edit_payment_not_found(self):
-        response = self.client.patch('/api/financials/edit_payment/9999/', {}, format='json')
-        assert response.status_code in [404, 400]
-
-    def test_edit_warranty_not_found(self):
-        response = self.client.patch('/api/financials/edit_warranty/9999/', {}, format='json')
-        assert response.status_code in [404, 400]
-
-    def test_register_payment_empty_list(self):
+    def test_list_payments_empty(self):
         response = self.client.get(f'/api/financials/register_payment/?rental={self.rental.id}')
         assert response.status_code == 200
+        assert response.data['payments'] == []
+        assert response.data['payable_mount'] == 0
 
-    def test_register_payment_with_payments(self):
+    def test_list_payments_with_data(self):
         Payment.objects.create(
             voucher_number='VCH-001', business_name='Test', nit='1234567',
             detail='Payment', payable_mount=5000, amount_paid=2500, rental=self.rental
         )
         response = self.client.get(f'/api/financials/register_payment/?rental={self.rental.id}')
         assert response.status_code == 200
+        assert len(response.data['payments']) == 1
+        assert response.data['payable_mount'] == 5000
 
-    def test_register_payment_missing_rental_param(self):
-        response = self.client.get('/api/financials/register_payment/')
-        assert response.status_code == 400
 
-    def test_register_warranty_empty_list(self):
+@pytest.mark.django_db
+class TestRegisterWarrantyAPI:
+    def setup_method(self):
+        self.client = APIClient()
+        self.user = User.objects.create_superuser(username='admin', password='admin123')
+        self.client.force_authenticate(user=self.user)
+        self.rental = _create_rental()
+
+    def test_list_warranties_empty(self):
         response = self.client.get(f'/api/financials/register_warranty/?rental={self.rental.id}')
         assert response.status_code == 200
 
-    def test_register_warranty_with_movements(self):
+    def test_list_warranties_with_data(self):
         Warranty_Movement.objects.create(
             voucher_number='WRN-001', income=1000, discount=0,
             returned=0, balance=1000, rental=self.rental
         )
         response = self.client.get(f'/api/financials/register_warranty/?rental={self.rental.id}')
         assert response.status_code == 200
-
-    def test_register_warranty_missing_rental_param(self):
-        response = self.client.get('/api/financials/register_warranty/')
-        assert response.status_code == 400

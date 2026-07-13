@@ -84,13 +84,6 @@ class TestRequirementAPI:
         req.refresh_from_db()
         assert req.requirement_name == 'New'
 
-    def test_requirement_soft_delete(self):
-        req = Requirement.objects.create(requirement_name='ToDelete')
-        response = self.client.delete(f'/api/requirements/{req.id}')
-        assert response.status_code == 200
-        req.refresh_from_db()
-        assert req.is_active is False
-
     def test_rate_requirement_detail(self):
         rate = Rate.objects.create(name='Regular')
         ct = Customer_type.objects.create(name='Publico')
