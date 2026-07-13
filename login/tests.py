@@ -14,6 +14,7 @@ class TestLoginAPI:
         response = self.client.post('/api/login/auth/', data, format='json')
         assert response.status_code == 200
         assert 'access' in response.data
+        assert 'refresh' in response.data
 
     def test_local_login_wrong_password(self):
         User.objects.create_user(username='testuser', password='testpass123')
@@ -29,3 +30,10 @@ class TestLoginAPI:
     def test_login_empty_body(self):
         response = self.client.post('/api/login/auth/', {}, format='json')
         assert response.status_code in [400, 401]
+
+    def test_superuser_login(self):
+        User.objects.create_superuser(username='admin', password='admin123', email='admin@test.com')
+        data = {'username': 'admin', 'password': 'admin123'}
+        response = self.client.post('/api/login/auth/', data, format='json')
+        assert response.status_code == 200
+        assert 'access' in response.data

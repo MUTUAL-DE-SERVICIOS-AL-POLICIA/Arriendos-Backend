@@ -476,7 +476,7 @@ class Change_state(generics.ListAPIView):
             }
             return Response(response_data, status=status.HTTP_200_OK)
         return Response({"error": "No se puede cambiar de estado existen garantías o pagos registrados"}, status=status.HTTP_400_BAD_REQUEST)
-    def default_case(self, rental_id, state):
+    def default_case(self, rental_id, state, reason=None):
         return Response({"error": "No existe el estado"}, status=status.HTTP_400_BAD_REQUEST)
     def validated_state(self,rental_id,state):
         list_states= Rental.objects.get(pk=rental_id).state.next_state

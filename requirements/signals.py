@@ -1,131 +1,107 @@
 import logging
 from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
+from records.utils import get_current_user, create_record
 from .models import Requirement, Requirement_Delivered, RateRequirement
-from users.models import Record
-from threadlocals.threadlocals import get_thread_variable
 
 business_logger = logging.getLogger('business')
 
+
+def _log_and_record(user, model, action, detail, instance_id):
+    if action == 'create':
+        business_logger.info(f"[{model}] CREATE: {detail} (user={user}, id={instance_id})")
+    elif action == 'update':
+        business_logger.info(f"[{model}] UPDATE: {detail} (user={user}, id={instance_id})")
+    elif action == 'delete':
+        business_logger.info(f"[{model}] DELETE: {detail} (user={user}, id={instance_id})")
+    create_record(user, action, model, detail, instance_id)
+
+
 @receiver(post_save, sender=Requirement)
 def log_create_requirement(sender, instance, created, **kwargs):
-    model="Requirement"
-    user = get_thread_variable('thread_user')
+    user = get_current_user()
     if created:
-        detail=f"El usuario: {user} creó el registro {instance}"
-        action="create"
-        try:
-            Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
-        except Exception as e:
-            business_logger.error(f"[REQUIREMENT] Audit record failed: {e}")
-        business_logger.info(f"[REQUIREMENT] CREATE: {instance} creado (user={user}, id={instance.id})")
+        _log_and_record(user, 'Requirement', 'create', f'El usuario: {user} creó el registro {instance}', instance.id)
+
 
 @receiver(pre_save, sender=Requirement)
 def log_edit_requirement(sender, instance, **kwargs):
-    action="update"
-    model="Requirement"
     if instance.pk is not None:
-        old_instance = Requirement.objects.get(pk=instance.pk)
+        user = get_current_user()
+        try:
+            old_instance = Requirement.objects.get(pk=instance.pk)
+        except Requirement.DoesNotExist:
+            return
         for field in Requirement._meta.fields:
             old_value = getattr(old_instance, field.name)
             new_value = getattr(instance, field.name)
-            user = get_thread_variable('thread_user')
             if old_value != new_value:
-                try:
-                    Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
-                except Exception as e:
-                    business_logger.error(f"[REQUIREMENT] Audit record failed: {e}")
-                business_logger.info(f"[REQUIREMENT] UPDATE: Campo '{field.name}' de '{old_value}' a '{new_value}' en {instance} (user={user})")
+                _log_and_record(user, 'Requirement', 'update',
+                    f'El usuario: {user} realizó un cambio en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
+                    instance.id)
+
 
 @receiver(post_delete, sender=Requirement)
 def log_delete_requirement(sender, instance, **kwargs):
-    model="Requirement"
-    user = get_thread_variable('thread_user')
-    action="delete"
-    try:
-        Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
-    except Exception as e:
-        business_logger.error(f"[REQUIREMENT] Audit record failed: {e}")
-    business_logger.info(f"[REQUIREMENT] DELETE: {instance} eliminado (user={user}, id={instance.id})")
+    user = get_current_user()
+    _log_and_record(user, 'Requirement', 'delete', f'El usuario: {user} eliminó el registro {instance}', instance.id)
+
 
 @receiver(post_save, sender=Requirement_Delivered)
 def log_create_requirement_delivered(sender, instance, created, **kwargs):
-    model="Requirement_Delivered"
-    user = get_thread_variable('thread_user')
+    user = get_current_user()
     if created:
-        detail=f"El usuario: {user} creó el registro {instance}"
-        action="create"
-        try:
-            Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
-        except Exception as e:
-            business_logger.error(f"[REQUIREMENT_DELIVERED] Audit record failed: {e}")
-        business_logger.info(f"[REQUIREMENT_DELIVERED] CREATE: {instance} creado (user={user}, id={instance.id})")
+        _log_and_record(user, 'Requirement_Delivered', 'create', f'El usuario: {user} creó el registro {instance}', instance.id)
+
 
 @receiver(pre_save, sender=Requirement_Delivered)
 def log_edit_requirement_delivered(sender, instance, **kwargs):
-    action="update"
-    model="Requirement_Delivered"
     if instance.pk is not None:
-        old_instance = Requirement_Delivered.objects.get(pk=instance.pk)
+        user = get_current_user()
+        try:
+            old_instance = Requirement_Delivered.objects.get(pk=instance.pk)
+        except Requirement_Delivered.DoesNotExist:
+            return
         for field in Requirement_Delivered._meta.fields:
             old_value = getattr(old_instance, field.name)
             new_value = getattr(instance, field.name)
-            user = get_thread_variable('thread_user')
             if old_value != new_value:
-                try:
-                    Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
-                except Exception as e:
-                    business_logger.error(f"[REQUIREMENT_DELIVERED] Audit record failed: {e}")
-                business_logger.info(f"[REQUIREMENT_DELIVERED] UPDATE: Campo '{field.name}' de '{old_value}' a '{new_value}' en {instance} (user={user})")
+                _log_and_record(user, 'Requirement_Delivered', 'update',
+                    f'El usuario: {user} realizó un cambio en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
+                    instance.id)
+
 
 @receiver(post_delete, sender=Requirement_Delivered)
 def log_delete_requirement_delivered(sender, instance, **kwargs):
-    model="Requirement_Delivered"
-    user = get_thread_variable('thread_user')
-    action="delete"
-    try:
-        Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
-    except Exception as e:
-        business_logger.error(f"[REQUIREMENT_DELIVERED] Audit record failed: {e}")
-    business_logger.info(f"[REQUIREMENT_DELIVERED] DELETE: {instance} eliminado (user={user}, id={instance.id})")
+    user = get_current_user()
+    _log_and_record(user, 'Requirement_Delivered', 'delete', f'El usuario: {user} eliminó el registro {instance}', instance.id)
+
 
 @receiver(post_save, sender=RateRequirement)
 def log_create_rate_requirement(sender, instance, created, **kwargs):
-    model="RateRequirement"
-    user = get_thread_variable('thread_user')
+    user = get_current_user()
     if created:
-        detail=f"El usuario: {user} creó el registro {instance}"
-        action="create"
-        try:
-            Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
-        except Exception as e:
-            business_logger.error(f"[RATE_REQUIREMENT] Audit record failed: {e}")
-        business_logger.info(f"[RATE_REQUIREMENT] CREATE: {instance} creado (user={user}, id={instance.id})")
+        _log_and_record(user, 'RateRequirement', 'create', f'El usuario: {user} creó el registro {instance}', instance.id)
+
 
 @receiver(pre_save, sender=RateRequirement)
 def log_edit_rate_requirement(sender, instance, **kwargs):
-    action="update"
-    model="RateRequirement"
     if instance.pk is not None:
-        old_instance = RateRequirement.objects.get(pk=instance.pk)
+        user = get_current_user()
+        try:
+            old_instance = RateRequirement.objects.get(pk=instance.pk)
+        except RateRequirement.DoesNotExist:
+            return
         for field in RateRequirement._meta.fields:
             old_value = getattr(old_instance, field.name)
             new_value = getattr(instance, field.name)
-            user = get_thread_variable('thread_user')
             if old_value != new_value:
-                try:
-                    Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
-                except Exception as e:
-                    business_logger.error(f"[RATE_REQUIREMENT] Audit record failed: {e}")
-                business_logger.info(f"[RATE_REQUIREMENT] UPDATE: Campo '{field.name}' de '{old_value}' a '{new_value}' en {instance} (user={user})")
+                _log_and_record(user, 'RateRequirement', 'update',
+                    f'El usuario: {user} realizó un cambio en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
+                    instance.id)
+
 
 @receiver(post_delete, sender=RateRequirement)
 def log_delete_rate_requirement(sender, instance, **kwargs):
-    model="RateRequirement"
-    user = get_thread_variable('thread_user')
-    action="delete"
-    try:
-        Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
-    except Exception as e:
-        business_logger.error(f"[RATE_REQUIREMENT] Audit record failed: {e}")
-    business_logger.info(f"[RATE_REQUIREMENT] DELETE: {instance} eliminado (user={user}, id={instance.id})")
+    user = get_current_user()
+    _log_and_record(user, 'RateRequirement', 'delete', f'El usuario: {user} eliminó el registro {instance}', instance.id)

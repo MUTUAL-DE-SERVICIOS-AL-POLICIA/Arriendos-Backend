@@ -10,10 +10,12 @@ class TestProductModels:
     def test_rate_creation(self):
         rate = Rate.objects.create(name='Regular')
         assert rate.name == 'Regular'
+        assert str(rate) == 'Regular'
 
     def test_hour_range_creation(self):
         hr = HourRange.objects.create(time=4)
         assert hr.time == 4
+        assert str(hr) == '4h'
 
     def test_product_creation(self):
         prop = Property.objects.create(name='Hotel', address='Main St', department='LP')
@@ -28,6 +30,10 @@ class TestProductModels:
         )
         assert product.day == ['LUNES', 'MARTES']
         assert product.is_deleted is False
+        s = str(product)
+        assert 'Room1' in s
+        assert 'Regular' in s
+        assert '4h' in s
 
     def test_price_creation(self):
         prop = Property.objects.create(name='Hotel', address='Main St', department='LP')
@@ -38,6 +44,10 @@ class TestProductModels:
         price = Price.objects.create(mount=500, product=product, is_active=True)
         assert price.mount == 500
         assert price.is_active is True
+        s = str(price)
+        assert 'Room1' in s
+        assert '500' in s
+        assert 'vigente' in s
 
     def test_product_soft_delete(self):
         prop = Property.objects.create(name='Hotel', address='Main St', department='LP')

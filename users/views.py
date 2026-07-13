@@ -85,9 +85,9 @@ class User_Ldap(APIView):
         for entry in connection.entries:
             if (first_name == entry.givenName and last_name == entry.sn and username == entry.uid and email == entry.mail):
                 if User.objects.filter(username=username).exists():
-                    return Response({'error': 'El usuario ya existe'}, status=status.HTTP_400_BAD_REQUEST_REQUEST)
+                    return Response({'error': 'El usuario ya existe'}, status=status.HTTP_400_BAD_REQUEST)
                 if User.objects.filter(email=email).exists():
-                    return Response({'error': 'El correo ya existe'}, status=status.HTTP_400_BAD_REQUEST_REQUEST)
+                    return Response({'error': 'El correo ya existe'}, status=status.HTTP_400_BAD_REQUEST)
                 user = User.objects.create_user(username=username, email=email, first_name=first_name, last_name=last_name)
                 return Response({"message":"Usuario registrado con exito", "user": user.id, "username": user.username, "email": user.email, "first_name": user.first_name, "last_name": user.last_name}, status=status.HTTP_201_CREATED)
             else:
@@ -109,14 +109,14 @@ class User_Delete(generics.GenericAPIView):
             return Response({
                 "status": "fail", 
                 "message": "No se puede desactivar al usuario administrador del sistema"
-            }, status=status.HTTP_400_BAD_REQUEST_REQUEST)
+            }, status=status.HTTP_400_BAD_REQUEST)
         
         # No permitir que un usuario se desactive a si mismo
         if user.pk == request.user.pk:
             return Response({
                 "status": "fail", 
                 "message": "No puedes desactivar tu propia cuenta"
-            }, status=status.HTTP_400_BAD_REQUEST_REQUEST)
+            }, status=status.HTTP_400_BAD_REQUEST)
         
         if user.is_active == True:
             user.is_active= False

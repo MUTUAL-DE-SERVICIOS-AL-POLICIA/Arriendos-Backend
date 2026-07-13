@@ -26,6 +26,7 @@ class TestFinancialModels:
         )
         assert payment.voucher_number == 'VCH-001'
         assert 'VCH-001' in str(payment)
+        assert 'Test Corp' in str(payment)
 
     def test_warranty_movement_creation(self):
         ct = Customer_type.objects.create(name='Público')
@@ -44,3 +45,4 @@ class TestFinancialModels:
         )
         assert warranty.voucher_number == 'WRN-001'
         assert 'WRN-001' in str(warranty)
+        assert '1000' in str(warranty)

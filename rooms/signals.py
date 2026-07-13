@@ -1,131 +1,107 @@
 import logging
 from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
-from users.models import Record
-from threadlocals.threadlocals import get_thread_variable
-from .models import *
+from records.utils import get_current_user, create_record
+from .models import Property, Room, Sub_Room
 
 business_logger = logging.getLogger('business')
 
+
+def _log_and_record(user, model, action, detail, instance_id):
+    if action == 'create':
+        business_logger.info(f"[{model}] CREATE: {detail} (user={user}, id={instance_id})")
+    elif action == 'update':
+        business_logger.info(f"[{model}] UPDATE: {detail} (user={user}, id={instance_id})")
+    elif action == 'delete':
+        business_logger.info(f"[{model}] DELETE: {detail} (user={user}, id={instance_id})")
+    create_record(user, action, model, detail, instance_id)
+
+
 @receiver(post_save, sender=Room)
 def log_create_room(sender, instance, created, **kwargs):
-    model="Room"
-    user = get_thread_variable('thread_user')
+    user = get_current_user()
     if created:
-        detail=f"El usuario: {user} creó el registro {instance}"
-        action="create"
-        try:
-            Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
-        except Exception as e:
-            business_logger.error(f"[ROOM] Audit record failed: {e}")
-        business_logger.info(f"[ROOM] CREATE: {instance} creado (user={user}, id={instance.id})")
+        _log_and_record(user, 'Room', 'create', f'El usuario: {user} creó el registro {instance}', instance.id)
+
 
 @receiver(pre_save, sender=Room)
 def log_edit_room(sender, instance, **kwargs):
-    action="update"
-    model="Room"
     if instance.pk is not None:
-        old_instance = Room.objects.get(pk=instance.pk)
+        user = get_current_user()
+        try:
+            old_instance = Room.objects.get(pk=instance.pk)
+        except Room.DoesNotExist:
+            return
         for field in Room._meta.fields:
             old_value = getattr(old_instance, field.name)
             new_value = getattr(instance, field.name)
-            user = get_thread_variable('thread_user')
             if old_value != new_value:
-                try:
-                    Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
-                except Exception as e:
-                    business_logger.error(f"[ROOM] Audit record failed: {e}")
-                business_logger.info(f"[ROOM] UPDATE: Campo '{field.name}' de '{old_value}' a '{new_value}' en {instance} (user={user})")
+                _log_and_record(user, 'Room', 'update',
+                    f'El usuario: {user} realizó un cambio en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
+                    instance.id)
+
 
 @receiver(post_delete, sender=Room)
 def log_delete_room(sender, instance, **kwargs):
-    model="Room"
-    user = get_thread_variable('thread_user')
-    action="delete"
-    try:
-        Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
-    except Exception as e:
-        business_logger.error(f"[ROOM] Audit record failed: {e}")
-    business_logger.info(f"[ROOM] DELETE: {instance} eliminado (user={user}, id={instance.id})")
+    user = get_current_user()
+    _log_and_record(user, 'Room', 'delete', f'El usuario: {user} eliminó el registro {instance}', instance.id)
+
 
 @receiver(post_save, sender=Property)
 def log_create_property(sender, instance, created, **kwargs):
-    model="Property"
-    user = get_thread_variable('thread_user')
+    user = get_current_user()
     if created:
-        detail=f"El usuario: {user} creó el registro {instance}"
-        action="create"
-        try:
-            Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
-        except Exception as e:
-            business_logger.error(f"[PROPERTY] Audit record failed: {e}")
-        business_logger.info(f"[PROPERTY] CREATE: {instance} creado (user={user}, id={instance.id})")
+        _log_and_record(user, 'Property', 'create', f'El usuario: {user} creó el registro {instance}', instance.id)
+
 
 @receiver(pre_save, sender=Property)
 def log_edit_property(sender, instance, **kwargs):
-    action="update"
-    model="Property"
     if instance.pk is not None:
-        old_instance = Property.objects.get(pk=instance.pk)
+        user = get_current_user()
+        try:
+            old_instance = Property.objects.get(pk=instance.pk)
+        except Property.DoesNotExist:
+            return
         for field in Property._meta.fields:
             old_value = getattr(old_instance, field.name)
             new_value = getattr(instance, field.name)
-            user = get_thread_variable('thread_user')
             if old_value != new_value:
-                try:
-                    Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
-                except Exception as e:
-                    business_logger.error(f"[PROPERTY] Audit record failed: {e}")
-                business_logger.info(f"[PROPERTY] UPDATE: Campo '{field.name}' de '{old_value}' a '{new_value}' en {instance} (user={user})")
+                _log_and_record(user, 'Property', 'update',
+                    f'El usuario: {user} realizó un cambio en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
+                    instance.id)
+
 
 @receiver(post_delete, sender=Property)
 def log_delete_property(sender, instance, **kwargs):
-    model="Property"
-    user = get_thread_variable('thread_user')
-    action="delete"
-    try:
-        Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
-    except Exception as e:
-        business_logger.error(f"[PROPERTY] Audit record failed: {e}")
-    business_logger.info(f"[PROPERTY] DELETE: {instance} eliminado (user={user}, id={instance.id})")
+    user = get_current_user()
+    _log_and_record(user, 'Property', 'delete', f'El usuario: {user} eliminó el registro {instance}', instance.id)
+
 
 @receiver(post_save, sender=Sub_Room)
 def log_create_sub_room(sender, instance, created, **kwargs):
-    model="Sub_Room"
-    user = get_thread_variable('thread_user')
+    user = get_current_user()
     if created:
-        detail=f"El usuario: {user} creó el registro {instance}"
-        action="create"
-        try:
-            Record.objects.create(user=user, action=action, model=model, detail=detail, instance_id=instance.id)
-        except Exception as e:
-            business_logger.error(f"[SUB_ROOM] Audit record failed: {e}")
-        business_logger.info(f"[SUB_ROOM] CREATE: {instance} creado (user={user}, id={instance.id})")
+        _log_and_record(user, 'Sub_Room', 'create', f'El usuario: {user} creó el registro {instance}', instance.id)
+
 
 @receiver(pre_save, sender=Sub_Room)
 def log_edit_sub_room(sender, instance, **kwargs):
-    action="update"
-    model="Sub_Room"
     if instance.pk is not None:
-        old_instance = Sub_Room.objects.get(pk=instance.pk)
+        user = get_current_user()
+        try:
+            old_instance = Sub_Room.objects.get(pk=instance.pk)
+        except Sub_Room.DoesNotExist:
+            return
         for field in Sub_Room._meta.fields:
             old_value = getattr(old_instance, field.name)
             new_value = getattr(instance, field.name)
-            user = get_thread_variable('thread_user')
             if old_value != new_value:
-                try:
-                    Record.objects.create(user=user, action=action, model=model, detail=f'El usuario: {user} realizó un cambió en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}', instance_id=instance.id)
-                except Exception as e:
-                    business_logger.error(f"[SUB_ROOM] Audit record failed: {e}")
-                business_logger.info(f"[SUB_ROOM] UPDATE: Campo '{field.name}' de '{old_value}' a '{new_value}' en {instance} (user={user})")
+                _log_and_record(user, 'Sub_Room', 'update',
+                    f'El usuario: {user} realizó un cambio en el campo {field.name}: del anterior valor: {old_value}, al nuevo valor: {new_value} del registro: {instance}',
+                    instance.id)
+
 
 @receiver(post_delete, sender=Sub_Room)
 def log_delete_sub_room(sender, instance, **kwargs):
-    model="Sub_Room"
-    user = get_thread_variable('thread_user')
-    action="delete"
-    try:
-        Record.objects.create(user=user, action=action, model=model, detail=f"El usuario: {user} eliminó el registro {instance}", instance_id=instance.id)
-    except Exception as e:
-        business_logger.error(f"[SUB_ROOM] Audit record failed: {e}")
-    business_logger.info(f"[SUB_ROOM] DELETE: {instance} eliminado (user={user}, id={instance.id})")
+    user = get_current_user()
+    _log_and_record(user, 'Sub_Room', 'delete', f'El usuario: {user} eliminó el registro {instance}', instance.id)
