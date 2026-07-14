@@ -258,10 +258,17 @@ class Requirements_customer(generics.GenericAPIView):
     def get(self, request):
         set_thread_variable('thread_user', request.user)
         rental_id = request.GET.get('rental', None)
+        if not rental_id:
+            return Response({"error": "Parámetro 'rental' requerido"}, status=status.HTTP_400_BAD_REQUEST)
         try:
             selected_product = Selected_Product.objects.filter(rental_id=rental_id).first()
+            if selected_product is None:
+                return Response({"error": "No hay productos seleccionados para este alquiler"}, status=status.HTTP_404_NOT_FOUND)
             rate_id = selected_product.product.rate.id
-            customer_type = RateRequirement.objects.filter(rate_id=rate_id).first().customer_type
+            rate_requirement = RateRequirement.objects.filter(rate_id=rate_id).first()
+            if rate_requirement is None:
+                return Response({"error": "No hay requisitos definidos para esta tarifa"}, status=status.HTTP_404_NOT_FOUND)
+            customer_type = rate_requirement.customer_type
             required_requirements = RateRequirement.objects.filter(customer_type=customer_type)
             required_requirements_list =  []
             for required_requirement in required_requirements:
@@ -283,8 +290,8 @@ class Requirements_customer(generics.GenericAPIView):
                 }
                 other_requirements_list.append(other_requirement_data)
             return Response({"data": {"required_requirements": required_requirements_list,"optional_requirements":other_requirements_list}}, status=status.HTTP_200_OK)
-        except Rental.DoesNotExist:
-            return Response({"error": "No se encontró el arriendo"}, status=status.HTTP_404_NOT_FOUND)
+            except (Rental.DoesNotExist, AttributeError) as e:
+                    return Response({"error": f"Error al obtener requisitos: {str(e)}"}, status=status.HTTP_404_NOT_FOUND)
 
 request_body_schema = openapi.Schema(
     type=openapi.TYPE_OBJECT,
@@ -319,11 +326,14 @@ class Register_delivered_requirement(generics.ListAPIView):
             try:
                 if list_requirements:
                     rental = Rental.objects.get(pk=rental_id)
-                    for requirement in list_requirements:
-                        requirements_delivered = Requirement_Delivered.objects.filter(requirement_id = requirement, rental_id = rental_id).exists()
-                        if requirements_delivered:
-                            # Los requisitos ya existen, continuar con la generación del formulario
-                            return Make_Rental_Form(request, rental_id)
+                    all_delivered = all(
+                        Requirement_Delivered.objects.filter(
+                            requirement_id=req, rental_id=rental_id
+                        ).exists()
+                        for req in list_requirements
+                    )
+                    if all_delivered:
+                        return Make_Rental_Form(request, rental_id)
                     for requirement in list_requirements:
                         requirement_delivered = Requirement_Delivered()
                         requirement_register=Requirement.objects.get(pk=requirement)

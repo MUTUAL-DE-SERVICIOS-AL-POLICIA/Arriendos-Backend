@@ -95,7 +95,7 @@ class TestCustomerAPI:
     def test_customer_delete(self):
         customer = Customer.objects.create(institution_name='ToDelete', nit='2222222', customer_type=self.institution_ct)
         response = self.client.delete(f'/api/customers/{customer.id}')
-        assert response.status_code == 200
+        assert response.status_code == 204
 
     def test_customer_type_create(self):
         data = {'name': 'Nuevo Tipo', 'is_institution': False, 'is_police': False}

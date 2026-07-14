@@ -366,8 +366,7 @@ class MyPermissions_View(generics.GenericAPIView):
 
     URL: /api/roles/my-permissions/
     """
-    permission_classes = [IsAuthenticated, HasModulePermission]
-    rbac_module = 'users'
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         """Obtiene los permisos del usuario autenticado."""

@@ -49,9 +49,9 @@ class User_Ldap(APIView):
         users = User.objects.prefetch_related(
             'user_role', 'user_role__role'
         ).order_by('id')
-        total_users = users.count()
         if search_param:
             users = users.filter(first_name__icontains=search_param)
+        total_users = users.count()
         if limit_num == -1:
             paginated = users
         else:

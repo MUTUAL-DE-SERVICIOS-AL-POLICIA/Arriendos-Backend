@@ -384,15 +384,17 @@ class Register_warranty(generics.GenericAPIView):
         for warranty in warranties:
             n=n+1
             if warranty.income>0:
-                type= "INGRESO"
-            if warranty.discount>0:
-                type = "DESCUENTO"
-            if warranty.returned>0:
-                type = "RETORNO"
+                movement_type= "INGRESO"
+            elif warranty.discount>0:
+                movement_type = "DESCUENTO"
+            elif warranty.returned>0:
+                movement_type = "RETORNO"
+            else:
+                movement_type = "MOVIMIENTO"
             warranty_data= {
                 "id":warranty.id,
                 "correlative":n,
-                "type": type,
+                "type": movement_type,
                 "income":warranty.income,
                 "discount":warranty.discount,
                 "returned":warranty.returned,

@@ -230,10 +230,15 @@ class Selected_Product_Detail(generics.GenericAPIView):
     def patch(self, request, pk):
         set_thread_variable('thread_user', request.user)
         selected_product = self.get_selected_product(pk=pk)
-        start_time = request.data["start_time"]
-        end_time = request.data["end_time"]
-        selected_products_data = Selected_Product.objects.filter(rental_id = selected_product.rental_id)
-        selected_products_data = selected_products_data.first()
+        if selected_product is None:
+            return Response({"error": "Producto seleccionado no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+        start_time = request.data.get("start_time")
+        end_time = request.data.get("end_time")
+        if not start_time or not end_time:
+            return Response({"error": "start_time y end_time son requeridos"}, status=status.HTTP_400_BAD_REQUEST)
+        selected_products_data = Selected_Product.objects.filter(rental_id = selected_product.rental_id).first()
+        if selected_products_data is None:
+            return Response({"error": "No hay productos seleccionados para este alquiler"}, status=status.HTTP_404_NOT_FOUND)
         first_year = selected_products_data.start_time.year
         start_time = datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S.%fZ')
         start_time = pytz.timezone('America/La_Paz').localize(start_time)
@@ -243,14 +248,14 @@ class Selected_Product_Detail(generics.GenericAPIView):
         if today > start_time:
             return Response({"message":"La fecha no es válida"}, status=status.HTTP_400_BAD_REQUEST)
         if start_time.year > first_year:
-            return Response({"message": "La fecha no es válida"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"message": "La fecha no es válida"}, status=status.HTTP_400_BAD_REQUEST)
         rental = Rental.objects.get(pk= selected_product.rental_id)
         if rental.state_id >3:
-            return Response({"message":"No se puede editar una reserva que ya fue confirmada o cancelada"})
+            return Response({"message":"No se puede editar una reserva que ya fue confirmada o cancelada"}, status=status.HTTP_400_BAD_REQUEST)
         selected_product.start_time = start_time
         selected_product.end_time = end_time
         selected_product.save()
-        return Response({"message":"Reserva editada con éxito"}, status=status.HTTP_201_CREATED)
+        return Response({"message":"Reserva editada con éxito"}, status=status.HTTP_200_OK)
 
 contact_schema = openapi.Schema(
     type=openapi.TYPE_OBJECT,
@@ -541,12 +546,11 @@ class Delivery_Form(generics.GenericAPIView):
     )
     def post(self, request, *args, **kwargs):
         set_thread_variable('thread_user', request.user)
-        rental = int(request.data["rental"])
-        selected_product = int(request.data["product"])
-        if rental is None:
-            return Response({"error": "No se ha enviado rental"}, status=status.HTTP_404_NOT_FOUND)
-        if selected_product is None:
-            return Response({"error": "No se ha enviado selected_product"}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            rental = int(request.data["rental"])
+            selected_product = int(request.data["product"])
+        except (KeyError, ValueError, TypeError):
+            return Response({"error": "Parámetros 'rental' y 'product' son requeridos y deben ser numéricos"}, status=status.HTTP_400_BAD_REQUEST)
         return Make_Delivery_Form(request, rental, selected_product)
 
 selected_product = openapi.Parameter('selected_product', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
@@ -587,6 +591,8 @@ class Register_additional_hour_applied(generics.RetrieveUpdateDestroyAPIView):
         price = request.data.get('price')
         if number is None and description is None and voucher_number is None and price is None:
             return Make_Overtime_Form(request, rental, selected_product_id)
+        if number is None or price is None:
+            return Response({"error": "number y price son requeridos para registrar hora extra"}, status=status.HTTP_400_BAD_REQUEST)
         total = number*price
         data= {
             'selected_product': selected_product_id,

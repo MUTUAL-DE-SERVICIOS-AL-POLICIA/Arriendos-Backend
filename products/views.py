@@ -138,23 +138,28 @@ class Product_Api(generics.GenericAPIView):
     )
     def post(self, request, *args, **kwargs):
         set_thread_variable('thread_user', request.user)
+        mount = request.data.get('mount', '')
+        price_data = {
+            "mount": mount,
+            "is_active": True,
+            "product": 0,
+            "valid_from": timezone.now()
+        }
+        price_validation = PriceSerializer(data=price_data)
+        if not price_validation.is_valid():
+            return Response({"status": "fail", "message": price_validation.errors}, status=status.HTTP_400_BAD_REQUEST)
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            Product_saved=serializer.save()
-            mount=request.data.get('mount', '')
-            price_data = {
-                "mount": mount,
-                "is_active": True,
-                "product": Product_saved.id,
-                "valid_from": timezone.now()
-            }
-            PriceSerialized=PriceSerializer(data=price_data)
-            if (PriceSerialized.is_valid()):
-                PriceSerialized.save()
-                combined_response=[serializer.data, PriceSerialized.data]
+            Product_saved = serializer.save()
+            price_data["product"] = Product_saved.id
+            price_serialized = PriceSerializer(data=price_data)
+            if price_serialized.is_valid():
+                price_serialized.save()
+                combined_response = [serializer.data, price_serialized.data]
                 return Response({"status": "success", "data": combined_response}, status=status.HTTP_201_CREATED)
             else:
-                return Response({"status": "fail", "message": PriceSerialized.errors}, status=status.HTTP_400_BAD_REQUEST)
+                Product_saved.delete()
+                return Response({"status": "fail", "message": price_serialized.errors}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"status": "fail", "message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 

@@ -364,11 +364,11 @@ class Customer_Detail(generics.GenericAPIView):
             rental = Rental.objects.filter(customer=customer).first()
             if rental:
                 if rental.state_id != 5:
-                    return Response({"error": "El cliente tiene un alquiler."}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"error": "El cliente tiene un alquiler activo."}, status=status.HTTP_400_BAD_REQUEST)
             customer.delete()
-            return Response({'message': 'Cliente eliminado exitosamente'})
+            return Response({'message': 'Cliente eliminado exitosamente'}, status=status.HTTP_204_NO_CONTENT)
         except Customer.DoesNotExist:
-            return Response({"error": "El cliente no existe."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "El cliente no existe."}, status=status.HTTP_404_NOT_FOUND)
 
 class identify_affiliate(generics.GenericAPIView):
     permission_classes = [IsAuthenticated, HasModulePermission]
