@@ -121,8 +121,11 @@ class Role_List_Create_View(generics.GenericAPIView):
     rbac_module = 'users'
 
     def get(self, request, *args, **kwargs):
-        page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', 10))
+        try:
+            page_num = int(request.GET.get('page', 0))
+            limit_num = int(request.GET.get('limit', 10))
+        except (ValueError, TypeError):
+            return Response({"error": "Parámetros 'page' y 'limit' deben ser numéricos"}, status=status.HTTP_400_BAD_REQUEST)
         search_param = request.GET.get('search', '')
 
         roles = Role.objects.prefetch_related('role_permissions__permissions', 'userrole_set')

@@ -329,12 +329,18 @@ class Pre_Reserve_Api(generics.GenericAPIView):
         initial_total = 0
         for selected_product in selected_products:
             product_id = selected_product.get("product")
-            product_price = Price.objects.get(product_id=product_id, is_active=True)
+            try:
+                product_price = Price.objects.get(product_id=product_id, is_active=True)
+            except Price.DoesNotExist:
+                return Response({"error": f"No existe precio activo para el producto {product_id}"}, status=status.HTTP_404_NOT_FOUND)
             product_price = product_price.mount
             initial_total = initial_total + product_price
         productos_plan = len(selected_products)
         if productos_plan > 1:
-            plan_discount = Plan.objects.get(pk=request.data["plan"])
+            try:
+                plan_discount = Plan.objects.get(pk=request.data["plan"])
+            except (Plan.DoesNotExist, KeyError):
+                return Response({"error": "Plan no válido"}, status=status.HTTP_404_NOT_FOUND)
             initial_total = initial_total - (initial_total*(plan_discount.plan_discount/100))
             rental = Rental.objects.create(customer_id = customer, state_id = 1, plan_id = request.data["plan"], initial_total=initial_total)
         else:
@@ -342,7 +348,10 @@ class Pre_Reserve_Api(generics.GenericAPIView):
         for selected_product in selected_products:
             event_type = selected_product.get("event_type")
             product_id = selected_product.get("product")
-            product_price = Price.objects.get(product_id=product_id, is_active=True)
+            try:
+                product_price = Price.objects.get(product_id=product_id, is_active=True)
+            except Price.DoesNotExist:
+                return Response({"error": f"No existe precio activo para el producto {product_id}"}, status=status.HTTP_404_NOT_FOUND)
             product_price = product_price.mount
             if Event_Type.objects.filter(name=event_type).exists():
                 event = Event_Type.objects.get(name=event_type)
@@ -386,7 +395,10 @@ class Get_state(generics.ListAPIView):
         try:
             rental = Rental.objects.get(pk=rental_id)
             current_state = rental.state_id
-            state = State.objects.get(pk=current_state)
+            try:
+                state = State.objects.get(pk=current_state)
+            except State.DoesNotExist:
+                return Response({"error": "Estado actual no válido"}, status=status.HTTP_404_NOT_FOUND)
             current_states = {
                 "id":state.id,
                 "name":state.name
@@ -394,7 +406,10 @@ class Get_state(generics.ListAPIView):
             next_possible_states_id = state.next_state
             next_possible_states=[]
             for next_possible_state in next_possible_states_id:
-                state = State.objects.get(pk=next_possible_state)
+                try:
+                    state = State.objects.get(pk=next_possible_state)
+                except State.DoesNotExist:
+                    continue
                 next_state = {
                     "id":state.id,
                     "name":state.name
@@ -420,7 +435,10 @@ class Change_state(generics.ListAPIView):
     rbac_module = 'leases'
     def prereserved(self, rental_id,state,reason):
         if self.validated_state(rental_id, state):
-            state_obj = State.objects.get(pk=state)
+            try:
+                state_obj = State.objects.get(pk=state)
+            except State.DoesNotExist:
+                return Response({"error": "Estado no válido"}, status=status.HTTP_404_NOT_FOUND)
             self.save_state(rental_id,state_obj,reason)
             response_data = {
                 "message": f"cambio de estado a {state_obj.name} exitosamente",
@@ -429,7 +447,10 @@ class Change_state(generics.ListAPIView):
             return Response(response_data, status=status.HTTP_200_OK)
         return Response({"error": "No se puede cambiar de estado "}, status=status.HTTP_400_BAD_REQUEST)
     def reserved(self, rental_id, state, reason):
-        state_obj = State.objects.get(pk=state)
+        try:
+            state_obj = State.objects.get(pk=state)
+        except State.DoesNotExist:
+            return Response({"error": "Estado no válido"}, status=status.HTTP_404_NOT_FOUND)
         requirement_delivered = Requirement_Delivered.objects.filter(rental_id=rental_id)
         if self.validated_state(rental_id, state):
             if requirement_delivered.exists():
@@ -442,7 +463,10 @@ class Change_state(generics.ListAPIView):
             return Response({"error": "No existen requisitos entregados"}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"error": "No se puede cambiar de estado "}, status=status.HTTP_400_BAD_REQUEST)
     def rented(self, rental_id, state,reason):
-        state_obj = State.objects.get(pk=state)
+        try:
+            state_obj = State.objects.get(pk=state)
+        except State.DoesNotExist:
+            return Response({"error": "Estado no válido"}, status=status.HTTP_404_NOT_FOUND)
         warranty = Warranty_Movement.objects.filter(rental_id=rental_id)
         if self.validated_state(rental_id, state):
             if not warranty.exists():
@@ -462,8 +486,14 @@ class Change_state(generics.ListAPIView):
                 return Response({"error": f"No se puede realizar la acción, el monto pendiente de pago es: {last_payment.payable_mount}"}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"error": "No se puede cambiar de estado "}, status=status.HTTP_400_BAD_REQUEST)
     def concluded(self, rental_id, state,reason):
-        state_obj = State.objects.get(pk=state)
-        last_warranty = Warranty_Movement.objects.filter(rental_id=rental_id).latest("id")
+        try:
+            state_obj = State.objects.get(pk=state)
+        except State.DoesNotExist:
+            return Response({"error": "Estado no válido"}, status=status.HTTP_404_NOT_FOUND)
+        warranty_qs = Warranty_Movement.objects.filter(rental_id=rental_id)
+        if not warranty_qs.exists():
+            return Response({"error": "No hay garantías registradas para este alquiler"}, status=status.HTTP_400_BAD_REQUEST)
+        last_warranty = warranty_qs.latest("id")
         if self.validated_state(rental_id, state):
             if last_warranty.returned>0:
                 self.save_state(rental_id,state_obj,reason)
@@ -475,7 +505,10 @@ class Change_state(generics.ListAPIView):
             return Response({"error": f"No se puede realizar la acción, la monto de garantía: {last_warranty.balance} no ha sido retornada: "}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"error": "No se puede cambiar de estado "}, status=status.HTTP_400_BAD_REQUEST)
     def canceled(self, rental_id, state, reason):
-        state_obj = State.objects.get(pk=state)
+        try:
+            state_obj = State.objects.get(pk=state)
+        except State.DoesNotExist:
+            return Response({"error": "Estado no válido"}, status=status.HTTP_404_NOT_FOUND)
         payment = Payment.objects.filter(rental_id=rental_id)
         warranty = Warranty_Movement.objects.filter(rental_id=rental_id)
         if self.validated_state(rental_id, state) and not warranty and not payment:
@@ -489,13 +522,19 @@ class Change_state(generics.ListAPIView):
     def default_case(self, rental_id, state, reason=None):
         return Response({"error": "No existe el estado"}, status=status.HTTP_400_BAD_REQUEST)
     def validated_state(self,rental_id,state):
-        list_states= Rental.objects.get(pk=rental_id).state.next_state
+        try:
+            list_states= Rental.objects.get(pk=rental_id).state.next_state
+        except Rental.DoesNotExist:
+            return False
         for state_object in list_states:
             if state==state_object:
                 return True
         return False
     def save_state(self,rental_id, state,reason ):
-        rental= Rental.objects.get(pk=rental_id)
+        try:
+            rental= Rental.objects.get(pk=rental_id)
+        except Rental.DoesNotExist:
+            return
         rental.cancel_reason = reason
         rental.state = state
         rental.save()
@@ -593,7 +632,10 @@ class Register_additional_hour_applied(generics.RetrieveUpdateDestroyAPIView):
             return Make_Overtime_Form(request, rental, selected_product_id)
         if number is None or price is None:
             return Response({"error": "number y price son requeridos para registrar hora extra"}, status=status.HTTP_400_BAD_REQUEST)
-        total = number*price
+        try:
+            total = float(number)*float(price)
+        except (ValueError, TypeError):
+            return Response({"error": "number y price deben ser numéricos"}, status=status.HTTP_400_BAD_REQUEST)
         data= {
             'selected_product': selected_product_id,
             'number': number,
@@ -682,8 +724,8 @@ class List_additional_hour_applied(generics.ListAPIView):
                     }
                     list_additional_hour_applied.append(additional_hour_applied_data)
             return Response(list_additional_hour_applied, status=status.HTTP_200_OK)
-        except Selected_Product.DoesNotExist:
-            return Response({"error": "No existe el arriendo"}, status=status.HTTP_404_NOT_FOUND)
+        except (AttributeError, TypeError) as e:
+            return Response({"error": f"Error al obtener horas adicionales: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
 class Report_Api(generics.GenericAPIView):
     queryset= Rental.objects.all()
@@ -746,8 +788,11 @@ class rental_list(generics.GenericAPIView):
         if date_to:
             queryset = queryset.filter(created_at__date__lte=date_to)
         queryset = queryset.order_by("id").distinct()
-        page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', 10))
+        try:
+            page_num = int(request.GET.get('page', 0))
+            limit_num = int(request.GET.get('limit', 10))
+        except (ValueError, TypeError):
+            return Response({"error": "Parámetros 'page' y 'limit' deben ser numéricos"}, status=status.HTTP_400_BAD_REQUEST)
         total = queryset.count()
         if limit_num == -1:
             paginated_qs = queryset
@@ -768,7 +813,8 @@ class rental_list(generics.GenericAPIView):
             customer_name= item["customer"]["institution_name"]
             selected_products_list=[]
             if customer_name is None:
-                customer_name= item["customer"]["contacts"][0]["name"]
+                contacts = item["customer"].get("contacts", [])
+                customer_name = contacts[0]["name"] if contacts else "Sin nombre"
             if state["id"] == 3:
                 can_edit=True
             for product in item["selected_products"]:
@@ -794,7 +840,7 @@ class rental_list(generics.GenericAPIView):
                 "status": "success",
                 "total": total,
                 "page": page_num,
-                "last_page": math.ceil(total/ limit_num),
+                "last_page": math.ceil(total/ limit_num) if limit_num > 0 else 0,
                 "rentals": rental_list
             }
         return Response(response_data)

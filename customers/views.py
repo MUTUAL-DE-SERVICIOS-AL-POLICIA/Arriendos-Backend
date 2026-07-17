@@ -24,8 +24,11 @@ class Customer_Type_Api(generics.GenericAPIView):
     rbac_module = 'customers'
     def get(self, request, *args, **kwargs):
         set_thread_variable('thread_user', request.user)
-        page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', 10))
+        try:
+            page_num = int(request.GET.get('page', 0))
+            limit_num = int(request.GET.get('limit', 10))
+        except (ValueError, TypeError):
+            return Response({"error": "Parámetros 'page' y 'limit' deben ser numéricos"}, status=status.HTTP_400_BAD_REQUEST)
         search_param = request.GET.get('search')
         customers = Customer_type.objects.all().order_by('id')
         if search_param:
@@ -140,8 +143,11 @@ class Customer_Api(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         set_thread_variable('thread_user', request.user)
         serializer_class = CustomersSerializer
-        page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', 10))
+        try:
+            page_num = int(request.GET.get('page', 0))
+            limit_num = int(request.GET.get('limit', 10))
+        except (ValueError, TypeError):
+            return Response({"error": "Parámetros 'page' y 'limit' deben ser numéricos"}, status=status.HTTP_400_BAD_REQUEST)
         search_param = request.GET.get('search')
         search_nit = request.GET.get('search_nit', '')
         search_name = request.GET.get('search_name', '')
@@ -207,8 +213,11 @@ class Customer_Api(generics.GenericAPIView):
                 institutions_data = request.data["institution"]
                 institution_name =institutions_data.get("name", None)
                 nit = institutions_data.get("nit", None)
-                contacts = institutions_data.get("contacts")
+                contacts = institutions_data.get("contacts", [])
                 if institution_name is None or nit is None:
+                    return Response({"error":"los campos no son válidos"}, status=status.HTTP_400_BAD_REQUEST)
+                if not contacts:
+                    return Response({"error":"Se requiere al menos un contacto"}, status=status.HTTP_400_BAD_REQUEST)
                     return Response({"error":"los campos no son válidos"}, status=status.HTTP_400_BAD_REQUEST)
                 if Customer.objects.filter(nit=nit).exists():
                     return Response({"error":"La institucion ya esta registrada"}, status=status.HTTP_400_BAD_REQUEST)
@@ -421,7 +430,7 @@ class identify_affiliate(generics.GenericAPIView):
                         return({"data":array, "is_police":True})
             return ({'error':'no hay afiliado con ese ci,', "is_police":False})
         else:
-            return ({'error': 'Error en la solicitud al microservicio'})
+            return ({'error': 'Error en la solicitud al microservicio', 'is_police': False})
     def get_spouse(self, id_card):
         token_de_autenticacion = self.get_token_access()
         url_spouse = f'{settings.MICROSERVICE_API_URL}/affiliate/spouse_ext'
@@ -481,11 +490,14 @@ class identify_affiliate(generics.GenericAPIView):
             return Response(police_response["data"])
         return Response({"error": "No existe el afiliado"}, status=status.HTTP_404_NOT_FOUND)
 def customer_data(rental_id):
-    rental= Rental.objects.get(pk=rental_id)
+    try:
+        rental= Rental.objects.get(pk=rental_id)
+    except Rental.DoesNotExist:
+        return {"name":"","nit":"","nup":"","institution_name":"","institution_nit":""}
     customer=rental.customer
     try:
-        contact=Contact.objects.get(customer_id=customer.id)
-    except Contact.DoesNotExist:
+        contact=Contact.objects.filter(customer_id=customer.id).first()
+    except Exception:
         contact=None
     name = contact.name if contact else ""
     nit = contact.ci_nit if contact else ""

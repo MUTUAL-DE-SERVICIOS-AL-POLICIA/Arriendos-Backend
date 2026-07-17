@@ -43,8 +43,11 @@ class User_Ldap(APIView):
     )
     def get(self, request):
         set_thread_variable('thread_user', request.user)
-        page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', 10))
+        try:
+            page_num = int(request.GET.get('page', 0))
+            limit_num = int(request.GET.get('limit', 10))
+        except (ValueError, TypeError):
+            return Response({"error": "Parámetros 'page' y 'limit' deben ser numéricos"}, status=status.HTTP_400_BAD_REQUEST)
         search_param = request.GET.get('search')
         users = User.objects.prefetch_related(
             'user_role', 'user_role__role'
@@ -97,8 +100,6 @@ class User_Ldap(APIView):
                         return Response({'error': 'El correo ya existe'}, status=status.HTTP_400_BAD_REQUEST)
                     user = User.objects.create_user(username=username, email=email, first_name=first_name, last_name=last_name)
                     return Response({"message":"Usuario registrado con exito", "user": user.id, "username": user.username, "email": user.email, "first_name": user.first_name, "last_name": user.last_name}, status=status.HTTP_201_CREATED)
-                else:
-                    return Response({"status": "fail"}, status=status.HTTP_404_NOT_FOUND)
             return Response({"error": "Usuario no encontrado en LDAP"}, status=status.HTTP_404_NOT_FOUND)
         except LDAPException as e:
             logger.error(f"LDAP_ERROR: {str(e)}")
@@ -198,8 +199,11 @@ class Assign_Api(generics.GenericAPIView):
         set_thread_variable('thread_user', request.user)
         serializer_class = AssignsSerializer
         queryset = Assign.objects.all()
-        page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', 10))
+        try:
+            page_num = int(request.GET.get('page', 0))
+            limit_num = int(request.GET.get('limit', 10))
+        except (ValueError, TypeError):
+            return Response({"error": "Parámetros 'page' y 'limit' deben ser numéricos"}, status=status.HTTP_400_BAD_REQUEST)
         search_param = request.GET.get('search')
         assigns = Assign.objects.select_related('user', 'room', 'room__property').prefetch_related(
             'user__user_role', 'user__user_role__role'

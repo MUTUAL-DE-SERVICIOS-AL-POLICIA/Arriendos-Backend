@@ -76,6 +76,10 @@ class Register_payment(generics.GenericAPIView):
     )
     def post(self,request):
             set_thread_variable('thread_user', request.user)
+            validated_fields = ["rental", "detail", "mount", "business_name", "nit", "voucher_number"]
+            error_message = required_fields(request, validated_fields)
+            if error_message:
+                return Response(error_message, status=status.HTTP_400_BAD_REQUEST)
             rental_id = request.data["rental"]
             detail = request.data["detail"]
             mount=request.data["mount"]
@@ -131,7 +135,7 @@ class Register_payment(generics.GenericAPIView):
                     }
                     return Response(response_data, status=status.HTTP_201_CREATED)
             except Rental.DoesNotExist:
-                return Response({"error": "El alquiler no existe."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "El alquiler no existe."}, status=status.HTTP_404_NOT_FOUND)
 
     @swagger_auto_schema(
     operation_description="Borrar registro de pago",
@@ -178,7 +182,7 @@ class Print_payment(generics.ListAPIView):
             'payments' : payments,
             'selected_products': selected_products_data
         }
-        return util.generate_pdf('payments.html',params)
+        return util.generate_pdf('payments.html',params, filename='canon_de_pagos.pdf')
 class Edit_payment(generics.RetrieveUpdateAPIView):
     queryset = Payment.objects.all()
     serializer_class = Payment_Serializer
@@ -193,13 +197,19 @@ class Edit_payment(generics.RetrieveUpdateAPIView):
         set_thread_variable('thread_user', request.user)
         partial = kwargs.pop('partial', True)
         instance = self.get_object()
-        amount_paid = float(request.data.get('amount_paid'))
+        amount_paid_raw = request.data.get('amount_paid')
+        if amount_paid_raw is None:
+            return Response({"error": "amount_paid es requerido"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            amount_paid = float(amount_paid_raw)
+        except (ValueError, TypeError):
+            return Response({"error": "amount_paid debe ser numérico"}, status=status.HTTP_400_BAD_REQUEST)
         list_payment=self.queryset.filter(rental=instance.rental).order_by('id')
         number_payment=list_payment.count()
         if number_payment >1:
             previus_payment=list_payment[len(list_payment)-2]
             previus_payable_mount=float(previus_payment.payable_mount)
-            if amount_paid is not None and amount_paid<=previus_payable_mount:
+            if amount_paid<=previus_payable_mount:
                 request.data["payable_mount"]=float(previus_payment.payable_mount)-float(request.data["amount_paid"])
                 serializer = self.get_serializer(instance, data=request.data, partial=partial)
                 serializer.is_valid(raise_exception=True)
@@ -425,7 +435,7 @@ class Register_warranty(generics.GenericAPIView):
             else:
                 return Response({"error": "No existen garantías registradas para ese alquiler"}, status=status.HTTP_400_BAD_REQUEST)
         except Rental.DoesNotExist:
-            return Response({"error": "El Arriendo no existe."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "El Arriendo no existe."}, status=status.HTTP_404_NOT_FOUND)
 
 rental = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
 class Print_Warranties(generics.GenericAPIView):
@@ -448,7 +458,7 @@ class Print_Warranties(generics.GenericAPIView):
             'warranties' : warranties,
             'selected_products':selected_products_data
         }
-        return util.generate_pdf('warranties.html',params)
+        return util.generate_pdf('warranties.html',params, filename='registro_de_garantias.pdf')
 class Edit_warranty(generics.RetrieveUpdateAPIView):
     queryset = Warranty_Movement.objects.all()
     serializer_class = Warranty_Movement_Serializer
@@ -474,7 +484,7 @@ class Edit_warranty(generics.RetrieveUpdateAPIView):
             if income_value is not None:
                 request.data["balance"]=float(previus_warranty.balance) + float(request.data["income"])
         else:
-            request.data["balance"]=request.data["income"]
+            request.data["balance"]=income_value if income_value is not None else 0
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
@@ -499,14 +509,15 @@ class Warranty_Return_Request(generics.GenericAPIView):
             warranty=Warranty_Movement.objects.filter(rental_id=rental).latest('id')
         except Warranty_Movement.DoesNotExist:
             return Response({"error": "No hay garantías registradas del alquiler"}, status=status.HTTP_400_BAD_REQUEST)
-        rental_state = Rental.objects.get(pk=rental)
-        rental_state = rental_state.state_id
-        if rental_state == 4:
+        try:
+            rental_obj = Rental.objects.get(pk=rental)
+        except Rental.DoesNotExist:
+            return Response({"error": "El alquiler no existe"}, status=status.HTTP_404_NOT_FOUND)
+        if rental_obj.state_id == 4:
             return Response({"error": "Ya se ha retornado la garantía"}, status=status.HTTP_404_NOT_FOUND)
         now = timezone.localtime(timezone.now())
-        rental_date=Rental.objects.get(pk=rental)
-        rental_date.warranty_return_request = now
-        rental_date.save()
+        rental_obj.warranty_return_request = now
+        rental_obj.save()
         return Make_Warranty_Form(request, rental)
 
 request_body_schema = openapi.Schema(
@@ -667,9 +678,11 @@ class Return_Warranty_Form(generics.GenericAPIView):
             warranty_balance=warranty.latest('id').balance
         else:
             return Response({"error":"El alquiler no tiene garantías registradas"}, status=status.HTTP_404_NOT_FOUND)
-        rental_state = Rental.objects.get(pk=rental)
-        rental_state = rental_state.state_id
-        if rental_state == 4:
+        try:
+            rental_state_obj = Rental.objects.get(pk=rental)
+        except Rental.DoesNotExist:
+            return Response({"error": "El alquiler no existe"}, status=status.HTTP_404_NOT_FOUND)
+        if rental_state_obj.state_id == 4:
             return Response({"error": "Ya se ha retornado la garantía"}, status=status.HTTP_404_NOT_FOUND)
         #if warranty_balance == 0:
         #    return Response({"error":f"La garantía actual es: {warranty_balance}"}, status=status.HTTP_404_NOT_FOUND)

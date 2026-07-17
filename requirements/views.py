@@ -29,8 +29,11 @@ class Requirement_Api(generics.GenericAPIView):
     )
     def get(self, request, *args, **kw):
         set_thread_variable('thread_user', request.user)
-        page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', 10))
+        try:
+            page_num = int(request.GET.get('page', 0))
+            limit_num = int(request.GET.get('limit', 10))
+        except (ValueError, TypeError):
+            return Response({"error": "Parámetros 'page' y 'limit' deben ser numéricos"}, status=status.HTTP_400_BAD_REQUEST)
         search_param = request.GET.get('search')
         requirements = Requirement.objects.filter(is_active = True).order_by('id')
         if search_param:
@@ -108,8 +111,11 @@ class RateWithRelatedDataView(generics.ListAPIView):
     )
     def get(self, request):
         set_thread_variable('thread_user', request.user)
-        page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', 10))
+        try:
+            page_num = int(request.GET.get('page', 0))
+            limit_num = int(request.GET.get('limit', 10))
+        except (ValueError, TypeError):
+            return Response({"error": "Parámetros 'page' y 'limit' deben ser numéricos"}, status=status.HTTP_400_BAD_REQUEST)
         rates = Rate.objects.prefetch_related(
             'raterequirement_set', 'raterequirement_set__requirement', 'raterequirement_set__customer_type'
         ).order_by('id')
@@ -125,7 +131,7 @@ class RateWithRelatedDataView(generics.ListAPIView):
             "status":"success",
             "total": total_rates,
             "page": page_num,
-            "last_page": math.ceil(total_rates/ limit_num),
+            "last_page": math.ceil(total_rates/ limit_num) if limit_num > 0 else 0,
             "rates": serializer.data
         })
 
@@ -219,8 +225,13 @@ class RateRequirement_Detail(generics.GenericAPIView):
         customer_types = request.data.get("customer_type")
         rate_requirements = request.data.get("requirement")
         rates_group = RateRequirement.objects.filter(rate=pk)
+        if not customer_types:
+            return Response({"error": "Se requiere al menos un tipo de cliente"}, status=status.HTTP_400_BAD_REQUEST)
         if name is not None:
-            rate_name=Rate.objects.get(pk=pk)
+            try:
+                rate_name=Rate.objects.get(pk=pk)
+            except Rate.DoesNotExist:
+                return Response({"error": "Tarifa no encontrada"}, status=status.HTTP_404_NOT_FOUND)
             rate_name.name= name
             rate_name.save()
         
@@ -290,8 +301,8 @@ class Requirements_customer(generics.GenericAPIView):
                 }
                 other_requirements_list.append(other_requirement_data)
             return Response({"data": {"required_requirements": required_requirements_list,"optional_requirements":other_requirements_list}}, status=status.HTTP_200_OK)
-            except (Rental.DoesNotExist, AttributeError) as e:
-                    return Response({"error": f"Error al obtener requisitos: {str(e)}"}, status=status.HTTP_404_NOT_FOUND)
+        except (Rental.DoesNotExist, AttributeError) as e:
+            return Response({"error": f"Error al obtener requisitos: {str(e)}"}, status=status.HTTP_404_NOT_FOUND)
 
 request_body_schema = openapi.Schema(
     type=openapi.TYPE_OBJECT,

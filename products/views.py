@@ -49,8 +49,11 @@ class Rate_Api(generics.GenericAPIView):
     operation_description="Lista de Tarifas",
     )
     def get(self, request, *args, **kwargs):
-        page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', 10))
+        try:
+            page_num = int(request.GET.get('page', 0))
+            limit_num = int(request.GET.get('limit', 10))
+        except (ValueError, TypeError):
+            return Response({"error": "Parámetros 'page' y 'limit' deben ser numéricos"}, status=status.HTTP_400_BAD_REQUEST)
         search_param = request.GET.get('search')
         rates = Rate.objects.all()
         if search_param:
@@ -103,8 +106,11 @@ class Product_Api(generics.GenericAPIView):
         queryset = Product.objects.filter(is_deleted=False).select_related(
             'rate', 'room', 'room__property', 'hour_range'
         ).prefetch_related('price_set')
-        page_num = int(request.GET.get('page', 0))
-        limit_num = int(request.GET.get('limit', 10))
+        try:
+            page_num = int(request.GET.get('page', 0))
+            limit_num = int(request.GET.get('limit', 10))
+        except (ValueError, TypeError):
+            return Response({"error": "Parámetros 'page' y 'limit' deben ser numéricos"}, status=status.HTTP_400_BAD_REQUEST)
         total_products = queryset.count()
         if limit_num == -1:
             paginated_products = queryset
@@ -488,8 +494,11 @@ class Product_Filter(generics.ListAPIView):
     def list(self, request, *args, **kwargs):
         try:
             queryset = self.get_queryset()
-            page_num = int(request.GET.get('page', 0))
-            limit_num = int(request.GET.get('limit', 10))
+            try:
+                page_num = int(request.GET.get('page', 0))
+                limit_num = int(request.GET.get('limit', 10))
+            except (ValueError, TypeError):
+                return Response({"error": "Parámetros 'page' y 'limit' deben ser numéricos"}, status=status.HTTP_400_BAD_REQUEST)
             total_products = queryset.count()
             
             # Si limit es -1, mostrar todos

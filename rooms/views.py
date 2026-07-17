@@ -113,8 +113,11 @@ class Sub_Room_Api(generics.GenericAPIView):
     def get(self, request):
         set_thread_variable('thread_user', request.user)
         serializer_class = Sub_RoomSerializer
-        page_num = int(request.GET.get('page',0))
-        limit_num = int(request.GET.get('limit', 10))
+        try:
+            page_num = int(request.GET.get('page',0))
+            limit_num = int(request.GET.get('limit', 10))
+        except (ValueError, TypeError):
+            return Response({"error": "Parámetros 'page' y 'limit' deben ser numéricos"}, status=status.HTTP_400_BAD_REQUEST)
         start_num = (page_num) * limit_num
         end_num = limit_num * (page_num + 1)
         sub_rooms = Sub_Room.objects.all()
@@ -130,7 +133,7 @@ class Sub_Room_Api(generics.GenericAPIView):
             "status": "success",
             "total": total_sub_rooms,
             "page": page_num,
-            "last_page": math.ceil(total_sub_rooms/ limit_num),
+            "last_page": math.ceil(total_sub_rooms/ limit_num) if limit_num > 0 else 0,
             "sub_rooms": serializer.data
         })
     @swagger_auto_schema(
@@ -143,7 +146,7 @@ class Sub_Room_Api(generics.GenericAPIView):
             serializer.save()
             return Response({"data":{ "sub_rooms": serializer.data }}, status=status.HTTP_201_CREATED)
         else:
-            return Response({"error":serializer.errors}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 class Sub_Room_Detail(generics.GenericAPIView):
     queryset = Sub_Room.objects.all()
@@ -174,4 +177,4 @@ class Sub_Room_Detail(generics.GenericAPIView):
         if serializer.is_valid():
             serializer.save()
             return Response({"data":{"sub_room":serializer.data}}, status=status.HTTP_200_OK)
-        return Response({"error": serializer.errors}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
