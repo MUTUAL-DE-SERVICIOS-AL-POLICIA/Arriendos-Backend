@@ -13,14 +13,15 @@ def required_fields(request, required_fields):
         }
     return None
 
-def generate_pdf(html, params):
+def generate_pdf(html, params, filename='documento.pdf'):
     root_logo = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logo.jpg')
     params["logo"]='file://' + root_logo
-    params["date"]=datetime.now().strftime("%d/%m/%y")
+    today = datetime.now()
+    params["date"]=today.strftime("%d/%m/%y %H:%M")
     html_content = render_to_string(html, params)
-    html = HTML(string=html_content)
+    html_obj = HTML(string=html_content)
     css = CSS(string='@page { margin-top: 10mm; margin-bottom: 20mm; margin-left: 10mm; margin-right: 10mm; }')
-    pdf_file = html.write_pdf(stylesheets=[css])
+    pdf_file = html_obj.write_pdf(stylesheets=[css])
     response = HttpResponse(pdf_file, content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="hello_world.pdf"'
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response

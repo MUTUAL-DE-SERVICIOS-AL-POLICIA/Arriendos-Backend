@@ -62,7 +62,7 @@ def Make_Delivery_Form(request, rental_id, product):
         'product':product,
         'date': date,
         'user': user,
-        'logo': 'file://' + ruta_logo
+        'logo': 'file://' + ruta_logo,
         })
 
     HTML(string=html_string).write_pdf(response, stylesheets=[CSS(
@@ -114,6 +114,7 @@ def Make_Overtime_Form(request, rental_id, product):
                 'additional_hour_applieds': additional_hour_applieds_data
             }
             selected_products.append(selected_product)
+
     user = request.user
     today = datetime.now()
     date = today.strftime("%d/%m/%y")
@@ -139,7 +140,7 @@ def Make_Overtime_Form(request, rental_id, product):
         'nup': nup,
         'date': date,
         'user': user,
-        'logo': 'file://' + ruta_logo
+        'logo': 'file://' + ruta_logo,
         })
 
     HTML(string=html_string).write_pdf(response, stylesheets=[CSS(
@@ -400,4 +401,5 @@ def Make_Rental_Report(request, start_date, end_date, state):
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = 'attachment; filename=reporte_de_alquileres.xlsx'
     wb.save(response)
+
     return response

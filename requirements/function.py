@@ -55,6 +55,7 @@ def Make_Rental_Form(request, rental_id):
     user = request.user
     today = datetime.now()
     date = today.strftime("%d/%m/%y")
+
     ruta_archivo_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'reserva.html')
     ruta_logo = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logo.jpg')
     response = HttpResponse(content_type='application/pdf')
@@ -82,7 +83,7 @@ def Make_Rental_Form(request, rental_id):
         'detail_nit': deatil_nit,
         'date': date,
         'user': user,
-        'logo': 'file://' + ruta_logo
+        'logo': 'file://' + ruta_logo,
         })
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = 'attachment; filename="formulariodesolicitudreserva.pdf"'

@@ -54,6 +54,7 @@ def Make_Warranty_Form(request, rental_id):
     user = request.user
     today = datetime.now()
     date = today.strftime("%d/%m/%y")
+
     ruta_archivo_html = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'solicitud_devolucion_de_garantia.html')
     ruta_logo = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logo.jpg')
     response = HttpResponse(content_type='application/pdf')
@@ -83,7 +84,7 @@ def Make_Warranty_Form(request, rental_id):
         'detail_nit': deatil_nit,
         'date': date,
         'user': user,
-        'logo': 'file://' + ruta_logo
+        'logo': 'file://' + ruta_logo,
         })
 
     HTML(string=html_string).write_pdf(response, stylesheets=[CSS(
@@ -164,7 +165,7 @@ def Make_Damage_Warranty_Form(request, rental_id, product):
         'contract_number': contract_number,
         'date': date,
         'user': user,
-        'logo': 'file://' + ruta_logo
+        'logo': 'file://' + ruta_logo,
         })
 
     HTML(string=html_string).write_pdf(response, stylesheets=[CSS(
@@ -210,6 +211,7 @@ def Make_Return_Warranty_Form(request, rental_id):
             'name': requirement.requirement_name
         }
         requirements.append(data)
+
     user = request.user
     today = datetime.now()
     date = today.strftime("%d/%m/%y")
@@ -239,7 +241,7 @@ def Make_Return_Warranty_Form(request, rental_id):
         'warranty': warranty.balance,
         'date': date,
         'user': user,
-        'logo': 'file://' + ruta_logo
+        'logo': 'file://' + ruta_logo,
         })
 
     HTML(string=html_string).write_pdf(response, stylesheets=[CSS(
