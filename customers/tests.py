@@ -78,7 +78,9 @@ class TestCustomerAPI:
             'institution': {
                 'name': 'New Co',
                 'nit': '9999999',
-                'contacts': []
+                'contacts': [
+                    {'name': 'Contact1', 'ci_nit': '1234567', 'phone': '7777777'}
+                ]
             }
         }
         response = self.client.post('/api/customers/', data, format='json')

@@ -190,7 +190,7 @@ class TestSubRoomAPI:
     def test_sub_room_invalid_data(self):
         data = {'name': '', 'room': self.room.id}
         response = self.client.post('/api/rooms/sub_rooms/', data, format='json')
-        assert response.status_code == 404
+        assert response.status_code == 400
 
     def test_properties_with_rooms_endpoint(self):
         Sub_Room.objects.create(name='Sub1', quantity=5, room=self.room, state='Disponible')
