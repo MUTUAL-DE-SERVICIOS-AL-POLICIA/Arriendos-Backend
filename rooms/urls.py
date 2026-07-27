@@ -8,5 +8,5 @@ urlpatterns = [
     path('<int:pk>/', RoomRetrieveUpdateDestroyView.as_view(), name='room-retrieve-update-destroy'),
     path('properties/roomslist/', List_Properties_with_Rooms.as_view(), name='List_Properties_with_Rooms'),
     path('sub_rooms/', Sub_Room_Api.as_view()),
-    path('sub_rooms/<str:pk>',Sub_Room_Detail.as_view())
+    path('sub_rooms/<int:pk>',Sub_Room_Detail.as_view())
 ]
