@@ -208,13 +208,60 @@ class UserRoleCreateSerializer(serializers.Serializer):
 
     def validate(self, data):
         """
-        Validación global: previene que un usuario se asigne un rol a sí mismo.
-        Esto es un control de seguridad para evitar que usuarios manipulen
-        sus propios permisos.
+        Validaciones RBAC:
+        1. No auto-asignación de rol
+        2. Operador no puede asignar rol de Administrador
+        3. Operador no puede cambiar rol de un Administrador existente
+        4. No quitar el último Administrador
         """
         request = self.context.get('request')
-        if request and data.get('user_id') == request.user.id:
+        if not request:
+            return data
+
+        user_id = data.get('user_id')
+        role_id = data.get('role_id')
+
+        # 1. No auto-asignación
+        if user_id == request.user.id:
             raise serializers.ValidationError("No puedes asignarte un rol a ti mismo")
+
+        # Solo aplicar reglas de Operador si el solicitante NO es superuser
+        if request.user.is_superuser:
+            return data
+
+        try:
+            request_user_role = UserRole.objects.get(user=request.user)
+            request_role_name = request_user_role.role.name
+        except UserRole.DoesNotExist:
+            # Sin rol asignado = sin permisos (HasModulePermission ya bloqueó)
+            return data
+
+        target_user = User.objects.get(id=user_id)
+        target_role = Role.objects.get(id=role_id)
+
+        # 2. Operador no puede asignar rol de Administrador
+        if request_role_name == 'Operador' and target_role.name == 'Administrador':
+            raise serializers.ValidationError("No puedes asignar el rol de Administrador")
+
+        # 3. Operador no puede cambiar rol de un Administrador existente
+        if request_role_name == 'Operador':
+            try:
+                target_current_role = UserRole.objects.get(user=target_user)
+                if target_current_role.role.name == 'Administrador':
+                    raise serializers.ValidationError("No puedes cambiar el rol de un Administrador")
+            except UserRole.DoesNotExist:
+                pass
+
+        # 4. No quitar el último Administrador
+        try:
+            target_current_role = UserRole.objects.get(user=target_user)
+            if target_current_role.role.name == 'Administrador' and target_role.name != 'Administrador':
+                admin_count = UserRole.objects.filter(role__name='Administrador').count()
+                if admin_count <= 1:
+                    raise serializers.ValidationError("No se puede quitar el rol al último administrador")
+        except UserRole.DoesNotExist:
+            pass
+
         return data
 
     def create(self, validated_data):

@@ -28,6 +28,7 @@ from .serializers import (
     UserWithRoleSerializer
 )
 from roles.permissions import HasModulePermission
+from users.audit import create_rbac_audit
 import math
 
 
@@ -150,9 +151,19 @@ class Role_List_Create_View(generics.GenericAPIView):
         })
 
     def post(self, request, *args, **kwargs):
+        # Solo Administrador o is_superuser puede crear roles
+        if not request.user.is_superuser:
+            try:
+                user_role = UserRole.objects.get(user=request.user)
+                if user_role.role.name != 'Administrador':
+                    return Response({"status": "fail", "message": "Solo administradores pueden crear roles"}, status=status.HTTP_403_FORBIDDEN)
+            except UserRole.DoesNotExist:
+                return Response({"status": "fail", "message": "No tienes un rol asignado"}, status=status.HTTP_403_FORBIDDEN)
+
         serializer = RoleCreateSerializer(data=request.data)
         if serializer.is_valid():
             role = serializer.save()
+            create_rbac_audit(request.user, "ROLE_CREATE", f"Creó rol '{role.name}'", role.id)
             return Response({
                 "status": "success",
                 "data": RoleSerializer(role).data
@@ -203,11 +214,21 @@ class Role_Detail_View(generics.GenericAPIView):
 
     def patch(self, request, pk, *args, **kwargs):
         """Actualiza un rol existente (actualización parcial)."""
+        # Solo Administrador o is_superuser puede editar roles
+        if not request.user.is_superuser:
+            try:
+                user_role = UserRole.objects.get(user=request.user)
+                if user_role.role.name != 'Administrador':
+                    return Response({"status": "fail", "message": "Solo administradores pueden editar roles"}, status=status.HTTP_403_FORBIDDEN)
+            except UserRole.DoesNotExist:
+                return Response({"status": "fail", "message": "No tienes un rol asignado"}, status=status.HTTP_403_FORBIDDEN)
+
         try:
             role = Role.objects.get(pk=pk)
             serializer = RoleCreateSerializer(role, data=request.data, partial=True)
             if serializer.is_valid():
                 role = serializer.save()
+                create_rbac_audit(request.user, "ROLE_UPDATE", f"Actualizó rol '{role.name}'", role.id)
                 return Response({
                     "status": "success",
                     "data": RoleSerializer(role).data
@@ -226,7 +247,17 @@ class Role_Detail_View(generics.GenericAPIView):
         """
         Elimina un rol.
         Valida que no tenga usuarios asignados antes de eliminar.
+        Solo Administrador o is_superuser puede eliminar roles.
         """
+        # Solo Administrador o is_superuser puede eliminar roles
+        if not request.user.is_superuser:
+            try:
+                user_role = UserRole.objects.get(user=request.user)
+                if user_role.role.name != 'Administrador':
+                    return Response({"status": "fail", "message": "Solo administradores pueden eliminar roles"}, status=status.HTTP_403_FORBIDDEN)
+            except UserRole.DoesNotExist:
+                return Response({"status": "fail", "message": "No tienes un rol asignado"}, status=status.HTTP_403_FORBIDDEN)
+
         try:
             role = Role.objects.get(pk=pk)
             # Verificar si hay usuarios con este rol
@@ -235,7 +266,9 @@ class Role_Detail_View(generics.GenericAPIView):
                     "status": "fail",
                     "message": "No se puede eliminar un rol asignado a usuarios"
                 }, status=status.HTTP_400_BAD_REQUEST)
+            role_name = role.name
             role.delete()
+            create_rbac_audit(request.user, "ROLE_DELETE", f"Eliminó rol '{role_name}'", pk)
             return Response({
                 "status": "success",
                 "message": "Rol eliminado correctamente"
@@ -270,9 +303,24 @@ class UserRole_Assign_View(generics.GenericAPIView):
     rbac_module = 'users'
 
     def post(self, request, *args, **kwargs):
+        # Solo Administrador o is_superuser puede asignar roles
+        if not request.user.is_superuser:
+            try:
+                user_role = UserRole.objects.get(user=request.user)
+                if user_role.role.name != 'Administrador':
+                    return Response({"status": "fail", "message": "Solo administradores pueden asignar roles"}, status=status.HTTP_403_FORBIDDEN)
+            except UserRole.DoesNotExist:
+                return Response({"status": "fail", "message": "No tienes un rol asignado"}, status=status.HTTP_403_FORBIDDEN)
+
         serializer = UserRoleCreateSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
             user_role = serializer.save()
+            target_user = User.objects.get(id=user_role.user_id)
+            create_rbac_audit(
+                request.user, "ROLE_ASSIGN",
+                f"Asignó rol '{user_role.role.name}' a usuario '{target_user.username}'",
+                user_role.id
+            )
             return Response({
                 "status": "success",
                 "data": UserRoleSerializer(user_role).data
@@ -323,9 +371,31 @@ class UserRole_Detail_View(generics.GenericAPIView):
 
     def delete(self, request, pk, *args, **kwargs):
         """Elimina la asignación de rol de un usuario."""
+        # Solo Administrador o is_superuser puede quitar roles
+        if not request.user.is_superuser:
+            try:
+                user_role_request = UserRole.objects.get(user=request.user)
+                if user_role_request.role.name != 'Administrador':
+                    return Response({"status": "fail", "message": "Solo administradores pueden quitar roles"}, status=status.HTTP_403_FORBIDDEN)
+            except UserRole.DoesNotExist:
+                return Response({"status": "fail", "message": "No tienes un rol asignado"}, status=status.HTTP_403_FORBIDDEN)
+
         try:
             user_role = UserRole.objects.get(pk=pk)
+            # No permitir remover último Administrador
+            if user_role.role.name == 'Administrador':
+                admin_count = UserRole.objects.filter(role__name='Administrador').count()
+                if admin_count <= 1:
+                    return Response({"status": "fail", "message": "No se puede remover el rol al último administrador"}, status=status.HTTP_400_BAD_REQUEST)
+
+            target_user = User.objects.get(id=user_role.user_id)
+            role_name = user_role.role.name
             user_role.delete()
+            create_rbac_audit(
+                request.user, "ROLE_REMOVE",
+                f"Removió rol '{role_name}' de usuario '{target_user.username}'",
+                pk
+            )
             return Response({
                 "status": "success",
                 "message": "Rol removido del usuario"
