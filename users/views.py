@@ -17,6 +17,7 @@ from threadlocals.threadlocals import set_thread_variable
 from rest_framework.permissions import IsAuthenticated
 from roles.permissions import HasModulePermission
 from roles.models import UserRole
+from .audit import create_rbac_audit
 import math
 import re
 import logging
@@ -121,28 +122,57 @@ class User_Delete(generics.GenericAPIView):
         if not User.objects.filter(pk=pk).exists():
             return Response({"status":"fail", "message":"Usuario no encontrado"}, status=status.HTTP_404_NOT_FOUND)
         user = User.objects.get(pk=pk)
-        
-        # No permitir desactivar al ultimo administrador
-        if user.is_superuser:
-            return Response({
-                "status": "fail", 
-                "message": "No se puede desactivar al usuario administrador del sistema"
-            }, status=status.HTTP_400_BAD_REQUEST)
-        
+
         # No permitir que un usuario se desactive a si mismo
         if user.pk == request.user.pk:
             return Response({
-                "status": "fail", 
+                "status": "fail",
                 "message": "No puedes desactivar tu propia cuenta"
             }, status=status.HTTP_400_BAD_REQUEST)
-        
+
+        # No permitir desactivar usuario is_superuser
+        if user.is_superuser:
+            return Response({
+                "status": "fail",
+                "message": "No se puede desactivar al usuario administrador del sistema"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Operador no puede desactivar/activar Administradores
+        if not request.user.is_superuser:
+            try:
+                request_user_role = UserRole.objects.get(user=request.user)
+                if request_user_role.role.name == 'Operador':
+                    try:
+                        target_role = UserRole.objects.get(user=user)
+                        if target_role.role.name == 'Administrador':
+                            return Response({"status": "fail", "message": "No puedes desactivar a un administrador"}, status=status.HTTP_403_FORBIDDEN)
+                    except UserRole.DoesNotExist:
+                        pass
+            except UserRole.DoesNotExist:
+                pass
+
+        # No permitir desactivar al ultimo administrador
+        try:
+            target_role = UserRole.objects.get(user=user)
+            if target_role.role.name == 'Administrador':
+                admin_count = UserRole.objects.filter(role__name='Administrador').count()
+                if admin_count <= 1:
+                    return Response({
+                        "status": "fail",
+                        "message": "No se puede desactivar al último administrador"
+                    }, status=status.HTTP_400_BAD_REQUEST)
+        except UserRole.DoesNotExist:
+            pass
+
         if user.is_active == True:
             user.is_active= False
             user.save()
+            create_rbac_audit(request.user, "USER_DEACTIVATE", f"Desactivó usuario '{user.username}'", user.id)
             return Response({"status":"success", "message":"Usuario desactivado"}, status=status.HTTP_200_OK)
         else:
             user.is_active= True
             user.save()
+            create_rbac_audit(request.user, "USER_ACTIVATE", f"Activó usuario '{user.username}'", user.id)
             return Response({"status":"success", "message":"Usuario activado"}, status=status.HTTP_200_OK)
 
 
