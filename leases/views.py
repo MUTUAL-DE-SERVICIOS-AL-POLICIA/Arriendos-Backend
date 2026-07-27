@@ -509,16 +509,14 @@ class Change_state(generics.ListAPIView):
             state_obj = State.objects.get(pk=state)
         except State.DoesNotExist:
             return Response({"error": "Estado no válido"}, status=status.HTTP_404_NOT_FOUND)
-        payment = Payment.objects.filter(rental_id=rental_id)
-        warranty = Warranty_Movement.objects.filter(rental_id=rental_id)
-        if self.validated_state(rental_id, state) and not warranty and not payment:
+        if self.validated_state(rental_id, state):
             self.save_state(rental_id,state_obj,reason)
             response_data = {
                 "message": f"cambio de estado a {state_obj.name} exitosamente",
                 "name_state": state_obj.name
             }
             return Response(response_data, status=status.HTTP_200_OK)
-        return Response({"error": "No se puede cambiar de estado existen garantías o pagos registrados"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "No se puede cambiar de estado"}, status=status.HTTP_400_BAD_REQUEST)
     def default_case(self, rental_id, state, reason=None):
         return Response({"error": "No existe el estado"}, status=status.HTTP_400_BAD_REQUEST)
     def validated_state(self,rental_id,state):
@@ -783,6 +781,10 @@ class rental_list(generics.GenericAPIView):
             )
         if state_id:
             queryset = queryset.filter(state_id=state_id)
+        else:
+            exclude_annulled = self.request.query_params.get('exclude_annulled', 'true')
+            if exclude_annulled == 'true':
+                queryset = queryset.exclude(state_id=5)
         if date_from:
             queryset = queryset.filter(created_at__date__gte=date_from)
         if date_to:
