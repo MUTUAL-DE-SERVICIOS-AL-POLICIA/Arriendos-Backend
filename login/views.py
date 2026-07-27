@@ -228,7 +228,19 @@ class Auth(TokenObtainPairView):
                         first_name=username,
                     )
 
-        # Si LDAP no está habilitado o LDAP falló, intentar autenticación local
+        # Si LDAP está habilitado pero falló, rechazar login (sin fallback a DB)
+        if settings.LDAP_STATUS == True and user is None:
+            security_logger.warning(f"LOGIN_FAIL_LDAP: usuario={username} ip={ip}")
+            Record.objects.create(
+                user=None,
+                action="LOGIN_FAIL",
+                model="User",
+                detail=f"Login LDAP fallido para usuario {username}",
+                instance_id=None,
+            )
+            return Response({'error': 'Credenciales inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Solo si LDAP no está habilitado, intentar autenticación local
         if user is None:
             try:
                 response = super().post(request, *args, **kwargs)
