@@ -12,6 +12,9 @@ class Property(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        ordering = ['id']
+
 class Room(models.Model):
     property=models.ForeignKey(Property, on_delete=models.CASCADE)
     name=models.CharField(max_length=250)
@@ -25,10 +28,16 @@ class Room(models.Model):
 
 
 class Sub_Room(models.Model):
+    STATE_CHOICES = [
+        ('BUENO', 'Bueno'),
+        ('REGULAR', 'Regular'),
+        ('MALO', 'Malo'),
+    ]
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
     name = models.CharField(max_length=150)
     quantity = models.IntegerField(null=True)
-    state = models.CharField(max_length=250)
+    state = models.CharField(max_length=250, choices=STATE_CHOICES, default='BUENO')
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
