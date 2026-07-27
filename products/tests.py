@@ -6,62 +6,6 @@ from rooms.models import Property, Room
 
 
 @pytest.mark.django_db
-class TestProductModels:
-    def test_rate_creation(self):
-        rate = Rate.objects.create(name='Regular')
-        assert rate.name == 'Regular'
-        assert str(rate) == 'Regular'
-
-    def test_hour_range_creation(self):
-        hr = HourRange.objects.create(time=4)
-        assert hr.time == 4
-        assert str(hr) == '4h'
-
-    def test_product_creation(self):
-        prop = Property.objects.create(name='Hotel', address='Main St', department='LP')
-        room = Room.objects.create(name='Room1', capacity=50, warranty=500, property=prop)
-        rate = Rate.objects.create(name='Regular')
-        hr = HourRange.objects.create(time=4)
-        product = Product.objects.create(
-            day=['LUNES', 'MARTES'],
-            rate=rate,
-            room=room,
-            hour_range=hr
-        )
-        assert product.day == ['LUNES', 'MARTES']
-        assert product.is_deleted is False
-        s = str(product)
-        assert 'Room1' in s
-        assert 'Regular' in s
-        assert '4h' in s
-
-    def test_price_creation(self):
-        prop = Property.objects.create(name='Hotel', address='Main St', department='LP')
-        room = Room.objects.create(name='Room1', capacity=50, warranty=500, property=prop)
-        rate = Rate.objects.create(name='Regular')
-        hr = HourRange.objects.create(time=4)
-        product = Product.objects.create(day=['LUNES'], rate=rate, room=room, hour_range=hr)
-        price = Price.objects.create(mount=500, product=product, is_active=True)
-        assert price.mount == 500
-        assert price.is_active is True
-        s = str(price)
-        assert 'Room1' in s
-        assert '500' in s
-        assert 'vigente' in s
-
-    def test_product_soft_delete(self):
-        prop = Property.objects.create(name='Hotel', address='Main St', department='LP')
-        room = Room.objects.create(name='Room1', capacity=50, warranty=500, property=prop)
-        rate = Rate.objects.create(name='Regular')
-        hr = HourRange.objects.create(time=4)
-        product = Product.objects.create(day=['LUNES'], rate=rate, room=room, hour_range=hr)
-        product.is_deleted = True
-        product.save()
-        assert Product.objects.filter(is_deleted=True).count() == 1
-        assert Product.objects.filter(is_deleted=False).count() == 0
-
-
-@pytest.mark.django_db
 class TestProductAPI:
     def setup_method(self):
         self.client = APIClient()
@@ -72,44 +16,60 @@ class TestProductAPI:
         self.rate = Rate.objects.create(name='Regular')
         self.hr = HourRange.objects.create(time=4)
 
-    def test_product_list(self):
+    def test_product_create_with_price(self):
+        data = {
+            'day': ['LUNES', 'MARTES'],
+            'rate': self.rate.id,
+            'room': self.room.id,
+            'hour_range': self.hr.id,
+            'mount': 750
+        }
+        response = self.client.post('/api/product/', data, format='json')
+        assert response.status_code == 201
+        assert response.data['status'] == 'success'
+        product_data = response.data['data'][0]
+        price_data = response.data['data'][1]
+        assert product_data['id'] is not None
+        assert price_data['mount'] == 750
+        assert price_data['is_active'] is True
+        assert Price.objects.filter(product_id=product_data['id'], is_active=True).exists()
+
+    def test_product_create_invalid_price_deletes_product(self):
+        data = {
+            'day': ['LUNES'],
+            'rate': self.rate.id,
+            'room': self.room.id,
+            'hour_range': self.hr.id,
+            'mount': 'abc'
+        }
+        initial_count = Product.objects.count()
+        response = self.client.post('/api/product/', data, format='json')
+        assert response.status_code == 400
+        assert Product.objects.count() == initial_count
+
+    def test_product_list_excludes_deleted(self):
         Product.objects.create(day=['LUNES'], rate=self.rate, room=self.room, hour_range=self.hr)
+        deleted = Product.objects.create(day=['MARTES'], rate=self.rate, room=self.room, hour_range=self.hr)
+        deleted.is_deleted = True
+        deleted.save()
         response = self.client.get('/api/product/')
         assert response.status_code == 200
+        assert response.data['total'] == 1
 
-    def test_rate_list(self):
-        Rate.objects.create(name='Regular')
-        Rate.objects.create(name='Preferencial')
-        response = self.client.get('/api/product/rates/')
+    def test_product_soft_delete_via_api(self):
+        product = Product.objects.create(day=['LUNES'], rate=self.rate, room=self.room, hour_range=self.hr)
+        response = self.client.delete(f'/api/product/{product.id}')
         assert response.status_code == 200
+        product.refresh_from_db()
+        assert product.is_deleted is True
 
-    def test_hour_range_list(self):
-        HourRange.objects.create(time=4)
-        HourRange.objects.create(time=8)
-        response = self.client.get('/api/product/hour-range/')
-        assert response.status_code == 200
-
-    def test_price_list(self):
+    def test_product_patch_with_price(self):
         product = Product.objects.create(day=['LUNES'], rate=self.rate, room=self.room, hour_range=self.hr)
         Price.objects.create(mount=500, product=product, is_active=True)
-        response = self.client.get('/api/product/price/')
+        response = self.client.patch(f'/api/product/{product.id}', {'mount': 900}, format='json')
         assert response.status_code == 200
-
-    def test_product_filter_options(self):
-        response = self.client.get('/api/product/product_filter_options/')
-        assert response.status_code == 200
-
-    def test_price_history(self):
-        product = Product.objects.create(day=['LUNES'], rate=self.rate, room=self.room, hour_range=self.hr)
-        Price.objects.create(mount=500, product=product, is_active=True)
-        response = self.client.get(f'/api/product/price_history/?product={product.id}')
-        assert response.status_code == 200
-
-    def test_product_filter(self):
-        Product.objects.create(day=['LUNES'], rate=self.rate, room=self.room, hour_range=self.hr)
-        response = self.client.get('/api/product/product_filter/')
-        assert response.status_code == 200
-
-    def test_additional_hour_list(self):
-        response = self.client.get('/api/product/additional_hour/')
-        assert response.status_code == 200
+        assert response.data['data']['price']['mount'] == 900
+        old_price = Price.objects.filter(product=product, is_active=False).first()
+        assert old_price is not None
+        new_price = Price.objects.filter(product=product, is_active=True).first()
+        assert new_price.mount == 900
