@@ -84,10 +84,12 @@ class List_Properties_with_Rooms(generics.GenericAPIView):
                 sub_room_data = []
                 for sub_room in sub_rooms:
                     sub_room_rooms = {
+                        'id': sub_room.id,
                         'name': sub_room.name,
                         'state': sub_room.state,
                         'room': sub_room.room_id,
-                        'quantity': sub_room.quantity
+                        'quantity': sub_room.quantity,
+                        'is_active': sub_room.is_active
                     }
                     sub_room_data.append(sub_room_rooms)
                 room_data = {
