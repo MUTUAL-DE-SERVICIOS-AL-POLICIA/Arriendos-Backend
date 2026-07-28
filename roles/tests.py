@@ -132,10 +132,10 @@ class TestPermissionMapping:
 
         assert response.status_code == 403
 
-    def test_post_maps_to_add_permission(self):
-        """POST requiere permiso 'add' sobre el módulo."""
+    def test_post_assign_requires_admin_role(self):
+        """POST /api/roles/assign/ requiere rol Administrador."""
         user = User.objects.create_user(username='admin_post', password='pass123')
-        admin_role = Role.objects.create(name='Administrador')
+        admin_role = Role.objects.create(name='Operador')
         _grant_permission(admin_role, 'users', 'add')
         UserRole.objects.create(user=user, role=admin_role)
         self.client.force_authenticate(user=user)
@@ -144,16 +144,22 @@ class TestPermissionMapping:
             'user_id': 999, 'role_id': 999
         }, format='json')
 
-        assert response.status_code != 403
+        assert response.status_code == 403
 
-    def test_delete_maps_to_delete_permission(self):
-        """DELETE requiere permiso 'delete' sobre el módulo."""
-        _grant_permission(self.role, 'users', 'delete')
+    def test_delete_user_requires_admin_role(self):
+        """DELETE /api/users/state/<pk> requiere rol Operador/Admin."""
+        operador = User.objects.create_user(username='operador_user', password='pass123')
+        operador_role = Role.objects.create(name='Operador')
+        _grant_permission(operador_role, 'users', 'delete')
+        UserRole.objects.create(user=operador, role=operador_role)
+        admin_target = User.objects.create_user(username='admin_target', password='pass123')
+        admin_target_role = Role.objects.create(name='Administrador')
+        UserRole.objects.create(user=admin_target, role=admin_target_role)
+        self.client.force_authenticate(user=operador)
 
-        response = self.client.delete('/api/users/state/99999')
+        response = self.client.delete(f'/api/users/state/{admin_target.id}')
 
-        # No debe ser 403 por permisos (puede ser 404 por no existir)
-        assert response.status_code != 403
+        assert response.status_code == 403
 
 
 @pytest.mark.django_db

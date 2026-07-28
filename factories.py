@@ -225,6 +225,15 @@ class WarrantyMovementFactory(factory.django.DjangoModelFactory):
     rental = factory.SubFactory(RentalFactory)
 
 
+class EventDamageFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Event_Damage
+
+    mount = factory.Faker('pyfloat', min_value=10, max_value=500)
+    selected_product = factory.SubFactory(SelectedProductFactory)
+    warranty_movement = factory.SubFactory(WarrantyMovementFactory)
+
+
 class RecordFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Record
