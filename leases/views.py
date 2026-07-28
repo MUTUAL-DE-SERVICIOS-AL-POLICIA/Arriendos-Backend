@@ -786,9 +786,9 @@ class rental_list(generics.GenericAPIView):
             if exclude_annulled == 'true':
                 queryset = queryset.exclude(state_id=5)
         if date_from:
-            queryset = queryset.filter(created_at__date__gte=date_from)
+            queryset = queryset.filter(selected_product_set__start_time__date__gte=date_from)
         if date_to:
-            queryset = queryset.filter(created_at__date__lte=date_to)
+            queryset = queryset.filter(selected_product_set__start_time__date__lte=date_to)
         queryset = queryset.order_by("id").distinct()
         try:
             page_num = int(request.GET.get('page', 0))
