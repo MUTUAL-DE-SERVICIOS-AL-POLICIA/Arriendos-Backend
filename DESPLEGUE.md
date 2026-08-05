@@ -1,6 +1,6 @@
-# DESPLIEGUE — ARRIENDOS BACKEND
+# DESPLIEGUE — ARRIENDOS
 
-Guia paso a paso para desplegar el sistema en los 3 entornos.
+Guia completa para desplegar Backend y Frontend en los 3 entornos.
 
 ---
 
@@ -12,7 +12,9 @@ Guia paso a paso para desplegar el sistema en los 3 entornos.
 4. [Despliegue en Pruebas](#4-despliegue-en-pruebas)
 5. [Despliegue en Produccion](#5-despliegue-en-produccion)
 6. [Rollback](#6-rollback)
-7. [Troubleshooting](#7-troubleshooting)
+7. [Scripts de Despliegue](#7-scripts-de-despliegue)
+8. [Checklist de Despliegue Seguro](#8-checklist-de-despliegue-seguro)
+9. [Troubleshooting](#9-troubleshooting)
 
 ---
 
@@ -90,30 +92,20 @@ LDAP_STATUS=False
 createdb -U postgres bd_arriendos
 ```
 
-### Paso 4: Levantar con Docker
+### Paso 4: Levantar Backend con Docker
 ```bash
 docker build -t arriendos:latest .
 docker run -d \
   --name arriendos-app \
-  -e DB_HOST="127.0.0.1" \
-  -e DB_NAME="bd_arriendos" \
-  -e DB_USER="postgres" \
-  -e DB_PASSWORD="123456" \
-  -e SECRET_KEY="<tu-secret-key>" \
-  -e DEBUG=True \
-  -e ENVIRONMENT=local \
-  -e LDAP_STATUS=False \
+  --env-file .env \
   -p 9005:9005 \
   arriendos:latest
 ```
 
-### Paso 5: Verificar
+### Paso 5: Verificar Backend
 ```bash
-# Ver logs
 docker logs arriendos-app
-
-# Abrir swagger
-# http://localhost:9005/swagger/
+# Abrir: http://localhost:9005/swagger/
 ```
 
 ### Paso 6: Cargar datos iniciales (UNA SOLA VEZ)
@@ -129,11 +121,29 @@ docker exec arriendos-app python manage.py loaddata requirements/fixtures/initia
 
 > **NOTA:** Los fixtures usan PKs hardcodeados. NO ejecutar en una BD con datos existentes.
 
+### Paso 7: Levantar Frontend
+```bash
+cd ../arriendos-frontend
+cp .env.example .env
+# Editar .env si es necesario
+docker build -t arriendos-frontend:latest .
+docker run -d \
+  --name arriendos-frontend \
+  -p 83:80 \
+  arriendos-frontend:latest
+```
+
+### Paso 8: Verificar Frontend
+```bash
+docker logs arriendos-frontend
+# Abrir: http://localhost:83/
+```
+
 ---
 
 ## 4. DESPLIEGUE EN PRUEBAS
 
-### Arquitectura del servidor de pruebas
+### Arquitectura del servidor
 
 ```
 Servidor: <IP_SERVIDOR> (1 CPU, 8GB RAM)
@@ -149,10 +159,24 @@ ssh <USUARIO>@<IP_SERVIDOR>
 
 ### Paso 2: Hacer backup de la BD
 ```bash
-pg_dump -h <IP_BD> -p 5438 -U test -d <NOMBRE_BD> -Fc -f /home/administrador/backup_pruebas_$(date +%Y%m%d_%H%M).dump
+pg_dump -h <IP_BD> -p 5438 -U test -d <NOMBRE_BD> \
+  -Fc -f /home/administrador/backups/bd_pruebas_pre_migracion_$(date +%Y%m%d_%H%M).dump
 ```
 
-### Paso 3: Clonar o actualizar el codigo
+### Paso 3: Taggear imagen actual (rollback point)
+```bash
+# Backend
+docker tag arriendos:latest arriendos:backup-$(date +%Y%m%d_%H%M)
+
+# Frontend
+docker tag arriendos-frontend:latest arriendos-frontend:backup-$(date +%Y%m%d_%H%M)
+
+# Verificar tags creados
+docker images arriendos --format "table {{.Tag}}\t{{.CreatedAt}}\t{{.Size}}"
+docker images arriendos-frontend --format "table {{.Tag}}\t{{.CreatedAt}}\t{{.Size}}"
+```
+
+### Paso 4: Actualizar codigo Backend
 ```bash
 cd /home/administrador/aplicaciones-dev/Arriendos/Arriendos-Backend
 git fetch origin
@@ -160,7 +184,7 @@ git checkout dev-roles
 git pull origin dev-roles
 ```
 
-### Paso 4: Crear archivo .env
+### Paso 5: Crear archivo .env Backend
 ```bash
 cat > .env << 'EOF'
 DB_HOST=<IP_BD>
@@ -183,19 +207,11 @@ CORS_ORIGINS=http://<IP_SERVIDOR>:83,http://<IP_SERVIDOR>:4300
 EOF
 ```
 
-### Paso 5: Detener contenedor viejo
-```bash
-# Anotar image ID para rollback
-docker inspect cranky_dijkstra --format '{{.Image}}' > /home/administrador/rollback_image.txt
-
-# Detener y eliminar
-docker stop cranky_dijkstra
-docker rm cranky_dijkstra
-```
-
-### Paso 6: Construir y ejecutar nuevo contenedor
+### Paso 6: Construir y desplegar Backend
 ```bash
 docker build -t arriendos:latest .
+docker stop arriendos-app 2>/dev/null || true
+docker rm arriendos-app 2>/dev/null || true
 docker run -d \
   --name arriendos-app \
   --restart unless-stopped \
@@ -204,47 +220,46 @@ docker run -d \
   arriendos:latest
 ```
 
-### Paso 7: Verificar
+### Paso 7: Verificar Backend
 ```bash
-# Ver logs de arranque
 docker logs arriendos-app
-
-# Verificar swagger
 curl -s http://<IP_SERVIDOR>:9005/swagger/
-
-# Verificar login LDAP
-curl -X POST http://<IP_SERVIDOR>:9005/api/login/ \
-  -H "Content-Type: application/json" \
-  -d '{"username":"<usuario_ldap>","password":"<password>"}'
-
-# Verificar tablas nuevas
 docker exec arriendos-app python manage.py dbshell -c "\dt roles_*"
 ```
 
-### Paso 8: Actualizar frontend (si aplica)
+### Paso 8: Actualizar codigo Frontend
 ```bash
 cd /home/administrador/aplicaciones-dev/Arriendos/arriendos-frontend
 git fetch origin
 git checkout dev-roles
 git pull origin dev-roles
+```
 
-# Crear .env
+### Paso 9: Crear archivo .env Frontend
+```bash
 cat > .env << 'EOF'
 VITE_HOST_BACKEND="http://<IP_SERVIDOR>:9005/"
 VITE_HOST='<IP_SERVIDOR>'
 VITE_PORT='4300'
 EOF
+```
 
-# Reconstruir
+### Paso 10: Construir y desplegar Frontend
+```bash
 docker build -t arriendos-frontend:latest .
-
-# Detener viejo y arrancar nuevo
-docker stop silly_euclid && docker rm silly_euclid
+docker stop arriendos-frontend 2>/dev/null || true
+docker rm arriendos-frontend 2>/dev/null || true
 docker run -d \
   --name arriendos-frontend \
   --restart unless-stopped \
   -p 83:80 \
   arriendos-frontend:latest
+```
+
+### Paso 11: Verificar Frontend
+```bash
+docker logs arriendos-frontend
+curl -s http://<IP_SERVIDOR>:83/
 ```
 
 ---
@@ -268,17 +283,28 @@ ssh <usuario_prod>@<IP_PROD>
 
 ### Paso 2: Hacer backup de la BD
 ```bash
-pg_dump -h <DB_HOST_PROD> -p <DB_PORT_PROD> -U <DB_USER_PROD> -d <DB_NAME_PROD> -Fc -f /home/<user>/backup_produccion_$(date +%Y%m%d_%H%M).dump
+pg_dump -h <DB_HOST_PROD> -p <DB_PORT_PROD> -U <DB_USER_PROD> -d <DB_NAME_PROD> \
+  -Fc -f /home/<user>/backups/bd_prod_pre_migracion_$(date +%Y%m%d_%H%M).dump
 ```
 
 ### Paso 3: Verificar backup
 ```bash
-createdb -U postgres bd_test_restore
-pg_restore -h localhost -U postgres -d bd_test_restore backup_produccion_*.dump
-dropdb -U postgres bd_test_restore
+pg_restore -l /home/<user>/backups/bd_prod_pre_migracion_*.dump > /dev/null && echo "Backup OK"
 ```
 
-### Paso 4: Clonar o actualizar el codigo
+### Paso 4: Taggear imagen actual (rollback point)
+```bash
+# Backend
+docker tag arriendos:latest arriendos:backup-$(date +%Y%m%d_%H%M)
+
+# Frontend
+docker tag arriendos-frontend:latest arriendos-frontend:backup-$(date +%Y%m%d_%H%M)
+
+# Verificar
+docker images arriendos --format "table {{.Tag}}\t{{.CreatedAt}}\t{{.Size}}"
+```
+
+### Paso 5: Actualizar codigo Backend
 ```bash
 cd /home/<user>/aplicaciones/Arriendos/Arriendos-Backend
 git fetch origin
@@ -286,7 +312,7 @@ git checkout dev-roles
 git pull origin dev-roles
 ```
 
-### Paso 5: Crear archivo .env para produccion
+### Paso 6: Crear archivo .env para produccion
 ```bash
 cat > .env << 'EOF'
 DB_HOST=<DB_HOST_PROD>
@@ -313,16 +339,11 @@ GUNICORN_TIMEOUT=120
 EOF
 ```
 
-### Paso 6: Detener contenedor viejo
-```bash
-docker inspect <CONTAINER_NAME> --format '{{.Image}}' > /home/<user>/rollback_image.txt
-docker stop <CONTAINER_NAME>
-docker rm <CONTAINER_NAME>
-```
-
-### Paso 7: Construir y ejecutar nuevo contenedor
+### Paso 7: Construir y desplegar Backend
 ```bash
 docker build -t arriendos:latest .
+docker stop arriendos-app 2>/dev/null || true
+docker rm arriendos-app 2>/dev/null || true
 docker run -d \
   --name arriendos-app \
   --restart unless-stopped \
@@ -331,24 +352,14 @@ docker run -d \
   arriendos:latest
 ```
 
-### Paso 8: Verificar
+### Paso 8: Verificar Backend
 ```bash
-# Ver logs
 docker logs arriendos-app
-
-# Verificar swagger
 curl -s http://<IP_PROD>:9005/swagger/
-
-# Verificar login LDAP
-curl -X POST http://<IP_PROD>:9005/api/login/ \
-  -H "Content-Type: application/json" \
-  -d '{"username":"<usuario>","password":"<password>"}'
-
-# Verificar tablas nuevas
 docker exec arriendos-app python manage.py dbshell -c "\dt roles_*"
 ```
 
-### Paso 9: Actualizar frontend (si aplica)
+### Paso 9: Actualizar Frontend (si aplica)
 ```bash
 cd /home/<user>/aplicaciones/Arriendos/arriendos-frontend
 git fetch origin
@@ -362,66 +373,248 @@ VITE_HOST='<IP_PROD>'
 VITE_PORT='4300'
 EOF
 
-# Reconstruir
+# Desplegar
 docker build -t arriendos-frontend:latest .
-
-# Detener viejo y arrancar nuevo
-docker stop <FRONTEND_CONTAINER> && docker rm <FRONTEND_CONTAINER>
+docker stop arriendos-frontend 2>/dev/null || true
+docker rm arriendos-frontend 2>/dev/null || true
 docker run -d \
   --name arriendos-frontend \
   --restart unless-stopped \
   -p 83:80 \
   arriendos-frontend:latest
+```
+
+### Paso 10: Verificar Frontend
+```bash
+docker logs arriendos-frontend
+curl -s http://<IP_PROD>:83/
 ```
 
 ---
 
 ## 6. ROLLBACK
 
-Si algo falla, volver a la version anterior:
+Si algo falla, volver a la version anterior usando imagenes Docker.
 
-### Backend
+### Rollback rapido (si el codigo cambio pero la BD esta bien)
+
+#### Backend
 ```bash
-# Recuperar image ID del backup
-IMAGE_ID=$(cat /home/<user>/rollback_image.txt)
-
 # Detener contenedor actual
-docker stop arriendos-app
-docker rm arriendos-app
+docker stop arriendos-app && docker rm arriendos-app
 
-# Arrancar con imagen anterior
+# Arrancar con imagen anterior (usar tag del backup)
 docker run -d \
   --name arriendos-app \
   --restart unless-stopped \
   --env-file .env \
   -p 9005:9005 \
-  $IMAGE_ID
+  arriendos:backup-YYYYMMDD_HHMM
+
+# Verificar
+docker logs arriendos-app
 ```
 
-### Frontend
+#### Frontend
 ```bash
-docker stop arriendos-frontend
-docker rm arriendos-frontend
+# Detener contenedor actual
+docker stop arriendos-frontend && docker rm arriendos-frontend
 
-# Reconstruir desde la rama main (version anterior)
-git checkout main
+# Arrancar con imagen anterior
+docker run -d \
+  --name arriendos-frontend \
+  --restart unless-stopped \
+  -p 83:80 \
+  arriendos-frontend:backup-YYYYMMDD_HHMM
+
+# Verificar
+docker logs arriendos-frontend
+```
+
+### Rollback con restauracion de BD (si migrate corrompio datos)
+
+```bash
+# 1. Rollback codigo (mismo que arriba)
+docker stop arriendos-app && docker rm arriendos-app
+docker run -d \
+  --name arriendos-app \
+  --restart unless-stopped \
+  --env-file .env \
+  -p 9005:9005 \
+  arriendos:backup-YYYYMMDD_HHMM
+
+# 2. Restaurar BD
+pg_restore -h <DB_HOST> -p <DB_PORT> -U <DB_USER> -d <DB_NAME> -c backup_pre_migracion.dump
+
+# 3. Verificar
+docker logs arriendos-app
+curl http://<IP>:9005/swagger/
+```
+
+### Listar imagenes disponibles para rollback
+```bash
+# Backend
+docker images arriendos --format "table {{.Tag}}\t{{.CreatedAt}}\t{{.Size}}"
+
+# Frontend
+docker images arriendos-frontend --format "table {{.Tag}}\t{{.CreatedAt}}\t{{.Size}}"
+```
+
+---
+
+## 7. SCRIPTS DE DESPLIEGUE
+
+### deploy.sh (para el servidor)
+
+Crear `/home/<user>/deploy.sh`:
+
+```bash
+#!/bin/bash
+set -e
+
+echo "========================================="
+echo "  DESPLIEGUE - $(date '+%Y-%m-%d %H:%M:%S')"
+echo "========================================="
+
+# Taggear version actual
+echo "1. Taggeando version actual..."
+docker tag arriendos:latest arriendos:backup-$(date +%Y%m%d_%H%M) 2>/dev/null || true
+docker tag arriendos-frontend:latest arriendos-frontend:backup-$(date +%Y%m%d_%H%M) 2>/dev/null || true
+
+# Desplegar backend
+echo "2. Despleguing backend..."
+docker build -t arriendos:latest .
+docker stop arriendos-app 2>/dev/null || true
+docker rm arriendos-app 2>/dev/null || true
+docker run -d \
+  --name arriendos-app \
+  --restart unless-stopped \
+  --env-file .env \
+  -p 9005:9005 \
+  arriendos:latest
+
+# Desplegar frontend
+echo "3. Despleguing frontend..."
+cd ../arriendos-frontend
 docker build -t arriendos-frontend:latest .
+docker stop arriendos-frontend 2>/dev/null || true
+docker rm arriendos-frontend 2>/dev/null || true
 docker run -d \
   --name arriendos-frontend \
   --restart unless-stopped \
   -p 83:80 \
   arriendos-frontend:latest
+
+echo "========================================="
+echo "  Despliegue completado"
+echo "========================================="
 ```
 
-### Restaurar BD (ULTIMO RECURSO)
+### rollback.sh (para el servidor)
+
+Crear `/home/<user>/rollback.sh`:
+
 ```bash
-# SOLO si la migracion corrompio datos
-pg_restore -h <DB_HOST> -p <DB_PORT> -U <DB_USER> -d <DB_NAME> -c backup_*.dump
+#!/bin/bash
+set -e
+
+TAG=${1:-""}
+
+if [ -z "$TAG" ]; then
+    echo "Uso: ./rollback.sh <tag>"
+    echo ""
+    echo "Tags disponibles:"
+    docker images arriendos --format "  {{.Tag}}"
+    exit 1
+fi
+
+echo "========================================="
+echo "  ROLLBACK a $TAG - $(date '+%Y-%m-%d %H:%M:%S')"
+echo "========================================="
+
+# Rollback backend
+echo "1. Rollback backend..."
+docker stop arriendos-app 2>/dev/null || true
+docker rm arriendos-app 2>/dev/null || true
+docker run -d \
+  --name arriendos-app \
+  --restart unless-stopped \
+  --env-file .env \
+  -p 9005:9005 \
+  arriendos:$TAG
+
+# Rollback frontend
+echo "2. Rollback frontend..."
+docker stop arriendos-frontend 2>/dev/null || true
+docker rm arriendos-frontend 2>/dev/null || true
+docker run -d \
+  --name arriendos-frontend \
+  --restart unless-stopped \
+  -p 83:80 \
+  arriendos-frontend:$TAG
+
+echo "========================================="
+echo "  Rollback completado"
+echo "========================================="
+```
+
+### Uso
+```bash
+# Desplegar
+chmod +x deploy.sh
+./deploy.sh
+
+# Rollback
+chmod +x rollback.sh
+./rollback.sh backup-20260805_1600
 ```
 
 ---
 
-## 7. TROUBLESHOOTING
+## 8. CHECKLIST DE DESPLIEGUE SEGURO
+
+### Fase 1: Preparacion (ANTES de tocar nada)
+
+| Paso | Que hacer | Comando |
+|------|-----------|---------|
+| 1 | Backup de BD | `pg_dump ... backup_pre_migracion.dump` |
+| 2 | Verificar backup | `pg_restore -l backup_pre_migracion.dump > /dev/null` |
+| 3 | Taggear imagen backend | `docker tag arriendos:latest arriendos:backup-$(date +%Y%m%d_%H%M)` |
+| 4 | Taggear imagen frontend | `docker tag arriendos-frontend:latest arriendos-frontend:backup-$(date +%Y%m%d_%H%M)` |
+| 5 | Comunicar ventana | (si aplica) |
+
+### Fase 2: Despliegue
+
+| Paso | Que hacer | Comando |
+|------|-----------|---------|
+| 6 | Actualizar codigo | `git pull origin dev-roles` |
+| 7 | Construir backend | `docker build -t arriendos:latest .` |
+| 8 | Desplegar backend | `docker run -d --name arriendos-app ...` |
+| 9 | Verificar backend | `docker logs arriendos-app && curl .../swagger/` |
+| 10 | Construir frontend | `docker build -t arriendos-frontend:latest .` |
+| 11 | Desplegar frontend | `docker run -d --name arriendos-frontend ...` |
+| 12 | Verificar frontend | `docker logs arriendos-frontend && curl .../` |
+
+### Fase 3: Post-despliegue
+
+| Paso | Que hacer | Comando |
+|------|-----------|---------|
+| 13 | Login LDAP | Probar con usuario real |
+| 14 | CRUD basico | Crear/ver un arriendo |
+| 15 | Logs | `docker logs arriendos-app --tail 50` |
+| 16 | Confirmar tablas | `docker exec arriendos-app python manage.py dbshell -c "\dt roles_*"` |
+
+### Si algo falla: Rollback
+
+| Paso | Que hacer | Comando |
+|------|-----------|---------|
+| 17 | Detener contenedor | `docker stop arriendos-app && docker rm arriendos-app` |
+| 18 | Arrancar version anterior | `docker run -d ... arriendos:backup-YYYYMMDD_HHMM` |
+| 19 | Si BD corrompida | `pg_restore -d <db> -c backup_pre_migracion.dump` |
+
+---
+
+## 9. TROUBLESHOOTING
 
 ### Error: "relation does not exist"
 Las migraciones no se ejecutaron.
@@ -438,7 +631,6 @@ createdb -h <DB_HOST> -p <DB_PORT> -U <DB_USER> <DB_NAME>
 ### Error: "could not connect to server"
 El contenedor no puede alcanzar la BD.
 ```bash
-# Verificar conectividad
 docker exec arriendos-app python -c "
 import psycopg2
 conn = psycopg2.connect(host='<DB_HOST>', port='<DB_PORT>', dbname='<DB_NAME>', user='<DB_USER>', password='<DB_PASSWORD>')
@@ -458,10 +650,10 @@ Causas comunes:
 
 ### LDAP no funciona
 ```bash
-# Verificar que LDAP_STATUS=True en .env
+# Verificar LDAP_STATUS=True en .env
 docker exec arriendos-app python -c "from django.conf import settings; print(settings.LDAP_STATUS)"
 
-# Verificar conexion al servidor LDAP
+# Verificar conexion LDAP
 docker exec arriendos-app python -c "
 from ldap3 import Server, Connection
 server = Server('${LDAP_SERVER}')
@@ -477,7 +669,6 @@ docker exec arriendos-app python manage.py seed_images
 
 ### Logs no se crean
 ```bash
-# Verificar que la carpeta logs existe
 docker exec arriendos-app ls -la logs/
 ```
 
