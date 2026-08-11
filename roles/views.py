@@ -382,11 +382,19 @@ class UserRole_Detail_View(generics.GenericAPIView):
 
         try:
             user_role = UserRole.objects.get(pk=pk)
-            # No permitir remover último Administrador
+
+            # No permitir removerse a sí mismo (excepto superuser)
+            if user_role.user_id == request.user.id and not request.user.is_superuser:
+                return Response({"status": "fail", "message": "No puedes remover tu propio rol"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Último admin: superuser puede si confirma, otros nunca
             if user_role.role.name == 'Administrador':
                 admin_count = UserRole.objects.filter(role__name='Administrador').count()
                 if admin_count <= 1:
-                    return Response({"status": "fail", "message": "No se puede remover el rol al último administrador"}, status=status.HTTP_400_BAD_REQUEST)
+                    if not request.user.is_superuser:
+                        return Response({"status": "fail", "message": "No se puede remover el rol al último administrador"}, status=status.HTTP_400_BAD_REQUEST)
+                    if not request.data.get('confirm'):
+                        return Response({"status": "warning", "message": "Está a punto de remover al último administrador. Envíe confirm=true para continuar."}, status=status.HTTP_400_BAD_REQUEST)
 
             target_user = User.objects.get(id=user_role.user_id)
             role_name = user_role.role.name

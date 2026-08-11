@@ -221,13 +221,13 @@ class UserRoleCreateSerializer(serializers.Serializer):
         user_id = data.get('user_id')
         role_id = data.get('role_id')
 
-        # 1. No auto-asignación
-        if user_id == request.user.id:
-            raise serializers.ValidationError("No puedes asignarte un rol a ti mismo")
-
-        # Solo aplicar reglas de Operador si el solicitante NO es superuser
+        # Superuser tiene acceso total (sin auto-asignación, sin restricciones)
         if request.user.is_superuser:
             return data
+
+        # 1. No auto-asignación (solo para no-superusers)
+        if user_id == request.user.id:
+            raise serializers.ValidationError("No puedes asignarte un rol a ti mismo")
 
         try:
             request_user_role = UserRole.objects.get(user=request.user)

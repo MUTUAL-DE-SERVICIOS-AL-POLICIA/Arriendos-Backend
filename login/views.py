@@ -56,13 +56,22 @@ def get_user_permissions(user):
         - Tupla (role_name, permissions)
         - role_name: Nombre del rol o None si no tiene rol
         - permissions: Lista de permisos en formato "modulo.permiso"
-                      (ej: ["products.view", "leases.add"])
+                       (ej: ["products.view", "leases.add"])
 
     Ejemplo de uso:
         role_name, permissions = get_user_permissions(user)
         # role_name: "Operador"
         # permissions: ["products.view", "leases.view", "leases.add"]
     """
+    # Superusuarios tienen acceso a todos los permisos (rol null = invisible en frontend)
+    if user.is_superuser:
+        from roles.models import Module, Permission
+        permissions = []
+        for module in Module.objects.all():
+            for perm in Permission.objects.all():
+                permissions.append(f"{module.codename}.{perm.codename}")
+        return None, permissions
+
     try:
         # Buscar el rol asignado al usuario
         user_role = UserRole.objects.get(user=user)
@@ -300,6 +309,7 @@ class Auth(TokenObtainPairView):
             role_name, permissions = get_user_permissions(user)
             response.data['role'] = role_name
             response.data['permissions'] = permissions
+            response.data['is_superuser'] = user.is_superuser
 
             security_logger.info(f"LOGIN_OK: usuario={username} ip={ip}")
             Record.objects.create(

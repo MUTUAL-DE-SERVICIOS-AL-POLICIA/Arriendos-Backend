@@ -43,9 +43,13 @@ echo "Aplicando migraciones..."
 python manage.py migrate --noinput
 echo "  Migraciones aplicadas correctamente."
 
-# Precargar imagenes de ambientes
+# Inicializar RBAC (modulos, permisos, roles) si no existen
+echo "Verificando RBAC..."
+python manage.py create_initial_roles
+
+# Precargar imagenes de ambientes (no falla si no existe)
 echo "Precargando imagenes de ambientes..."
-python manage.py seed_images
+python manage.py seed_images || echo "  [WARN] seed_images omitido (seed_data/properties.json no encontrado)"
 
 # Iniciar servidor segun entorno
 echo "========================================="
