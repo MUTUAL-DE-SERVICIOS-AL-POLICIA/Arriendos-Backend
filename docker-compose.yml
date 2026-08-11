@@ -1,0 +1,57 @@
+services:
+  backend:
+    build:
+      context: ./Arriendos-Backend
+      dockerfile: Dockerfile
+    container_name: arriendos-backend
+    ports:
+      - "${BACKEND_PORT:-9005}:9005"
+    env_file:
+      - ./Arriendos-Backend/.env
+    environment:
+      - DB_HOST=${DB_HOST:-host.docker.internal}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${DB_NAME:-bd_arriendos}
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-123456}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - backend_media:/app/media
+      - backend_logs:/app/logs
+    healthcheck:
+      test: ["CMD", "pgrep", "gunicorn"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - arriendos-network
+
+  frontend:
+    build:
+      context: ./arriendos-frontend
+      dockerfile: dockerfile
+    container_name: arriendos-frontend
+    ports:
+      - "${FRONTEND_PORT:-9006}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:80/ > /dev/null 2>&1 || wget -q -O- http://localhost:80/ > /dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - arriendos-network
+
+volumes:
+  backend_media:
+  backend_logs:
+
+networks:
+  arriendos-network:
+    driver: bridge
