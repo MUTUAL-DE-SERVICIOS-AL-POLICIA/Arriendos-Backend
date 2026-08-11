@@ -116,17 +116,13 @@ WSGI_APPLICATION = 'Arriendos_Backend.wsgi.application'
 # ============================================================
 # 5. DATABASE
 # ============================================================
-# Configuracion por entorno via variables de entorno:
-#   LOCAL:      DB_HOST=127.0.0.1, DB_PORT=5432, DB_USER=postgres, DB_PASSWORD=<TU_PASSWORD>
-#   PRUEBAS:    DB_HOST=<IP_BD>, DB_PORT=5438, DB_USER=test
-#   PRODUCCION: DB_HOST=<IP_PROD>, DB_PORT=5432, DB_USER=<real>
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('DB_NAME', 'bd_arriendos'),
         'USER': os.environ.get('DB_USER', 'postgres'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', '123456'),
-        'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
         'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
@@ -190,12 +186,12 @@ SIMPLE_JWT = {
 # 12. LDAP
 # ============================================================
 LDAP_STATUS = os.environ.get('LDAP_STATUS', 'False').lower() in ('true', '1', 'yes')
-LDAP_SERVER = os.environ.get('LDAP_SERVER', 'ldap://<IP_LDAP>:3891')
-LDAP_USER = os.environ.get('LDAP_USER', 'cn=admin,dc=empresa,dc=gob,dc=bo')
+LDAP_SERVER = os.environ.get('LDAP_SERVER', '')
+LDAP_USER = os.environ.get('LDAP_USER', '')
 LDAP_PASSWORD = os.environ.get('LDAP_PASSWORD', '')
-LDAP_USER_DN = 'ou=usuarios,dc=empresa,dc=gob,dc=bo'
-LDAP_BASE = 'dc=empresa,dc=gob,dc=bo'
-LDAP_FILTER = '(objectClass=*)'
+LDAP_USER_DN = os.environ.get('LDAP_USER_DN', '')
+LDAP_BASE = os.environ.get('LDAP_BASE', '')
+LDAP_FILTER = os.environ.get('LDAP_FILTER', '(objectClass=*)')
 ATTRIBUTES = ['uid', 'givenName', 'sn', 'mail']
 
 # ============================================================

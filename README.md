@@ -83,6 +83,9 @@ Toda la configuracion se controla via variables de entorno. Copia `.env.example`
 | `DEBUG` | Modo debug | `True` / `False` |
 | `ENVIRONMENT` | Entorno | `local` / `development` / `production` |
 | `LDAP_STATUS` | LDAP activo | `True` / `False` |
+| `LDAP_SERVER` | URL del servidor LDAP | `ldap://ldap.tudominio.com:389` |
+| `LDAP_USER` | Usuario administrador LDAP | `cn=admin,dc=tudominio,dc=com` |
+| `LDAP_PASSWORD` | Password LDAP | `***` |
 
 Ver `.env.example` para todas las variables disponibles.
 
