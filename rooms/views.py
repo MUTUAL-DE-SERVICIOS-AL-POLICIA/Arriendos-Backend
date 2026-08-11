@@ -75,7 +75,7 @@ class List_Properties_with_Rooms(generics.GenericAPIView):
                 'name': property.name,
                 'address': property.address,
                 'department': property.department,
-                'photo': request.build_absolute_uri(property.photo.url),
+                'photo': request.build_absolute_uri(property.photo.url) if property.photo else None,
                 'rooms': []
             }
             rooms = property.room_set.all()
