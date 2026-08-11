@@ -10,7 +10,14 @@ class Command(BaseCommand):
     help = 'Precarga imagenes de propiedades desde seed_data/ si no existen'
 
     def handle(self, *args, **options):
-        seed_dir = os.path.join(settings.BASE_DIR, 'Arriendos-Backend', 'seed_data')
+        base = str(settings.BASE_DIR)
+        # En Docker WORKDIR=/app, seed_data esta en /app/seed_data
+        # En local puede estar en /proyecto/Arriendos-Backend/seed_data
+        candidates = [
+            os.path.join(base, 'seed_data'),
+            os.path.join(base, 'Arriendos-Backend', 'seed_data'),
+        ]
+        seed_dir = next((d for d in candidates if os.path.exists(d)), candidates[0])
         json_path = os.path.join(seed_dir, 'properties.json')
         photos_dir = os.path.join(seed_dir, 'property_photos')
         media_dir = os.path.join(settings.MEDIA_ROOT, 'property_photos')
