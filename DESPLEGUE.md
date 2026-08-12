@@ -1,6 +1,6 @@
 # DESPLIEGUE — ARRIENDOS
 
-Guia completa para desplegar Backend y Frontend en los 3 entornos.
+Guia para desplegar Backend y Frontend en cualquier entorno.
 
 ---
 
@@ -8,13 +8,13 @@ Guia completa para desplegar Backend y Frontend en los 3 entornos.
 
 1. [Arquitectura](#1-arquitectura)
 2. [Requisitos Previos](#2-requisitos-previos)
-3. [Despliegue Local (desde cero)](#3-despliegue-local)
-4. [Despliegue en Pruebas](#4-despliegue-en-pruebas)
-5. [Despliegue en Produccion](#5-despliegue-en-produccion)
-6. [Rollback](#6-rollback)
-7. [Scripts de Despliegue](#7-scripts-de-despliegue)
-8. [Checklist de Despliegue Seguro](#8-checklist-de-despliegue-seguro)
-9. [Troubleshooting](#9-troubleshooting)
+3. [Despliegue desde cero](#3-despliegue-desde-cero)
+4. [Actualizacion (pull + rebuild)](#4-actualizacion)
+5. [Rollback](#5-rollback)
+6. [Scripts](#6-scripts)
+7. [Checklist](#7-checklist)
+8. [Troubleshooting](#8-troubleshooting)
+9. [Variables de Entorno](#9-variables-de-entorno)
 
 ---
 
@@ -23,197 +23,66 @@ Guia completa para desplegar Backend y Frontend en los 3 entornos.
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
 │  Frontend       │────▶│  Backend        │────▶│  PostgreSQL     │
-│  (React/Vite)   │     │  (Django/Gunicorn)│    │  (BD remota)    │
-│  Puerto: 83/9006│     │  Puerto: 9005   │     │                 │
+│  (React/Vite)   │     │  (Django)       │     │  (BD remota)    │
+│  Puerto: 83     │     │  Puerto: 9005   │     │                 │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
 ```
 
-### Entornos
-
-| Entorno | Servidor | BD | LDAP | DEBUG | Servidor |
-|---------|----------|-----|------|-------|----------|
-| Local | localhost | Local | Desactivado | True | runserver |
-| Pruebas | <IP_SERVIDOR> | <IP_BD>:5438 | Activo | True | runserver |
-| Produccion | <IP_PROD> | <IP_PROD>:5432 | Activo | False | Gunicorn |
+- **Frontend:** React + TypeScript + Vite, servido por nginx
+- **Backend:** Django 3.2 + DRF, corriendo con runserver (dev) o Gunicorn (prod)
+- **BD:** PostgreSQL en servidor dedicado
+- **LDAP:** Opcional, para autenticacion con Active Directory
 
 ---
 
 ## 2. REQUISITOS PREVIOS
 
-### Para todos los entornos
 - [ ] Docker instalado
-- [ ] Acceso al repositorio de Git
-- [ ] Un archivo `.env` configurado (copiar de `.env.example`)
+- [ ] Acceso al repositorio Git
+- [ ] Servidor PostgreSQL accesible
+- [ ] (Opcional) Servidor LDAP accesible
 
-### Para pruebas y produccion
-- [ ] Acceso SSH al servidor
-- [ ] Backup de la base de datos (`pg_dump`)
-- [ ] Verificar que el backup se puede restaurar
-
-### Generar SECRET_KEY segura
+### Generar SECRET_KEY
 ```bash
-python -c "import secrets; print(secrets.token_urlsafe(50))"
+python3 -c "import secrets; print(secrets.token_urlsafe(50))"
 ```
 
 ---
 
-## 3. DESPLIEGUE LOCAL
+## 3. DESPLIEGUE DESDE CERO
 
-### Paso 1: Clonar el repositorio
+### Paso 1: Clonar repositorios
 ```bash
 git clone https://github.com/MUTUAL-DE-SERVICIOS-AL-POLICIA/Arriendos-Backend.git
+git clone https://github.com/MUTUAL-DE-SERVICIOS-AL-POLICIA/arriendos-frontend.git
 cd Arriendos-Backend
 git checkout dev-roles
 ```
 
-### Paso 2: Configurar variables de entorno
+### Paso 2: Configurar Backend (.env)
 ```bash
 cp .env.example .env
 ```
 
-Editar `.env` con valores locales:
+Editar `.env` con tus valores (ver [Variables de Entorno](#9-variables-de-entorno)):
 ```bash
-DB_HOST=127.0.0.1
-DB_PORT=5432
-DB_NAME=bd_arriendos
-DB_USER=postgres
-DB_PASSWORD=<TU_PASSWORD>
+# Generar SECRET_KEY
+python3 -c "import secrets; print(secrets.token_urlsafe(50))"
 
-SECRET_KEY=<generar-con-el-comando-de-arriba>
-DEBUG=True
-ALLOWED_HOSTS=127.0.0.1,localhost
-ENVIRONMENT=local
-
-LDAP_STATUS=False
+# Editar .env con:
+# SECRET_KEY=<generar-arriba>
+# DB_HOST=<IP_SERVIDOR_BD>
+# DB_PORT=<PUERTO_BD>
+# DB_NAME=<NOMBRE_BD>
+# DB_USER=<USUARIO_BD>
+# DB_PASSWORD=<PASSWORD_BD>
+# ALLOWED_HOSTS=127.0.0.1,<IP_SERVIDOR>
+# CORS_ORIGINS=http://<IP_SERVIDOR>:83
 ```
 
-### Paso 3: Crear la base de datos (si no existe)
-```bash
-createdb -U postgres bd_arriendos
-```
-
-### Paso 4: Levantar Backend con Docker
+### Paso 3: Construir y levantar Backend
 ```bash
 docker build -t arriendos:latest .
-docker run -d \
-  --name arriendos-app \
-  --env-file .env \
-  -p 9005:9005 \
-  -v $(pwd)/media:/app/media \
-  -v $(pwd)/logs:/app/logs \
-  arriendos:latest
-```
-
-### Paso 5: Verificar Backend
-```bash
-docker logs arriendos-app
-# Abrir: http://localhost:9005/swagger/
-```
-
-### Paso 6: Cargar datos iniciales (UNA SOLA VEZ)
-```bash
-docker exec arriendos-app python manage.py loaddata rooms/fixtures/initial_data_property.json
-docker exec arriendos-app python manage.py loaddata rooms/fixtures/initial_data_rooms.json
-docker exec arriendos-app python manage.py loaddata leases/fixtures/initial_data_state.json
-docker exec arriendos-app python manage.py loaddata customers/fixtures/initial_data_customer_type.json
-docker exec arriendos-app python manage.py loaddata products/fixtures/initial_data_rate.json
-docker exec arriendos-app python manage.py loaddata products/fixtures/initial_data_hour_range.json
-docker exec arriendos-app python manage.py loaddata requirements/fixtures/initial_data_requirements.json
-```
-
-> **NOTA:** Los fixtures usan PKs hardcodeados. NO ejecutar en una BD con datos existentes.
-
-### Paso 7: Levantar Frontend
-```bash
-cd ../arriendos-frontend
-cp .env.example .env
-# Editar .env si es necesario
-docker build -t arriendos-frontend:latest .
-docker run -d \
-  --name arriendos-frontend \
-  -p 83:80 \
-  arriendos-frontend:latest
-```
-
-### Paso 8: Verificar Frontend
-```bash
-docker logs arriendos-frontend
-# Abrir: http://localhost:83/
-```
-
----
-
-## 4. DESPLIEGUE EN PRUEBAS
-
-### Arquitectura del servidor
-
-```
-Servidor: <IP_SERVIDOR> (1 CPU, 8GB RAM)
-BD:       <IP_BD>:5438 (remota, dedicada)
-LDAP:     <IP_LDAP>:3891
-Puertos:  Backend 9005, Frontend 83
-```
-
-### Paso 1: Conectarse al servidor
-```bash
-ssh <USUARIO>@<IP_SERVIDOR>
-```
-
-### Paso 2: Hacer backup de la BD
-```bash
-pg_dump -h <IP_BD> -p 5438 -U test -d <NOMBRE_BD> \
-  -Fc -f /home/administrador/backups/bd_pruebas_pre_migracion_$(date +%Y%m%d_%H%M).dump
-```
-
-### Paso 3: Taggear imagen actual (rollback point)
-```bash
-# Backend
-docker tag arriendos:latest arriendos:backup-$(date +%Y%m%d_%H%M)
-
-# Frontend
-docker tag arriendos-frontend:latest arriendos-frontend:backup-$(date +%Y%m%d_%H%M)
-
-# Verificar tags creados
-docker images arriendos --format "table {{.Tag}}\t{{.CreatedAt}}\t{{.Size}}"
-docker images arriendos-frontend --format "table {{.Tag}}\t{{.CreatedAt}}\t{{.Size}}"
-```
-
-### Paso 4: Actualizar codigo Backend
-```bash
-cd /home/administrador/aplicaciones-dev/Arriendos/Arriendos-Backend
-git fetch origin
-git checkout dev-roles
-git pull origin dev-roles
-```
-
-### Paso 5: Crear archivo .env Backend
-```bash
-cat > .env << 'EOF'
-DB_HOST=<IP_BD>
-DB_PORT=5438
-DB_NAME=<NOMBRE_BD>
-DB_USER=test
-DB_PASSWORD=<TU_PASSWORD>
-
-SECRET_KEY=<TU_SECRET_KEY>
-DEBUG=True
-ALLOWED_HOSTS=127.0.0.1,<IP_SERVIDOR>
-ENVIRONMENT=development
-
-LDAP_STATUS=True
-LDAP_SERVER=ldap://<IP_LDAP>:3891
-LDAP_USER=cn=admin,dc=empresa,dc=gob,dc=bo
-LDAP_PASSWORD=<TU_PASSWORD_LDAP>
-
-CORS_ORIGINS=http://<IP_SERVIDOR>:83,http://<IP_SERVIDOR>:4300
-EOF
-```
-
-### Paso 6: Construir y desplegar Backend
-```bash
-docker build -t arriendos:latest .
-docker stop arriendos-app 2>/dev/null || true
-docker rm arriendos-app 2>/dev/null || true
 docker run -d \
   --name arriendos-app \
   --restart unless-stopped \
@@ -224,132 +93,63 @@ docker run -d \
   arriendos:latest
 ```
 
-> **IMPORTANTE:** Los volumenes `media` y `logs` son obligatorios. Sin ellos se pierden los archivos subidos y los logs al recrear el contenedor.
+> **IMPORTANTE:** Los volumenes `media` y `logs` son obligatorios. Sin ellos se pierden archivos y logs al recrear el contenedor.
 
-### Paso 7: Verificar Backend
+### Paso 4: Verificar Backend
 ```bash
 docker logs arriendos-app
-curl -s http://<IP_SERVIDOR>:9005/swagger/
-docker exec arriendos-app python manage.py dbshell -c "\dt roles_*"
+# Abrir: http://<IP_SERVIDOR>:9005/swagger/
 ```
 
-### Paso 8: Actualizar codigo Frontend
+### Paso 5: Configurar Frontend
 ```bash
-cd /home/administrador/aplicaciones-dev/Arriendos/arriendos-frontend
-git fetch origin
+cd ../arriendos-frontend
 git checkout dev-roles
-git pull origin dev-roles
 ```
 
-### Paso 9: Crear archivo .env Frontend
+Crear `.env` del frontend (esto es build-time, se quema en la imagen):
 ```bash
-cat > .env << 'EOF'
+cat > .env << EOF
 VITE_HOST_BACKEND="http://<IP_SERVIDOR>:9005/"
 VITE_HOST='<IP_SERVIDOR>'
 VITE_PORT='4300'
 EOF
 ```
 
-### Paso 10: Construir y desplegar Frontend
+### Paso 6: Construir y levantar Frontend
 ```bash
 docker build -t arriendos-frontend:latest .
-docker stop arriendos-frontend 2>/dev/null || true
-docker rm arriendos-frontend 2>/dev/null || true
 docker run -d \
   --name arriendos-frontend \
   --restart unless-stopped \
   -p 83:80 \
+  -v $(pwd)/default.conf:/etc/nginx/conf.d/default.conf \
   arriendos-frontend:latest
 ```
 
-### Paso 11: Verificar Frontend
+### Paso 7: Verificar Frontend
 ```bash
 docker logs arriendos-frontend
-curl -s http://<IP_SERVIDOR>:83/
+# Abrir: http://<IP_SERVIDOR>:83/
 ```
 
 ---
 
-## 5. DESPLIEGUE EN PRODUCCION
+## 4. ACTUALIZACION
 
-> **ADVERTENCIA:** Este procedimiento afecta a usuarios reales. Ejecutar solo despues de verificar todo en pruebas.
-
-### Antes de empezar
-- [ ] Backup de la BD de produccion verificado
-- [ ] Todos los tests pasando en pruebas
-- [ ] Login LDAP funcionando en pruebas
-- [ ] Frontend funcionando en pruebas
-- [ ] Ventana de mantenimiento comunicada (si aplica)
-- [ ] Contacto de escalamiento identificado
-
-### Paso 1: Conectarse al servidor
+### Backend
 ```bash
-ssh <usuario_prod>@<IP_PROD>
-```
+cd /ruta/a/Arriendos-Backend
 
-### Paso 2: Hacer backup de la BD
-```bash
-pg_dump -h <DB_HOST_PROD> -p <DB_PORT_PROD> -U <DB_USER_PROD> -d <DB_NAME_PROD> \
-  -Fc -f /home/<user>/backups/bd_prod_pre_migracion_$(date +%Y%m%d_%H%M).dump
-```
-
-### Paso 3: Verificar backup
-```bash
-pg_restore -l /home/<user>/backups/bd_prod_pre_migracion_*.dump > /dev/null && echo "Backup OK"
-```
-
-### Paso 4: Taggear imagen actual (rollback point)
-```bash
-# Backend
+# Taggear version actual (rollback point)
 docker tag arriendos:latest arriendos:backup-$(date +%Y%m%d_%H%M)
 
-# Frontend
-docker tag arriendos-frontend:latest arriendos-frontend:backup-$(date +%Y%m%d_%H%M)
-
-# Verificar
-docker images arriendos --format "table {{.Tag}}\t{{.CreatedAt}}\t{{.Size}}"
-```
-
-### Paso 5: Actualizar codigo Backend
-```bash
-cd /home/<user>/aplicaciones/Arriendos/Arriendos-Backend
-git fetch origin
-git checkout dev-roles
+# Actualizar codigo
 git pull origin dev-roles
-```
 
-### Paso 6: Crear archivo .env para produccion
-```bash
-cat > .env << 'EOF'
-DB_HOST=<DB_HOST_PROD>
-DB_PORT=<DB_PORT_PROD>
-DB_NAME=<DB_NAME_PROD>
-DB_USER=<DB_USER_PROD>
-DB_PASSWORD=<DB_PASSWORD_PROD>
-
-SECRET_KEY=<SECRET_KEY_PROD>
-DEBUG=False
-ALLOWED_HOSTS=127.0.0.1,<IP_PROD>
-ENVIRONMENT=production
-
-LDAP_STATUS=True
-LDAP_SERVER=ldap://<LDAP_SERVER_PROD>
-LDAP_USER=<LDAP_USER_PROD>
-LDAP_PASSWORD=<LDAP_PASSWORD_PROD>
-
-CORS_ORIGINS=http://<IP_PROD>:83
-
-GUNICORN_WORKERS=<CALCULAR_SEGUN_CPU>
-GUNICORN_THREADS=2
-GUNICORN_TIMEOUT=120
-EOF
-```
-
-### Paso 7: Construir y desplegar Backend
-```bash
+# Reconstruir y reiniciar
 docker build -t arriendos:latest .
-docker stop arriendos-app 2>/dev/null || true
-docker rm arriendos-app 2>/dev/null || true
+docker stop arriendos-app && docker rm arriendos-app
 docker run -d \
   --name arriendos-app \
   --restart unless-stopped \
@@ -358,60 +158,43 @@ docker run -d \
   -v $(pwd)/media:/app/media \
   -v $(pwd)/logs:/app/logs \
   arriendos:latest
-```
 
-### Paso 8: Verificar Backend
-```bash
+# Verificar
 docker logs arriendos-app
-curl -s http://<IP_PROD>:9005/swagger/
-docker exec arriendos-app python manage.py dbshell -c "\dt roles_*"
 ```
 
-### Paso 9: Actualizar Frontend (si aplica)
+### Frontend
 ```bash
-cd /home/<user>/aplicaciones/Arriendos/arriendos-frontend
-git fetch origin
-git checkout dev-roles
+cd /ruta/a/arriendos-frontend
+
+# Taggear version actual
+docker tag arriendos-frontend:latest arriendos-frontend:backup-$(date +%Y%m%d_%H%M)
+
+# Actualizar codigo
 git pull origin dev-roles
 
-# Crear .env
-cat > .env << 'EOF'
-VITE_HOST_BACKEND="http://<IP_PROD>:9005/"
-VITE_HOST='<IP_PROD>'
-VITE_PORT='4300'
-EOF
-
-# Desplegar
+# Reconstruir y reiniciar
 docker build -t arriendos-frontend:latest .
-docker stop arriendos-frontend 2>/dev/null || true
-docker rm arriendos-frontend 2>/dev/null || true
+docker stop arriendos-frontend && docker rm arriendos-frontend
 docker run -d \
   --name arriendos-frontend \
   --restart unless-stopped \
   -p 83:80 \
+  -v $(pwd)/default.conf:/etc/nginx/conf.d/default.conf \
   arriendos-frontend:latest
-```
 
-### Paso 10: Verificar Frontend
-```bash
+# Verificar
 docker logs arriendos-frontend
-curl -s http://<IP_PROD>:83/
 ```
 
 ---
 
-## 6. ROLLBACK
+## 5. ROLLBACK
 
-Si algo falla, volver a la version anterior usando imagenes Docker.
-
-### Rollback rapido (si el codigo cambio pero la BD esta bien)
-
-#### Backend
+### Rollback rapido (solo codigo, BD intacta)
 ```bash
-# Detener contenedor actual
+# Backend
 docker stop arriendos-app && docker rm arriendos-app
-
-# Arrancar con imagen anterior (usar tag del backup)
 docker run -d \
   --name arriendos-app \
   --restart unless-stopped \
@@ -421,80 +204,48 @@ docker run -d \
   -v $(pwd)/logs:/app/logs \
   arriendos:backup-YYYYMMDD_HHMM
 
-# Verificar
-docker logs arriendos-app
-```
-
-#### Frontend
-```bash
-# Detener contenedor actual
+# Frontend
 docker stop arriendos-frontend && docker rm arriendos-frontend
-
-# Arrancar con imagen anterior
 docker run -d \
   --name arriendos-frontend \
   --restart unless-stopped \
   -p 83:80 \
   arriendos-frontend:backup-YYYYMMDD_HHMM
-
-# Verificar
-docker logs arriendos-frontend
 ```
 
-### Rollback con restauracion de BD (si migrate corrompio datos)
-
+### Rollback con restauracion de BD
 ```bash
-# 1. Rollback codigo (mismo que arriba)
-docker stop arriendos-app && docker rm arriendos-app
-docker run -d \
-  --name arriendos-app \
-  --restart unless-stopped \
-  --env-file .env \
-  -p 9005:9005 \
-  -v $(pwd)/media:/app/media \
-  -v $(pwd)/logs:/app/logs \
-  arriendos:backup-YYYYMMDD_HHMM
+# 1. Rollback codigo (usar comandos de arriba)
 
 # 2. Restaurar BD
 pg_restore -h <DB_HOST> -p <DB_PORT> -U <DB_USER> -d <DB_NAME> -c backup_pre_migracion.dump
 
 # 3. Verificar
 docker logs arriendos-app
-curl http://<IP>:9005/swagger/
 ```
 
-### Listar imagenes disponibles para rollback
+### Listar imagenes disponibles
 ```bash
-# Backend
 docker images arriendos --format "table {{.Tag}}\t{{.CreatedAt}}\t{{.Size}}"
-
-# Frontend
 docker images arriendos-frontend --format "table {{.Tag}}\t{{.CreatedAt}}\t{{.Size}}"
 ```
 
 ---
 
-## 7. SCRIPTS DE DESPLIEGUE
+## 6. SCRIPTS
 
-### deploy.sh (para el servidor)
-
-Crear `/home/<user>/deploy.sh`:
-
+### deploy.sh
 ```bash
 #!/bin/bash
 set -e
 
-echo "========================================="
-echo "  DESPLIEGUE - $(date '+%Y-%m-%d %H:%M:%S')"
-echo "========================================="
+echo "DESPLIEGUE - $(date '+%Y-%m-%d %H:%M:%S')"
 
 # Taggear version actual
-echo "1. Taggeando version actual..."
 docker tag arriendos:latest arriendos:backup-$(date +%Y%m%d_%H%M) 2>/dev/null || true
 docker tag arriendos-frontend:latest arriendos-frontend:backup-$(date +%Y%m%d_%H%M) 2>/dev/null || true
 
-# Desplegar backend
-echo "2. Despleguing backend..."
+# Backend
 docker build -t arriendos:latest .
 docker stop arriendos-app 2>/dev/null || true
 docker rm arriendos-app 2>/dev/null || true
@@ -507,8 +258,7 @@ docker run -d \
   -v $(pwd)/logs:/app/logs \
   arriendos:latest
 
-# Desplegar frontend
-echo "3. Despleguing frontend..."
+# Frontend
 cd ../arriendos-frontend
 docker build -t arriendos-frontend:latest .
 docker stop arriendos-frontend 2>/dev/null || true
@@ -519,35 +269,24 @@ docker run -d \
   -p 83:80 \
   arriendos-frontend:latest
 
-echo "========================================="
-echo "  Despliegue completado"
-echo "========================================="
+echo "Despliegue completado"
 ```
 
-### rollback.sh (para el servidor)
-
-Crear `/home/<user>/rollback.sh`:
-
+### rollback.sh
 ```bash
 #!/bin/bash
 set -e
 
 TAG=${1:-""}
-
 if [ -z "$TAG" ]; then
     echo "Uso: ./rollback.sh <tag>"
-    echo ""
-    echo "Tags disponibles:"
     docker images arriendos --format "  {{.Tag}}"
     exit 1
 fi
 
-echo "========================================="
-echo "  ROLLBACK a $TAG - $(date '+%Y-%m-%d %H:%M:%S')"
-echo "========================================="
+echo "ROLLBACK a $TAG - $(date '+%Y-%m-%d %H:%M:%S')"
 
-# Rollback backend
-echo "1. Rollback backend..."
+# Backend
 docker stop arriendos-app 2>/dev/null || true
 docker rm arriendos-app 2>/dev/null || true
 docker run -d \
@@ -555,10 +294,11 @@ docker run -d \
   --restart unless-stopped \
   --env-file .env \
   -p 9005:9005 \
+  -v $(pwd)/media:/app/media \
+  -v $(pwd)/logs:/app/logs \
   arriendos:$TAG
 
-# Rollback frontend
-echo "2. Rollback frontend..."
+# Frontend
 docker stop arriendos-frontend 2>/dev/null || true
 docker rm arriendos-frontend 2>/dev/null || true
 docker run -d \
@@ -567,107 +307,64 @@ docker run -d \
   -p 83:80 \
   arriendos-frontend:$TAG
 
-echo "========================================="
-echo "  Rollback completado"
-echo "========================================="
-```
-
-### Uso
-```bash
-# Desplegar
-chmod +x deploy.sh
-./deploy.sh
-
-# Rollback
-chmod +x rollback.sh
-./rollback.sh backup-20260805_1600
+echo "Rollback completado"
 ```
 
 ---
 
-## 8. CHECKLIST DE DESPLIEGUE SEGURO
+## 7. CHECKLIST
 
-### Fase 1: Preparacion (ANTES de tocar nada)
+### Pre-despliegue
+- [ ] Backup de BD verificado (`pg_dump` + `pg_restore -l`)
+- [ ] Imagenes taggeadas (`docker tag`)
+- [ ] Tests pasando
+- [ ] Ventana comunicada (si aplica)
 
-| Paso | Que hacer | Comando |
-|------|-----------|---------|
-| 1 | Backup de BD | `pg_dump ... backup_pre_migracion.dump` |
-| 2 | Verificar backup | `pg_restore -l backup_pre_migracion.dump > /dev/null` |
-| 3 | Taggear imagen backend | `docker tag arriendos:latest arriendos:backup-$(date +%Y%m%d_%H%M)` |
-| 4 | Taggear imagen frontend | `docker tag arriendos-frontend:latest arriendos-frontend:backup-$(date +%Y%m%d_%H%M)` |
-| 5 | Comunicar ventana | (si aplica) |
+### Despliegue
+- [ ] `git pull origin dev-roles`
+- [ ] Backend: `docker build` + `docker run` + verificar `docker logs`
+- [ ] Frontend: `docker build` + `docker run` + verificar `docker logs`
+- [ ] Login LDAP probado
+- [ ] CRUD basico probado
 
-### Fase 2: Despliegue
-
-| Paso | Que hacer | Comando |
-|------|-----------|---------|
-| 6 | Actualizar codigo | `git pull origin dev-roles` |
-| 7 | Construir backend | `docker build -t arriendos:latest .` |
-| 8 | Desplegar backend | `docker run -d --name arriendos-app ...` |
-| 9 | Verificar backend | `docker logs arriendos-app && curl .../swagger/` |
-| 10 | Construir frontend | `docker build -t arriendos-frontend:latest .` |
-| 11 | Desplegar frontend | `docker run -d --name arriendos-frontend ...` |
-| 12 | Verificar frontend | `docker logs arriendos-frontend && curl .../` |
-
-### Fase 3: Post-despliegue
-
-| Paso | Que hacer | Comando |
-|------|-----------|---------|
-| 13 | Login LDAP | Probar con usuario real |
-| 14 | CRUD basico | Crear/ver un arriendo |
-| 15 | Logs | `docker logs arriendos-app --tail 50` |
-| 16 | Confirmar tablas | `docker exec arriendos-app python manage.py dbshell -c "\dt roles_*"` |
-
-### Si algo falla: Rollback
-
-| Paso | Que hacer | Comando |
-|------|-----------|---------|
-| 17 | Detener contenedor | `docker stop arriendos-app && docker rm arriendos-app` |
-| 18 | Arrancar version anterior | `docker run -d ... arriendos:backup-YYYYMMDD_HHMM` |
-| 19 | Si BD corrompida | `pg_restore -d <db> -c backup_pre_migracion.dump` |
+### Post-despliegue
+- [ ] Logs sin errores: `docker logs arriendos-app --tail 50`
+- [ ] Tablas RBAC creadas: `docker exec arriendos-app python manage.py dbshell -c "\dt roles_*"`
 
 ---
 
-## 9. TROUBLESHOOTING
+## 8. TROUBLESHOOTING
 
-### Error: "relation does not exist"
-Las migraciones no se ejecutaron.
+### "relation does not exist"
+Migraciones no ejecutadas:
 ```bash
 docker exec arriendos-app python manage.py migrate
 ```
 
-### Error: "database does not exist"
-La BD no fue creada.
+### "database does not exist"
+BD no creada:
 ```bash
 createdb -h <DB_HOST> -p <DB_PORT> -U <DB_USER> <DB_NAME>
 ```
 
-### Error: "could not connect to server"
-El contenedor no puede alcanzar la BD.
+### "could not connect to server"
+Contenedor no alcanza la BD. Verificar `.env`:
 ```bash
-docker exec arriendos-app python -c "
-import psycopg2
-conn = psycopg2.connect(host='<DB_HOST>', port='<DB_PORT>', dbname='<DB_NAME>', user='<DB_USER>', password='<DB_PASSWORD>')
-print('BD OK')
-conn.close()
-"
+docker exec arriendos-app env | grep DB_
 ```
 
-### El contenedor se reinicia constantemente
+### Contenedor se reinicia constantemente
 ```bash
 docker logs arriendos-app
 ```
-Causas comunes:
-- Error en `.env` (variable faltante o incorrecta)
-- Error de conexion a BD
-- Migraciones pendientes que fallan
+Causas: error en `.env`, BD inaccesible, migraciones fallidas.
 
 ### LDAP no funciona
 ```bash
 # Verificar LDAP_STATUS=True en .env
-docker exec arriendos-app python -c "from django.conf import settings; print(settings.LDAP_STATUS)"
+docker exec arriendos-app env | grep LDAP
 
-# Verificar conexion LDAP
+# Probar conexion LDAP
 docker exec arriendos-app python -c "
 from ldap3 import Server, Connection
 server = Server('${LDAP_SERVER}')
@@ -681,24 +378,35 @@ print('LDAP OK' if conn.bind() else 'LDAP ERROR')
 docker exec arriendos-app python manage.py seed_images
 ```
 
-### Logs no se crean
+### Frontend no conecta al Backend
+Verificar `default.conf` de nginx apunta a la IP correcta del backend:
 ```bash
-docker exec arriendos-app ls -la logs/
+docker exec arriendos-frontend cat /etc/nginx/conf.d/default.conf
+# Debe tener: proxy_pass http://<IP_SERVIDOR>:9005;
 ```
 
 ---
 
-## VARIABLES DE ENTORNO — REFERENCIA RAPIDA
+## 9. VARIABLES DE ENTORNO
 
-| Variable | Local | Pruebas | Produccion |
-|----------|-------|---------|------------|
-| `DB_HOST` | 127.0.0.1 | <IP_BD> | <IP_PROD> |
-| `DB_PORT` | 5432 | 5438 | <PORT_PROD> |
-| `DB_NAME` | bd_arriendos | <NOMBRE_BD> | <NAME_PROD> |
-| `DB_USER` | postgres | test | <USER_PROD> |
-| `DB_PASSWORD` | 123456 | <VERIFICAR> | <VERIFICAR> |
-| `SECRET_KEY` | local-dev-key | <GENERAR> | <GENERAR> |
-| `DEBUG` | True | True | **False** |
-| `ENVIRONMENT` | local | development | **production** |
-| `LDAP_STATUS` | False | True | True |
-| `GUNICORN_WORKERS` | N/A | 2 | <SEGUN_CPU> |
+Ver `.env.example` para la lista completa. Aqui las variables criticas:
+
+| Variable | Descripcion | Ejemplo |
+|----------|-------------|---------|
+| `SECRET_KEY` | Clave secreta Django (generar con `python3 -c "import secrets; print(secrets.token_urlsafe(50))"`) | `abc123...` |
+| `DEBUG` | True=desarrollo, False=produccion | `True` |
+| `ALLOWED_HOSTS` | IPs/dominios permitidos, separados por coma | `127.0.0.1,192.168.1.100` |
+| `CORS_ORIGINS` | URLs del frontend permitidas, separadas por coma | `http://192.168.1.100:83` |
+| `ENVIRONMENT` | `development` (runserver) o `production` (Gunicorn) | `development` |
+| `DB_HOST` | IP del servidor PostgreSQL | `192.168.1.200` |
+| `DB_PORT` | Puerto PostgreSQL | `5432` |
+| `DB_NAME` | Nombre de la BD | `bd_arriendos` |
+| `DB_USER` | Usuario de BD | `postgres` |
+| `DB_PASSWORD` | Password de BD | `tu_password` |
+| `LDAP_STATUS` | Activar autenticacion LDAP | `False` |
+| `LDAP_SERVER` | URL del servidor LDAP | `ldap://192.168.1.10:3891` |
+| `LDAP_USER` | Bind DN del admin LDAP | `cn=admin,dc=empresa,dc=gob,dc=bo` |
+| `LDAP_PASSWORD` | Password del admin LDAP | `tu_password_ldap` |
+| `LDAP_USER_DN` | DN donde buscar usuarios | `ou=usuarios,dc=empresa,dc=gob,dc=bo` |
+| `LDAP_BASE` | Base DN para busquedas | `dc=empresa,dc=gob,dc=bo` |
+| `GUNICORN_WORKERS` | Workers de Gunicorn (solo prod) | `2` (1 por CPU + 1) |
