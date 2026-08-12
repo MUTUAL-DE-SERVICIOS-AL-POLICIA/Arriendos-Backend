@@ -99,6 +99,8 @@ docker run -d \
   --name arriendos-app \
   --env-file .env \
   -p 9005:9005 \
+  -v $(pwd)/media:/app/media \
+  -v $(pwd)/logs:/app/logs \
   arriendos:latest
 ```
 
@@ -217,8 +219,12 @@ docker run -d \
   --restart unless-stopped \
   --env-file .env \
   -p 9005:9005 \
+  -v $(pwd)/media:/app/media \
+  -v $(pwd)/logs:/app/logs \
   arriendos:latest
 ```
+
+> **IMPORTANTE:** Los volumenes `media` y `logs` son obligatorios. Sin ellos se pierden los archivos subidos y los logs al recrear el contenedor.
 
 ### Paso 7: Verificar Backend
 ```bash
@@ -349,6 +355,8 @@ docker run -d \
   --restart unless-stopped \
   --env-file .env \
   -p 9005:9005 \
+  -v $(pwd)/media:/app/media \
+  -v $(pwd)/logs:/app/logs \
   arriendos:latest
 ```
 
@@ -409,6 +417,8 @@ docker run -d \
   --restart unless-stopped \
   --env-file .env \
   -p 9005:9005 \
+  -v $(pwd)/media:/app/media \
+  -v $(pwd)/logs:/app/logs \
   arriendos:backup-YYYYMMDD_HHMM
 
 # Verificar
@@ -441,6 +451,8 @@ docker run -d \
   --restart unless-stopped \
   --env-file .env \
   -p 9005:9005 \
+  -v $(pwd)/media:/app/media \
+  -v $(pwd)/logs:/app/logs \
   arriendos:backup-YYYYMMDD_HHMM
 
 # 2. Restaurar BD
@@ -491,6 +503,8 @@ docker run -d \
   --restart unless-stopped \
   --env-file .env \
   -p 9005:9005 \
+  -v $(pwd)/media:/app/media \
+  -v $(pwd)/logs:/app/logs \
   arriendos:latest
 
 # Desplegar frontend
