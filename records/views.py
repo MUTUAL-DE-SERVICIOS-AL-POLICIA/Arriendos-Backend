@@ -212,8 +212,7 @@ class AvailableByRentalApi(generics.GenericAPIView):
                         'name': DOC_TYPE_TRANSLATIONS['warranties'],
                     })
 
-                is_concluded = rental.state_id == 4
-                if has_balance and not is_concluded:
+                if has_balance:
                     available_docs.append({
                         'type': 'warranty_request',
                         'name': DOC_TYPE_TRANSLATIONS['warranty_request'],

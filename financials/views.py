@@ -513,11 +513,9 @@ class Warranty_Return_Request(generics.GenericAPIView):
             rental_obj = Rental.objects.get(pk=rental)
         except Rental.DoesNotExist:
             return Response({"error": "El alquiler no existe"}, status=status.HTTP_404_NOT_FOUND)
-        if rental_obj.state_id == 4:
-            return Response({"error": "Ya se ha retornado la garantía"}, status=status.HTTP_404_NOT_FOUND)
-        now = timezone.localtime(timezone.now())
-        rental_obj.warranty_return_request = now
-        rental_obj.save()
+        if not rental_obj.warranty_return_request:
+            rental_obj.warranty_return_request = timezone.localtime(timezone.now())
+            rental_obj.save()
         return Make_Warranty_Form(request, rental)
 
 request_body_schema = openapi.Schema(
@@ -682,8 +680,32 @@ class Return_Warranty_Form(generics.GenericAPIView):
             rental_state_obj = Rental.objects.get(pk=rental)
         except Rental.DoesNotExist:
             return Response({"error": "El alquiler no existe"}, status=status.HTTP_404_NOT_FOUND)
-        if rental_state_obj.state_id == 4:
-            return Response({"error": "Ya se ha retornado la garantía"}, status=status.HTTP_404_NOT_FOUND)
-        #if warranty_balance == 0:
-        #    return Response({"error":f"La garantía actual es: {warranty_balance}"}, status=status.HTTP_404_NOT_FOUND)
         return Make_Return_Warranty_Form(request, rental)
+
+rental_param = openapi.Parameter('rental', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
+product_param = openapi.Parameter('product', in_=openapi.IN_QUERY, type=openapi.TYPE_INTEGER)
+class Print_Damage_Warranty_Form(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated, HasModulePermission]
+    rbac_module = 'documents'
+    @swagger_auto_schema(
+    operation_description="Reimpresión del formulario de ejecución de garantía",
+    manual_parameters=[rental_param, product_param],
+    )
+    def get(self, request, *args, **kwargs):
+        set_thread_variable('thread_user', request.user)
+        rental_param_val = request.GET.get('rental')
+        product_param_val = request.GET.get('product')
+        if rental_param_val is None or product_param_val is None:
+            return Response({"error": "Se requieren los parámetros 'rental' y 'product'"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            rental_id = int(rental_param_val)
+            product_id = int(product_param_val)
+        except (ValueError, TypeError):
+            return Response({"error": "Los parámetros 'rental' y 'product' deben ser números"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            Rental.objects.get(pk=rental_id)
+        except Rental.DoesNotExist:
+            return Response({"error": "El alquiler no existe"}, status=status.HTTP_404_NOT_FOUND)
+        if not Event_Damage.objects.filter(selected_product_id=product_id).exists():
+            return Response({"error": "No hay ejecuciones de garantía para este producto"}, status=status.HTTP_404_NOT_FOUND)
+        return Make_Damage_Warranty_Form(request, rental_id, product_id)

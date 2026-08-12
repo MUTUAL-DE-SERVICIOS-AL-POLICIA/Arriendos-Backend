@@ -13,5 +13,6 @@ urlpatterns = [
     path('warranty_request/', Warranty_Return_Request.as_view()),
     path('return_warranty_form/', Return_Warranty_Form.as_view()),
     path('print_payments/<int:rental_id>/', Print_payment.as_view()),
-    path('print_warranties/<int:rental_id>/', Print_Warranties.as_view())
+    path('print_warranties/<int:rental_id>/', Print_Warranties.as_view()),
+    path('print_damage_warranty/', Print_Damage_Warranty_Form.as_view()),
 ]

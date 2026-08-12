@@ -143,8 +143,8 @@ class TestAvailableByRental:
         assert 'warranty_request' in doc_types
         assert 'warranty_return' in doc_types
 
-    def test_concluded_hides_warranty_request_and_return(self):
-        """Concluido oculta documentos de solicitud/devolución de garantía."""
+    def test_concluded_shows_warranty_request_and_return(self):
+        """Concluido muestra documentos de solicitud/devolución de garantía (para reimprimir)."""
         rental = Rental.objects.create(initial_total=5000, customer=self.customer, state=self.s4, plan=self.plan)
         Warranty_Movement.objects.create(
             rental=rental, voucher_number='W001', income=Decimal('500'),
@@ -155,8 +155,8 @@ class TestAvailableByRental:
 
         assert response.status_code == 200
         doc_types = [d['type'] for d in response.data['rentals'][0]['available_documents']]
-        assert 'warranty_request' not in doc_types
-        assert 'warranty_return' not in doc_types
+        assert 'warranty_request' in doc_types
+        assert 'warranty_return' in doc_types
 
     def test_no_warranty_balance_no_warranty_docs(self):
         """Sin saldo de garantía, no se muestran docs de garantía."""

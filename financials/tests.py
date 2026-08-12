@@ -485,15 +485,15 @@ class TestWarrantyReturnRequest:
         self.user = User.objects.create_superuser(username='admin', password='admin123')
         self.client.force_authenticate(user=self.user)
 
-    def test_concluded_rental_returns_404(self):
+    def test_concluded_rental_returns_200(self):
         rental = _make_rental_with_product(4)[0]
         Warranty_Movement.objects.create(
             rental=rental, voucher_number='W1', income=Decimal('1000'),
             discount=Decimal('0'), returned=Decimal('0'), balance=Decimal('1000')
         )
         response = self.client.get(f'/api/financials/warranty_request/?rental={rental.id}')
-        assert response.status_code == 404
-        assert 'retornado' in response.data['error'].lower()
+        assert response.status_code == 200
+        assert response['Content-Type'] == 'application/pdf'
 
     def test_no_warranty_movements_returns_400(self):
         rental = _make_rental(3)
@@ -518,15 +518,15 @@ class TestReturnWarrantyForm:
         self.user = User.objects.create_superuser(username='admin', password='admin123')
         self.client.force_authenticate(user=self.user)
 
-    def test_concluded_rental_returns_404(self):
+    def test_concluded_rental_returns_200(self):
         rental = _make_rental_with_product(4)[0]
         Warranty_Movement.objects.create(
             rental=rental, voucher_number='W1', income=Decimal('1000'),
             discount=Decimal('0'), returned=Decimal('0'), balance=Decimal('1000')
         )
         response = self.client.get(f'/api/financials/return_warranty_form/?rental={rental.id}')
-        assert response.status_code == 404
-        assert 'retornado' in response.data['error'].lower()
+        assert response.status_code == 200
+        assert response['Content-Type'] == 'application/pdf'
 
     def test_no_warranty_movements_returns_404(self):
         rental = _make_rental(3)
