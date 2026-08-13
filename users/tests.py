@@ -109,15 +109,15 @@ class TestUserDeactivation:
     def test_cannot_deactivate_last_admin(self):
         """No se puede desactivar el último Administrador del sistema."""
         admin_role = Role.objects.create(name='Administrador')
-        cajero_role = Role.objects.create(name='Cajero')
-        _grant_users_delete_permission(cajero_role)
+        visualizador_role = Role.objects.create(name='Visualizador')
+        _grant_users_delete_permission(visualizador_role)
 
         admin = User.objects.create_user(username='lastadmin', password='pass123')
-        cajero = User.objects.create_user(username='cajero1', password='pass123')
+        visualizador = User.objects.create_user(username='visualizador1', password='pass123')
         UserRole.objects.create(user=admin, role=admin_role)
-        UserRole.objects.create(user=cajero, role=cajero_role)
+        UserRole.objects.create(user=visualizador, role=visualizador_role)
 
-        self.client.force_authenticate(user=cajero)
+        self.client.force_authenticate(user=visualizador)
         response = self.client.delete(f'/api/users/state/{admin.id}')
 
         assert response.status_code == 400
@@ -201,20 +201,20 @@ class TestUserDeactivationEdgeCases:
     def test_operator_can_deactivate_non_admin_user(self):
         """Un Operador con permiso SÍ puede desactivar usuarios que no son Administrador."""
         operador_role = Role.objects.create(name='Operador')
-        cajero_role = Role.objects.create(name='Cajero')
+        visualizador_role = Role.objects.create(name='Visualizador')
         _grant_users_delete_permission(operador_role)
 
         operador = User.objects.create_user(username='operador1', password='pass123')
-        cajero = User.objects.create_user(username='cajero1', password='pass123')
+        visualizador = User.objects.create_user(username='visualizador1', password='pass123')
         UserRole.objects.create(user=operador, role=operador_role)
-        UserRole.objects.create(user=cajero, role=cajero_role)
+        UserRole.objects.create(user=visualizador, role=visualizador_role)
 
         self.client.force_authenticate(user=operador)
-        response = self.client.delete(f'/api/users/state/{cajero.id}')
+        response = self.client.delete(f'/api/users/state/{visualizador.id}')
 
         assert response.status_code == 200
-        cajero.refresh_from_db()
-        assert cajero.is_active is False
+        visualizador.refresh_from_db()
+        assert visualizador.is_active is False
 
 
 @pytest.mark.django_db
@@ -241,7 +241,7 @@ class TestUserRoleAssignment:
     def test_assign_role_replaces_existing(self):
         """Asignar un nuevo rol reemplaza el anterior."""
         role1 = Role.objects.create(name='Operador')
-        role2 = Role.objects.create(name='Cajero')
+        role2 = Role.objects.create(name='Visualizador')
         user = User.objects.create_user(username='multirole', password='pass123')
 
         self.client.post('/api/roles/assign/', {

@@ -8,7 +8,7 @@ asignados, y la relacion entre usuarios y roles.
 Estructura:
 - Module: Modulos del sistema (Productos, Inmuebles, Clientes, etc.)
 - Permission: Permisos disponibles (Ver, Crear, Editar, Eliminar)
-- Role: Roles definidos en el sistema (Administrador, Gerente, etc.)
+- Role: Roles definidos en el sistema (Administrador, Operador, Visualizador)
 - RolePermission: Asociacion de permisos por modulo para cada rol
 - UserRole: Asignacion de rol a un usuario (1 usuario = 1 rol)
 
@@ -89,10 +89,8 @@ class Role(models.Model):
 
     Ejemplos de roles predefinidos:
         - Administrador: Acceso total al sistema
-        - Gerente: Gestion completa excepto usuarios y finanzas
         - Operador: Operaciones diarias de arriendos
-        - Cajero: Gestion de pagos y garantias
-        - Consulta: Solo lectura en todo el sistema
+        - Visualizador: Solo lectura en todo el sistema
 
     Campos:
         - name: Nombre unico del rol (ej: 'Administrador')

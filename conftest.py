@@ -99,14 +99,14 @@ def rbac_operador(api_client, db):
 
 
 @pytest.fixture
-def rbac_consulta(api_client, db):
-    """Consulta autenticado solo con permiso view."""
-    consulta = User.objects.create_user(username='consulta_test', password='pass123')
-    consulta_role = Role.objects.create(name='Consulta')
+def rbac_visualizador(api_client, db):
+    """Visualizador autenticado solo con permiso view."""
+    visualizador = User.objects.create_user(username='visualizador_test', password='pass123')
+    visualizador_role = Role.objects.create(name='Visualizador')
     for module in ['financials', 'customers', 'leases', 'products', 'requirements', 'rooms', 'documents', 'plans']:
-        _grant_permission(consulta_role, module, 'view')
-    UserRole.objects.create(user=consulta, role=consulta_role)
-    api_client.force_authenticate(user=consulta)
+        _grant_permission(visualizador_role, module, 'view')
+    UserRole.objects.create(user=visualizador, role=visualizador_role)
+    api_client.force_authenticate(user=visualizador)
     return api_client
 
 

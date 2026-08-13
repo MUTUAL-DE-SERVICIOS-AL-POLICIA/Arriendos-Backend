@@ -53,18 +53,6 @@ class Command(BaseCommand):
                 'description': 'Acceso total al sistema',
                 'modules': {m: list(permissions.values()) for m in modules.values()},
             },
-            'Gerente': {
-                'description': 'Gestion completa excepto usuarios y finanzas',
-                'modules': {
-                    modules['products']: [permissions['view'], permissions['add'], permissions['change']],
-                    modules['rooms']: [permissions['view'], permissions['add'], permissions['change']],
-                    modules['customers']: [permissions['view'], permissions['add'], permissions['change']],
-                    modules['leases']: [permissions['view'], permissions['add'], permissions['change']],
-                    modules['financials']: [permissions['view']],
-                    modules['requirements']: [permissions['view'], permissions['add'], permissions['change']],
-                    modules['users']: [permissions['view']],
-                },
-            },
             'Operador': {
                 'description': 'Operaciones diarias de arriendos',
                 'modules': {
@@ -76,15 +64,7 @@ class Command(BaseCommand):
                     modules['requirements']: [permissions['view']],
                 },
             },
-            'Cajero': {
-                'description': 'Gestion de pagos y garantias',
-                'modules': {
-                    modules['leases']: [permissions['view']],
-                    modules['financials']: [permissions['view'], permissions['add'], permissions['change'], permissions['delete']],
-                    modules['customers']: [permissions['view']],
-                },
-            },
-            'Consulta': {
+            'Visualizador': {
                 'description': 'Solo lectura en todo el sistema',
                 'modules': {m: [permissions['view']] for m in modules.values()},
             },
